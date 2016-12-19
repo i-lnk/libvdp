@@ -15,7 +15,6 @@
 
 #include "apprsp.h"
 #include "appreq.h"
-#include "common.h"
 #include "echo_control_mobile.h"
 #include "gain_control.h"
 #include "noise_suppression_x.h"
