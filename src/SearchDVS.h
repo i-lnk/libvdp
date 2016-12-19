@@ -6,9 +6,9 @@
 #include <linux/socket.h>
 #include <linux/tcp.h>
 #include <linux/in.h>
-#else
-#include "object_jni.h"
 #endif
+
+#include "object_jni.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
