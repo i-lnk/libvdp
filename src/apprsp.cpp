@@ -63,8 +63,8 @@ int             JsonBufferSize
     if(Msg == NULL || JsonBuffer == NULL){
         return -1;
     }
-    
-    SMsgAVIoctrlDelPushResp * hRQ = (SMsgAVIoctrlDelPushResp *)Msg;
+
+	SMsgAVIoctrlSetPushResp * hRQ = (SMsgAVIoctrlSetPushResp *)Msg;
     
     sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\"}",
             "result",hRQ->result,
@@ -83,6 +83,13 @@ int             JsonBufferSize
     if(Msg == NULL || JsonBuffer == NULL){
         return -1;
     }
+
+	SMsgAVIoctrlDelPushResp * hRQ = (SMsgAVIoctrlDelPushResp *)Msg;
+    
+    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\"}",
+            "result",hRQ->result,
+            "none",0
+            );
     
     return 0;
 }
