@@ -27,8 +27,8 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef OPENSL_IO
-#define OPENSL_IO
+#ifndef _OPENXL_IO_H_
+#define _OPENXL_IO_H_
 
 #define	CBC_CACHE_NUM	   3
 #define AEC_CACHE_LEN	   160
@@ -37,72 +37,100 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
+
+#else
+
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
+
+typedef struct {
+    void  * OXLPtr;
+    void (*Enqueue)(void * same,char * buffer,int lens);
+}SLSimpleBufferQueue,**SLAndroidSimpleBufferQueueItf;
+
+#endif
+
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct opensl_stream {
+typedef struct openxl_stream {
+    
+#ifdef PLATFORM_ANDROID
   
-  // engine interfaces
-  SLObjectItf engineObject;
-  SLEngineItf engineEngine;
+    // engine interfaces
+    SLObjectItf engineObject;
+    SLEngineItf engineEngine;
 
-  // output mix interfaces
-  SLObjectItf outputMixObject;
+    // output mix interfaces
+    SLObjectItf outputMixObject;
 
-  // buffer queue player interfaces
-  SLObjectItf bqPlayerObject;
-  SLPlayItf bqPlayerPlay;
-  SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
-  SLEffectSendItf bqPlayerEffectSend;
+    // buffer queue player interfaces
+    SLObjectItf bqPlayerObject;
+    SLPlayItf bqPlayerPlay;
+    SLEffectSendItf bqPlayerEffectSend;
 
-  // recorder interfaces
-  SLObjectItf recorderObject;
-  SLRecordItf recorderRecord;
-  SLAndroidSimpleBufferQueueItf recorderBufferQueue;
+    // recorder interfaces
+    SLObjectItf recorderObject;
+    SLRecordItf recorderRecord;
 
-  SLVolumeItf bqPlayerVolume; 
+    SLVolumeItf bqPlayerVolume;
 
-  void (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
-  void (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
+#else
+    
+    ALuint          sourceID;
+    ALCcontext *    alctx;
+    ALCdevice *     aldev;
+    pthread_t       altid;
+    
+    volatile char   exit;
+    
+#endif
+    
+    SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
+    SLAndroidSimpleBufferQueueItf recorderBufferQueue;
 
-  long long time;
-  int 		ichannels;
-  int 		ochannels;
-  int   	sr;
+    void (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
+    void (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
 
-  void *	context;
+    long long   time;
+    int 		ichannels;
+    int 		ochannels;
+    int         sr;
 
-  short *recBuffer;
-  short *playBuffer;
+    void *      context;
 
-  int outBufIndex;
-  int inBufIndex;
+    short *     recBuffer;
+    short *     playBuffer;
 
-} OPENSL_STREAM;
+    int         outBufIndex;
+    int         inBufIndex;
+
+} OPENXL_STREAM;
 
   /*
   Open the audio device with a given sampling rate (sr), input and output channels and IO buffer size
   in frames. Returns a handle to the OpenSL stream
   */
-  OPENSL_STREAM * InitOpenSLStream(int 	sr, 
+OPENXL_STREAM * InitOpenXLStream(int 	sr,
 	int 	ichannels, 
 	int 	ochannels, 
 	void * 	context,
 	void  (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf,void *),
 	void  (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf,void *)
 );
+    
   /* 
   Close the audio device 
   */
-  void FreeOpenSLStream(OPENSL_STREAM *p);
+void FreeOpenXLStream(OPENXL_STREAM *p);
   
 #ifdef __cplusplus
 };
-#endif
-
 #endif
 
 #endif // #ifndef OPENSL_IO

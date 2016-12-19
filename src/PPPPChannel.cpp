@@ -60,22 +60,21 @@ unsigned long GetAudioTime(){
 #endif
 }
 
-#ifdef PLATFORM_ANDROID
 // this callback handler is called every time a buffer finishes recording
 void bqRecordCallback(
 	SLAndroidSimpleBufferQueueItf bq, 
 	void *context
 ){
-	OPENSL_STREAM * p = (OPENSL_STREAM *)context;
+	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
     short *hFrame = p->recBuffer+(p->inBufIndex*AEC_CACHE_LEN/2);
 	
 	hPC->hAudioGetList->Write(hFrame,GetAudioTime());
-	
+
 	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
 
-	 p->inBufIndex = (p->inBufIndex+1)%CBC_CACHE_NUM;
+    p->inBufIndex = (p->inBufIndex+1)%CBC_CACHE_NUM;
 }
 
 // this callback handler is called every time a buffer finishes playing
@@ -83,7 +82,7 @@ void bqPlayerCallback(
 	SLAndroidSimpleBufferQueueItf bq, 
 	void *context
 ){
-	OPENSL_STREAM * p = (OPENSL_STREAM *)context;
+	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
     short *hFrame = p->playBuffer+(p->outBufIndex*AEC_CACHE_LEN/2);
@@ -99,12 +98,11 @@ void bqPlayerCallback(
 	}else{
 		memset((char*)hFrame,0,AEC_CACHE_LEN);
 	}
-	
+
 	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
 
-	 p->outBufIndex = (p->outBufIndex+1)%CBC_CACHE_NUM;
+    p->outBufIndex = (p->outBufIndex+1)%CBC_CACHE_NUM;
 }
-#endif
 
 void * audio_agc_init(
 	int 	gain,
@@ -1079,9 +1077,8 @@ static void * AudioSendProcess(
 
 	GET_LOCK(&OpenSLLock);
 
-#ifdef PLATFORM_ANDROID
-	OPENSL_STREAM * hOSL = NULL;
-	hOSL = InitOpenSLStream(
+	OPENXL_STREAM * hOSL = NULL;
+	hOSL = InitOpenXLStream(
 		8000,1,1,hVoid,
 		bqRecordCallback,
 		bqPlayerCallback
@@ -1091,7 +1088,6 @@ static void * AudioSendProcess(
 		Log3("opensl init failed.");
 		hPC->audioPlaying = 0;
 	}
-#endif
 
 	char hFrame[12*AEC_CACHE_LEN] = {0};
 	char hCodecFrame[ 3*AEC_CACHE_LEN] = {0};

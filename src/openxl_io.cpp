@@ -27,12 +27,17 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#include "utility.h"
+#include "openxl_io.h"
+
 #ifdef PLATFROM_ANDROID
 
 #include <jni.h>
-#include <math.h>
-#include "utility.h"
-#include "opensl_io2.h"
 
 // creates the OpenSL ES audio engine
 static SLresult openSLCreateEngine(OPENSL_STREAM *p)
@@ -395,8 +400,31 @@ static SLresult openSLRecordOpen(OPENSL_STREAM *p){
 
 }
 
+#else
+
+void * OpenALWorkingProcess(void * hOAL){
+    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)hOAL;
+    
+    while(!hOXL->exit){
+        hOXL->bqPlayerCallback(hOXL->bqPlayerBufferQueue,hOXL->context);
+        hOXL->bqRecordCallback(hOXL->recorderBufferQueue,hOXL->context);
+    }
+    
+    return NULL;
+}
+
+void AudioOutput(void * ptr,char * buffer,int lens){
+    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)ptr;
+}
+
+void AudioRecord(void * ptr,char * buffer,int lens){
+    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)ptr;
+}
+
+#endif
+
 // open the android audio device for input and/or output
-OPENSL_STREAM * InitOpenSLStream(
+OPENXL_STREAM * InitOpenXLStream(
 	int 	sr, 
 	int 	ichannels, 
 	int 	ochannels, 
@@ -404,49 +432,139 @@ OPENSL_STREAM * InitOpenSLStream(
 	void  (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf,void *),
 	void  (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf,void *)
 ){
-  
-  OPENSL_STREAM * p;
-  p = (OPENSL_STREAM *) malloc(sizeof(OPENSL_STREAM));
-  memset(p, 0, sizeof(OPENSL_STREAM));
-  p->ichannels = ichannels;
-  p->ochannels = ochannels;
-  p->sr = sr;
-  p->context = context;
-  p->bqPlayerCallback = bqPlayerCallback;
-  p->bqRecordCallback = bqRecordCallback;
-  p->recBuffer = NULL;
-  p->playBuffer = NULL;
-  if(openSLCreateEngine(p) != SL_RESULT_SUCCESS) {
-  	Log2("open sl engine failed.");
-    FreeOpenSLStream(p);
-    return NULL;
-  }
+    OPENXL_STREAM * p;
+    p = (OPENXL_STREAM *) malloc(sizeof(OPENXL_STREAM));
+    memset(p, 0, sizeof(OPENXL_STREAM));
+    p->ichannels = ichannels;
+    p->ochannels = ochannels;
+    p->context = context;
+    p->sr = sr;
+    p->bqPlayerCallback = bqPlayerCallback;
+    p->bqRecordCallback = bqRecordCallback;
+    p->recBuffer = NULL;
+    p->playBuffer = NULL;
 
-  if(openSLRecordOpen(p) != SL_RESULT_SUCCESS) {
-  	Log2("open sl record failed.");
-    FreeOpenSLStream(p);
-    return NULL;
-  } 
+#ifdef PLATFORM_ANDROID
+    
+    // for opensl on android
+    
+    if(openSLCreateEngine(p) != SL_RESULT_SUCCESS) {
+        Log2("open sl engine failed.");
+        FreeOpenSLStream(p);
+        goto jumperr;
+    }
 
-  if(openSLPlayerOpen(p) != SL_RESULT_SUCCESS) {
-  	Log2("open sl player failed.");
-    FreeOpenSLStream(p);
-    return NULL;
-  }  
+    if(openSLRecordOpen(p) != SL_RESULT_SUCCESS) {
+        Log2("open sl record failed.");
+        FreeOpenSLStream(p);
+        goto jumperr;
+    } 
 
-  p->time = 0.;
-  return p;
+    if(openSLPlayerOpen(p) != SL_RESULT_SUCCESS) {
+        Log2("open sl player failed.");
+        FreeOpenSLStream(p);
+        goto jumperr;
+    }
+#else
+    
+    // for openal on ios
+    
+    ALCcontext * ctx = NULL;
+    ALCdevice * device = NULL;
+    
+    device = alcOpenDevice(NULL);
+    if(device == NULL){
+        Log3("open al open device failed.");
+        goto jumperr;
+    }
+    
+    ctx = alcCreateContext(device, NULL);
+    if(ctx == NULL){
+        Log3("open al create context failed.")
+        alcCloseDevice(device);
+        goto jumperr;
+    }
+    
+    alcMakeContextCurrent(ctx);
+    
+    alGenSources(1,&p->sourceID);
+    alSourcei(p->sourceID, AL_LOOPING, AL_FALSE);          // 设置音频播放是否为循环播放，AL_FALSE是不循环
+    alSourcef(p->sourceID, AL_SOURCE_TYPE, AL_STREAMING);  // 设置声音数据为流试，（openAL 针对PCM格式数据流）
+    alSourcef(p->sourceID, AL_GAIN, 1.0f);                 // 设置音量大小，1.0f表示最大音量。openAL动态调节音量大小就用这个方法
+    
+    alSpeedOfSound(1.0);
+    
+    p->aldev = device;
+    p->alctx = ctx;
+    p->altid = (pthread_t)-1;
+    p->exit = 0;
+    
+    if(pthread_create(&p->altid, NULL, OpenALWorkingProcess, p) != 0){
+        alDeleteSources(1,&p->sourceID);
+        alcDestroyContext(p->alctx);
+        alcCloseDevice(p->aldev);
+        goto jumperr;
+    }
+    
+    SLSimpleBufferQueue * sbqs[2];
+    
+    sbqs[0] = (SLSimpleBufferQueue*)malloc(sizeof(SLSimpleBufferQueue));
+    sbqs[1] = (SLSimpleBufferQueue*)malloc(sizeof(SLSimpleBufferQueue));
+    
+    sbqs[0]->OXLPtr = p;
+    sbqs[1]->OXLPtr = p;
+    
+    p->bqPlayerBufferQueue = &sbqs[0];
+    p->recorderBufferQueue = &sbqs[1];
+    
+    sbqs[0]->Enqueue = AudioOutput;
+    sbqs[1]->Enqueue = AudioRecord;
+#endif
+
+    p->time = 0.;
+    return p;
+    
+jumperr:
+    
+    if(p != NULL){
+        free(p); p = NULL;
+    }
+    
+    return NULL;
 }
 
 // close the android audio device
-void FreeOpenSLStream(OPENSL_STREAM *p){
+void FreeOpenXLStream(OPENXL_STREAM *p){
 
-  if (p == NULL)
+    if (p == NULL)
     return;
 
-  openSLDestroyEngine(p);
-  
-  free(p);
+#ifdef PLATFORM_ANDROID
+    openSLDestroyEngine(p);
+#else
+    Log3("close openal audio play and capture.");
+    ALint state;
+    alGetSourcei(p->sourceID, AL_SOURCE_STATE, &state);
+    if(state != AL_STOPPED){
+        alSourceStop(p->sourceID);
+    }
+    
+    if(p->altid != (pthread_t)-1){
+        Log3("waiting for openal audio play and capture thread exit.");
+        p->exit = 1;
+        pthread_join(p->altid,NULL);
+    }
+    
+    Log3("release resource.")
+    alDeleteSources(1,&p->sourceID);
+    if(p->alctx) alcDestroyContext(p->alctx);
+    if(p->aldev) alcCloseDevice(p->aldev);
+    
+    free(*p->bqPlayerBufferQueue);
+    free(*p->recorderBufferQueue);
+#endif
+
+    free(p);
 }
 
-#endif
+
