@@ -60,7 +60,7 @@ src/global_h264decoder.o \
 src/PPPPChannel.o \
 src/PPPPChannelManagement.o \
 src/SearchDVS.o \
-src/opensl_io2.o \
+src/opensl_io.o \
 src/audio_codec_adpcm.o \
 src/audio_codec_g711.o \
 src/audio_codec_dec.o \
