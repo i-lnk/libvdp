@@ -6,7 +6,6 @@
 #include <linux/socket.h>
 #include <linux/tcp.h>
 #include <linux/in.h>
-#error "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 #endif
 
 #include "object_jni.h"
