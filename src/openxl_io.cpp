@@ -115,14 +115,14 @@ static void openSLDestroyEngine(OPENSL_STREAM *p){
     p->engineObject = NULL;
     p->engineEngine = NULL;
   }
-  if (p->playBuffer != NULL) {
-    free(p->playBuffer);
-    p->playBuffer = NULL;
+  if (p->outputBuffer != NULL) {
+    free(p->outputBuffer);
+    p->outputBuffer = NULL;
   }
 
-  if (p->recBuffer != NULL) {
-    free(p->recBuffer);
-    p->recBuffer = NULL;
+  if (p->recordBuffer != NULL) {
+    free(p->recordBuffer);
+    p->recordBuffer = NULL;
   }
 
   Log2("destory all opensl resource done.");
@@ -261,10 +261,10 @@ static SLresult openSLPlayerOpen(OPENSL_STREAM *p)
     result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay, SL_PLAYSTATE_PLAYING);
 
 	// send 20ms data when start
-    if((p->playBuffer = (short *) calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL) {
+    if((p->outputBuffer = (short *) calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL) {
       return -1;
     }
-    pBuffer =  (char*)p->playBuffer;
+    pBuffer =  (char*)p->outputBuffer;
     p->outBufIndex = 0;
     for(int i = 0;i< CBC_CACHE_NUM;i++)
     {
@@ -380,10 +380,10 @@ static SLresult openSLRecordOpen(OPENSL_STREAM *p){
 	
     result = (*p->recorderRecord)->SetRecordState(p->recorderRecord, SL_RECORDSTATE_RECORDING);
 
-    if((p->recBuffer = (short *) calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL) {
+    if((p->recordBuffer = (short *) calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL) {
       return -1;
     }
-    pBuffer =  (char*)p->recBuffer;
+    pBuffer =  (char*)p->recordBuffer;
     p->inBufIndex = 0;
     for(int i = 0;i< CBC_CACHE_NUM;i++)
     {
@@ -406,18 +406,24 @@ void * OpenALWorkingProcess(void * hOAL){
     OPENXL_STREAM * hOXL = (OPENXL_STREAM *)hOAL;
     
     while(!hOXL->exit){
-        hOXL->bqPlayerCallback(hOXL->bqPlayerBufferQueue,hOXL->context);
-        hOXL->bqRecordCallback(hOXL->recorderBufferQueue,hOXL->context);
+        hOXL->bqPlayerCallback(hOXL->bqPlayerBufferQueue,hOXL);
+        hOXL->bqRecordCallback(hOXL->recorderBufferQueue,hOXL);
     }
     
     return NULL;
 }
 
-void AudioOutput(void * ptr,char * buffer,int lens){
-    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)ptr;
+void AudioOutput(SLAndroidSimpleBufferQueueItf bq,char * buffer,int lens){
+    
+    Log3("start audio output by openal 1.");
+    
+    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)(*bq)->OXLPtr;
+    
     if(buffer == NULL){
         return;
     }
+    
+    Log3("start audio output by openal 2.");
     
     ALuint bufferID;
     
@@ -426,6 +432,8 @@ void AudioOutput(void * ptr,char * buffer,int lens){
         Log3("alGenBuffers error.");
         return;
     }
+    
+    Log3("start audio output by openal 3.");
     
     alBufferData(bufferID,
         AL_FORMAT_MONO16,
@@ -439,6 +447,8 @@ void AudioOutput(void * ptr,char * buffer,int lens){
         return;
     }
     
+    Log3("start audio output by openal 4.");
+    
     alSourceQueueBuffers(hOXL->sourceID, 1, &bufferID);
     
     if(alGetError() != AL_NO_ERROR){
@@ -448,8 +458,8 @@ void AudioOutput(void * ptr,char * buffer,int lens){
     }
 }
 
-void AudioRecord(void * ptr,char * buffer,int lens){
-    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)ptr;
+void AudioRecord(SLAndroidSimpleBufferQueueItf bq,char * buffer,int lens){
+    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)(*bq)->OXLPtr;
 }
 
 #endif
@@ -472,8 +482,8 @@ OPENXL_STREAM * InitOpenXLStream(
     p->sr = sr;
     p->bqPlayerCallback = bqPlayerCallback;
     p->bqRecordCallback = bqRecordCallback;
-    p->recBuffer = NULL;
-    p->playBuffer = NULL;
+    p->recordBuffer = NULL;
+    p->outputBuffer = NULL;
 
 #ifdef PLATFORM_ANDROID
     
@@ -506,6 +516,19 @@ OPENXL_STREAM * InitOpenXLStream(
     ALCcontext * ctx = NULL;
     ALCdevice * device = NULL;
     
+    if((p->recordBuffer = (short *)calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL){
+        Log3("alloc record buffer failed.");
+        goto jumperr;
+    }
+    
+    if((p->outputBuffer = (short *)calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL){
+        Log3("alloc output buffer failed.");
+        goto jumperr;
+    }
+    
+    p->iBufferIndex = 0;
+    p->oBufferIndex = 0;
+    
     device = alcOpenDevice(NULL);
     if(device == NULL){
         Log3("open al open device failed.");
@@ -533,27 +556,28 @@ OPENXL_STREAM * InitOpenXLStream(
     p->altid = (pthread_t)-1;
     p->exit = 0;
     
+    p->bqPlayerBufferQueue = (SLSimpleBufferQueue**)malloc(sizeof(SLSimpleBufferQueue*));
+    p->recorderBufferQueue = (SLSimpleBufferQueue**)malloc(sizeof(SLSimpleBufferQueue*));
+    
+    (*p->bqPlayerBufferQueue) = (SLSimpleBufferQueue*)malloc(sizeof(SLSimpleBufferQueue));
+    (*p->recorderBufferQueue) = (SLSimpleBufferQueue*)malloc(sizeof(SLSimpleBufferQueue));
+    
+    memset((*p->bqPlayerBufferQueue),0,sizeof(SLSimpleBufferQueue));
+    memset((*p->recorderBufferQueue),0,sizeof(SLSimpleBufferQueue));
+    
+    (*p->bqPlayerBufferQueue)->OXLPtr = p;
+    (*p->recorderBufferQueue)->OXLPtr = p;
+    
+    (*p->bqPlayerBufferQueue)->Enqueue = AudioOutput;
+    (*p->recorderBufferQueue)->Enqueue = AudioRecord;
+    
     if(pthread_create(&p->altid, NULL, OpenALWorkingProcess, p) != 0){
         alDeleteSources(1,&p->sourceID);
         alcDestroyContext(p->alctx);
         alcCloseDevice(p->aldev);
+        Log3("openal audio create audio loop thread failed.")
         goto jumperr;
     }
-    
-    SLSimpleBufferQueue * sbqs[2];
-    
-    sbqs[0] = (SLSimpleBufferQueue*)malloc(sizeof(SLSimpleBufferQueue));
-    sbqs[1] = (SLSimpleBufferQueue*)malloc(sizeof(SLSimpleBufferQueue));
-    
-    sbqs[0]->OXLPtr = p;
-    sbqs[1]->OXLPtr = p;
-    
-    p->bqPlayerBufferQueue = &sbqs[0];
-    p->recorderBufferQueue = &sbqs[1];
-    
-    sbqs[0]->Enqueue = AudioOutput;
-    sbqs[1]->Enqueue = AudioRecord;
-    
     
     alGetSourcei(p->sourceID, AL_SOURCE_STATE, &status);
     if(status != AL_PLAYING){
@@ -561,6 +585,8 @@ OPENXL_STREAM * InitOpenXLStream(
     }else{
         Log3("openal audio already playing.");
     }
+    
+    Log3("openal audio start successfull.");
     
 #endif
 
@@ -571,7 +597,15 @@ jumperr:
     
     if(p != NULL){
         free(p); p = NULL;
+        if(p->outputBuffer) free(p->outputBuffer);
+        if(p->recordBuffer) free(p->recordBuffer);
     }
+    
+    if(p->bqPlayerBufferQueue != NULL) free(p->bqPlayerBufferQueue);
+    if(p->recorderBufferQueue != NULL) free(p->recorderBufferQueue);
+    
+    if((*p->bqPlayerBufferQueue) != NULL) free((*p->bqPlayerBufferQueue));
+    if((*p->recorderBufferQueue) != NULL) free((*p->recorderBufferQueue));
     
     return NULL;
 }
@@ -603,8 +637,14 @@ void FreeOpenXLStream(OPENXL_STREAM *p){
     if(p->alctx) alcDestroyContext(p->alctx);
     if(p->aldev) alcCloseDevice(p->aldev);
     
-    free(*p->bqPlayerBufferQueue);
-    free(*p->recorderBufferQueue);
+    if((*p->bqPlayerBufferQueue) != NULL) free((*p->bqPlayerBufferQueue));
+    if((*p->recorderBufferQueue) != NULL) free((*p->recorderBufferQueue));
+    
+    if(p->bqPlayerBufferQueue != NULL) free(p->bqPlayerBufferQueue);
+    if(p->recorderBufferQueue != NULL) free(p->recorderBufferQueue);
+    
+    free(p->outputBuffer);
+    free(p->recordBuffer);
     
     memset(p,0,sizeof(OPENXL_STREAM));
     

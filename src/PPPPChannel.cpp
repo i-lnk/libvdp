@@ -68,13 +68,13 @@ void bqRecordCallback(
 	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
-    short *hFrame = p->recBuffer+(p->inBufIndex*AEC_CACHE_LEN/2);
+    short *hFrame = p->recordBuffer+(p->iBufferIndex*AEC_CACHE_LEN/2);
 	
 	hPC->hAudioGetList->Write(hFrame,GetAudioTime());
 
 	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
 
-    p->inBufIndex = (p->inBufIndex+1)%CBC_CACHE_NUM;
+    p->iBufferIndex = (p->iBufferIndex+1)%CBC_CACHE_NUM;
 }
 
 // this callback handler is called every time a buffer finishes playing
@@ -85,13 +85,13 @@ void bqPlayerCallback(
 	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
-    short *hFrame = p->playBuffer+(p->outBufIndex*AEC_CACHE_LEN/2);
+    short *hFrame = p->outputBuffer+(p->oBufferIndex*AEC_CACHE_LEN/2);
 
 	hPC->hAudioPutList->Write((short*)hFrame,GetAudioTime());
 	
 	int stocksize = hPC->hSoundBuffer->GetStock();
 
-//	Log3("read audio data from sound buffer with lens:[%d]",stocksize);
+	Log3("read audio data from sound buffer with lens:[%d]",stocksize);
 
 	if(stocksize >= AEC_CACHE_LEN){
 		hPC->hSoundBuffer->Read((char*)hFrame,AEC_CACHE_LEN);
@@ -101,7 +101,7 @@ void bqPlayerCallback(
 
 	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
 
-    p->outBufIndex = (p->outBufIndex+1)%CBC_CACHE_NUM;
+    p->oBufferIndex = (p->oBufferIndex+1)%CBC_CACHE_NUM;
 }
 
 void * audio_agc_init(

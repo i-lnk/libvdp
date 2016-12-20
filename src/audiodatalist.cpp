@@ -28,10 +28,8 @@ CAudioDataList::CAudioDataList( int count )
 			data->front	= NULL;
 			data->buf	= buf;
 			buf		+= size;
-			data->time	= 0;
-			data->state	= -1;
-			data->ss	= 0.0;
-			data->db	= 0.0;
+			data->time	=  0;
+            data->state	= -1;
 			data->front	= front;
 
 			if ( front != NULL )
@@ -95,7 +93,6 @@ void CAudioDataList::Write(short *data,unsigned long time)
 //    double mean;
     int size = MIN_PCM_AUDIO_SIZE/2;
     if(m_write!= NULL){
-		m_write->ss = 0.0;
 		for(int i = 0;i<size;i++)
 		{
 			if(data[i]>32767)

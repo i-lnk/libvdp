@@ -43,9 +43,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
 
-typedef struct {
+typedef struct SLSimpleBufferQueue{
     void  * OXLPtr;
-    void (*Enqueue)(void * same,char * buffer,int lens);
+    void (*Enqueue)(SLSimpleBufferQueue ** bq,char * buffer,int lens);
 }SLSimpleBufferQueue,**SLAndroidSimpleBufferQueueItf;
 
 #endif
@@ -104,11 +104,11 @@ typedef struct openxl_stream {
 
     void *      context;
 
-    short *     recBuffer;
-    short *     playBuffer;
+    short *     recordBuffer;
+    short *     outputBuffer;
 
-    int         outBufIndex;
-    int         inBufIndex;
+    int         oBufferIndex;
+    int         iBufferIndex;
 
 } OPENXL_STREAM;
 
