@@ -420,7 +420,7 @@ void AudioOutput(SLAndroidSimpleBufferQueueItf bq,char * buffer,int lens){
         return;
     }
     
-    ALuint bufferID;
+    ALuint bufferID = 0;
     
     int err = 0;
     
