@@ -991,9 +991,7 @@ static void * AudioRecvProcess(
 			continue;
 		}
 
-#ifdef PLATFORM_ANDROID
 		audio_agc_proc(hAgc,Codec,ret);
-#endif
 		
 		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
 		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
@@ -1098,7 +1096,7 @@ static void * AudioSendProcess(
 	}
 
 	char hFrame[12*AEC_CACHE_LEN] = {0};
-	char hCodecFrame[ 3*AEC_CACHE_LEN] = {0};
+	char hCodecFrame[12*AEC_CACHE_LEN] = {0};
 
 	AV_HEAD * hAV = (AV_HEAD*)hFrame;
 	char * WritePtr = hAV->d;
@@ -1165,11 +1163,14 @@ static void * AudioSendProcess(
 		frameInfo.codec_id = hPC->AudioSendFormat;
 		frameInfo.flags = (AUDIO_SAMPLE_8K << 2) | (AUDIO_DATABITS_16 << 1) | AUDIO_CHANNEL_MONO;
 		frameInfo.timestamp = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+        frameInfo.reserve2 = ret;
 
 		ret = avSendAudioData(spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
+        
+//      Log3("avSendAudioData with lens:[%d].", frameInfo.reserve2);
 		
 		if(ret != AV_ER_NoERROR){
-			Log2("tutk av server send audio data failed.err:[%d].",ret);
+			Log2("tutk av server send audio data failed.err:[%d].", ret);
 			break;
 		}
 

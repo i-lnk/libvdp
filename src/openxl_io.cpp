@@ -402,22 +402,36 @@ static SLresult openSLRecordOpen(OPENSL_STREAM *p){
 
 #else
 
-void * OpenALWorkingProcess(void * hOAL){
+void * OpenALOutputProcess(void * hOAL){
     OPENXL_STREAM * hOXL = (OPENXL_STREAM *)hOAL;
     
-    Log3("openal callback thread start.");
+    Log3("openal callback output thread start.");
+    
+    while(hOXL->exit != 1){
+        hOXL->bqPlayerCallback(hOXL->bqPlayerBufferQueue,hOXL);
+        usleep(1);
+    }
+    
+    Log3("openal callback output thread close.");
+    
+    return NULL;
+}
+
+void * OpenALRecordProcess(void * hOAL){
+    OPENXL_STREAM * hOXL = (OPENXL_STREAM *)hOAL;
+    
+    Log3("openal callback record thread start.");
     
     alcCaptureStart(hOXL->alrecorddev);
     
     while(hOXL->exit != 1){
-        hOXL->bqPlayerCallback(hOXL->bqPlayerBufferQueue,hOXL);
         hOXL->bqRecordCallback(hOXL->recorderBufferQueue,hOXL);
         usleep(1);
     }
     
     alcCaptureStop(hOXL->alrecorddev);
     
-    Log3("openal callback thread close.");
+    Log3("openal callback record thread close.");
     
     return NULL;
 }
@@ -442,7 +456,6 @@ void AudioOutput(SLAndroidSimpleBufferQueueItf bq,char * buffer,int lens){
         alSourcePlay(hOXL->sourceID);
         if((err = alGetError()) != AL_NO_ERROR){
             Log3("open al source play failed:%04x status:%04x.", err, status);
-
             return;
         }
     }
@@ -450,7 +463,7 @@ void AudioOutput(SLAndroidSimpleBufferQueueItf bq,char * buffer,int lens){
     // clean cached audio data
 
     alGetSourcei(hOXL->sourceID, AL_BUFFERS_PROCESSED, &buffer_processed);
-    alGetSourcei(hOXL->sourceID, AL_BUFFERS_QUEUED, &buffer_queued);
+//  alGetSourcei(hOXL->sourceID, AL_BUFFERS_QUEUED, &buffer_queued);
     
     while(buffer_processed --){
         alSourceUnqueueBuffers(hOXL->sourceID, 1, &bufferID);
@@ -499,6 +512,8 @@ void AudioRecord(SLAndroidSimpleBufferQueueItf bq,char * buffer,int size){
     if(lens >= size/2){
 //      Log3("openal has captured data with lens:%d.", lens);
         alcCaptureSamples(hOXL->alrecorddev, buffer, size/2);
+    }else{
+        usleep(10);
     }
     
     return;
@@ -529,7 +544,7 @@ int openALCreateEngine(OPENXL_STREAM * p){
     
     // for audio capture
     
-    record_device = alcCaptureOpenDevice(NULL, p->sr, AL_FORMAT_MONO16, AEC_CACHE_LEN * 2);
+    record_device = alcCaptureOpenDevice(NULL, p->sr, AL_FORMAT_MONO16, AEC_CACHE_LEN * 6);
     if(record_device == NULL){
         Log3("open al open record device failed.");
         goto jumpout;
@@ -566,13 +581,14 @@ int openALCreateEngine(OPENXL_STREAM * p){
     //    alDopplerVelocity(1.0);
     alSourcei(p->sourceID, AL_LOOPING, AL_FALSE);          // 设置音频播放是否为循环播放，AL_FALSE是不循环
     alSourcef(p->sourceID, AL_SOURCE_TYPE, AL_STREAMING);  // 设置声音数据为流试，（openAL 针对PCM格式数据流）
-    alSourcef(p->sourceID, AL_GAIN, 0.7f);                 // 设置音量大小，1.0f表示最大音量。openAL动态调节音量大小就用这个方法
+    alSourcef(p->sourceID, AL_GAIN, 1.0f);                 // 设置音量大小，1.0f表示最大音量。openAL动态调节音量大小就用这个方法
     alSourcef(p->sourceID, AL_BUFFERS_QUEUED, 8);
     
     p->aloutputdev = output_device;
     p->alrecorddev = record_device;
     p->alctx = ctx;
-    p->altid = (pthread_t)-1;
+    p->aloutputtid = (pthread_t)-1;
+    p->alrecordtid = (pthread_t)-1;
     p->exit = 0;
     
     p->bqPlayerBufferQueue = (SLSimpleBufferQueue**)malloc(sizeof(SLSimpleBufferQueue*));
@@ -590,8 +606,13 @@ int openALCreateEngine(OPENXL_STREAM * p){
     (*p->bqPlayerBufferQueue)->Enqueue = AudioOutput;
     (*p->recorderBufferQueue)->Enqueue = AudioRecord;
     
-    if(pthread_create(&p->altid, NULL, OpenALWorkingProcess, p) != 0){
-        Log3("openal audio create audio loop thread failed.")
+    if(pthread_create(&p->aloutputtid, NULL, OpenALOutputProcess, p) != 0){
+        Log3("openal audio create audio output loop thread failed.")
+        goto jumpout;
+    }
+    
+    if(pthread_create(&p->alrecordtid, NULL, OpenALRecordProcess, p) != 0){
+        Log3("openal audio create audio record loop thread failed.")
         goto jumpout;
     }
     
@@ -627,12 +648,11 @@ jumperr:
 int openALDestroyEngine(OPENXL_STREAM * p){
     Log3("close openal audio play and capture.");
     
-    if(p->altid != (pthread_t)-1){
-        Log3("waiting for openal audio play and capture thread exit.");
-        p->exit = 1;
-        pthread_join(p->altid,NULL);
-        Log3("openal audio play and capture thread terminal.");
-    }
+    Log3("waiting for openal audio play and capture thread exit.");
+    p->exit = 1;
+    if(p->aloutputtid != (pthread_t)-1) pthread_join(p->aloutputtid,NULL);
+    if(p->alrecordtid != (pthread_t)-1) pthread_join(p->alrecordtid,NULL);
+    Log3("openal audio play and capture thread terminal.");
     
     int buffer_processed = 0;
     int buffer_queued = 0;
