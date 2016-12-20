@@ -415,6 +415,37 @@ void * OpenALWorkingProcess(void * hOAL){
 
 void AudioOutput(void * ptr,char * buffer,int lens){
     OPENXL_STREAM * hOXL = (OPENXL_STREAM *)ptr;
+    if(buffer == NULL){
+        return;
+    }
+    
+    ALuint bufferID;
+    
+    alGenBuffers(1,&bufferID);
+    if(alGetError() != AL_NO_ERROR){
+        Log3("alGenBuffers error.");
+        return;
+    }
+    
+    alBufferData(bufferID,
+        AL_FORMAT_MONO16,
+        buffer,
+        lens,
+        hOXL->sr
+        );
+    
+    if(alGetError() != AL_NO_ERROR){
+        Log3("alBufferData error.");
+        return;
+    }
+    
+    alSourceQueueBuffers(hOXL->sourceID, 1, &bufferID);
+    
+    if(alGetError() != AL_NO_ERROR){
+        Log3("alSourceQueueBuffers error.");
+        alDeleteBuffers(1, &bufferID);
+        return;
+    }
 }
 
 void AudioRecord(void * ptr,char * buffer,int lens){
@@ -465,9 +496,12 @@ OPENXL_STREAM * InitOpenXLStream(
         FreeOpenSLStream(p);
         goto jumperr;
     }
+    
 #else
     
     // for openal on ios
+    
+    int status = 0;
     
     ALCcontext * ctx = NULL;
     ALCdevice * device = NULL;
@@ -519,6 +553,15 @@ OPENXL_STREAM * InitOpenXLStream(
     
     sbqs[0]->Enqueue = AudioOutput;
     sbqs[1]->Enqueue = AudioRecord;
+    
+    
+    alGetSourcei(p->sourceID, AL_SOURCE_STATE, &status);
+    if(status != AL_PLAYING){
+        alSourcePlay(p->sourceID);
+    }else{
+        Log3("openal audio already playing.");
+    }
+    
 #endif
 
     p->time = 0.;
@@ -562,6 +605,9 @@ void FreeOpenXLStream(OPENXL_STREAM *p){
     
     free(*p->bqPlayerBufferQueue);
     free(*p->recorderBufferQueue);
+    
+    memset(p,0,sizeof(OPENXL_STREAM));
+    
 #endif
 
     free(p);
