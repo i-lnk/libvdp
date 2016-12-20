@@ -405,7 +405,7 @@ static SLresult openSLRecordOpen(OPENSL_STREAM *p){
 void * OpenALWorkingProcess(void * hOAL){
     OPENXL_STREAM * hOXL = (OPENXL_STREAM *)hOAL;
     
-    while(!hOXL->exit){
+    while(hOXL->exit != 1){
         hOXL->bqPlayerCallback(hOXL->bqPlayerBufferQueue,hOXL);
         hOXL->bqRecordCallback(hOXL->recorderBufferQueue,hOXL);
     }
@@ -414,26 +414,21 @@ void * OpenALWorkingProcess(void * hOAL){
 }
 
 void AudioOutput(SLAndroidSimpleBufferQueueItf bq,char * buffer,int lens){
-    
-    Log3("start audio output by openal 1.");
-    
     OPENXL_STREAM * hOXL = (OPENXL_STREAM *)(*bq)->OXLPtr;
     
     if(buffer == NULL){
         return;
     }
     
-    Log3("start audio output by openal 2.");
-    
     ALuint bufferID;
     
+    int err = 0;
+    
     alGenBuffers(1,&bufferID);
-    if(alGetError() != AL_NO_ERROR){
-        Log3("alGenBuffers error.");
+    if((err = alGetError()) != AL_NO_ERROR){
+        Log3("alGenBuffers error:%04x.",err);
         return;
     }
-    
-    Log3("start audio output by openal 3.");
     
     alBufferData(bufferID,
         AL_FORMAT_MONO16,
@@ -442,17 +437,15 @@ void AudioOutput(SLAndroidSimpleBufferQueueItf bq,char * buffer,int lens){
         hOXL->sr
         );
     
-    if(alGetError() != AL_NO_ERROR){
-        Log3("alBufferData error.");
+    if((err = alGetError()) != AL_NO_ERROR){
+        Log3("alBufferData error:%04x.",err);
         return;
     }
     
-    Log3("start audio output by openal 4.");
-    
     alSourceQueueBuffers(hOXL->sourceID, 1, &bufferID);
     
-    if(alGetError() != AL_NO_ERROR){
-        Log3("alSourceQueueBuffers error.");
+    if((err = alGetError()) != AL_NO_ERROR){
+        Log3("alSourceQueueBuffers error:%04x.",err);
         alDeleteBuffers(1, &bufferID);
         return;
     }

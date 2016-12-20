@@ -91,7 +91,7 @@ void bqPlayerCallback(
 	
 	int stocksize = hPC->hSoundBuffer->GetStock();
 
-	Log3("read audio data from sound buffer with lens:[%d]",stocksize);
+//	Log3("read audio data from sound buffer with lens:[%d]",stocksize);
 
 	if(stocksize >= AEC_CACHE_LEN){
 		hPC->hSoundBuffer->Read((char*)hFrame,AEC_CACHE_LEN);
