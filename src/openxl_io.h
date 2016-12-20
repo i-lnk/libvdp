@@ -84,7 +84,10 @@ typedef struct openxl_stream {
     
     ALuint          sourceID;
     ALCcontext *    alctx;
-    ALCdevice *     aldev;
+    
+    ALCdevice *     aloutputdev;
+    ALCdevice *     alrecorddev;
+    
     pthread_t       altid;
     
     volatile char   exit;

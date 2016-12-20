@@ -91,12 +91,15 @@ void bqPlayerCallback(
 	
 	int stocksize = hPC->hSoundBuffer->GetStock();
 
-//	Log3("read audio data from sound buffer with lens:[%d]",stocksize);
-
 	if(stocksize >= AEC_CACHE_LEN){
+//      Log3("read audio data from sound buffer with lens:[%d]",stocksize);
 		hPC->hSoundBuffer->Read((char*)hFrame,AEC_CACHE_LEN);
 	}else{
-		memset((char*)hFrame,0,AEC_CACHE_LEN);
+        memset((char*)hFrame,0,AEC_CACHE_LEN);
+#ifdef PLATFORM_ANDROID
+#else
+        return;
+#endif
 	}
 
 	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
@@ -961,6 +964,7 @@ static void * AudioRecvProcess(
 		}
 
 		if(hPC->audioEnabled != 1){
+            Log3("audio pause...");
 			continue;
 		}
 
@@ -987,7 +991,9 @@ static void * AudioRecvProcess(
 			continue;
 		}
 
+#ifdef PLATFORM_ANDROID
 		audio_agc_proc(hAgc,Codec,ret);
+#endif
 		
 		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
 		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
@@ -1025,8 +1031,10 @@ static void * AudioSendProcess(
 		Log3("initialize audio encodec handle failed.\n");
 		return NULL;
 	}
+    
+    Log3("audio send process run with codec:%02x.",hPC->AudioSendFormat);
 
-	Log2("tutk get free channel for speaker.");
+	Log3("tutk get free channel for speaker.");
 	int speakerChannel = IOTC_Session_Get_Free_Channel(hPC->SID);
 
 	ioMsg.channel = speakerChannel;
@@ -1169,11 +1177,9 @@ static void * AudioSendProcess(
 		WritePtr = hAV->d;
 	}
 
-#ifdef PLATFORM_ANDROID
 	Log2("free opensl audio stream.");
-	FreeOpenSLStream(hOSL);
+	FreeOpenXLStream(hOSL);
 	hOSL = NULL;
-#endif
 
 	audio_enc_free(hCodec);
 
@@ -1191,7 +1197,6 @@ static void * AudioSendProcess(
 
 	return NULL;
 }
-
 
 static void * ProcsExitProcess(
 	void * hVoid
