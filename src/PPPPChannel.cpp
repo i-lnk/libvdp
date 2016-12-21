@@ -107,12 +107,24 @@ static void playerCallback(
 
 #else
 
-static void recordCallback(char * data, int lens, int timestamp, void *context){
+static void recordCallback(char * data, int lens, void *context){
     
 }
 
-static void playerCallback(char * data, int lens, int timestamp, void *context){
+static void playerCallback(char * data, int lens, void *context){
+    OPENXL_STREAM * p = (OPENXL_STREAM *)context;
+    CPPPPChannel * hPC = (CPPPPChannel *)p->context;
     
+    int stocksize = hPC->hSoundBuffer->GetStock();
+    
+    if(stocksize >= AEC_CACHE_LEN){
+        //      Log3("read audio data from sound buffer with lens:[%d]",stocksize);
+        hPC->hSoundBuffer->Read((char*)data,AEC_CACHE_LEN);
+    }else{
+        memset((char*)data,0,AEC_CACHE_LEN);
+    }
+    
+    hPC->hAudioPutList->Write((short*)data,GetAudioTime());
 }
 
 #endif

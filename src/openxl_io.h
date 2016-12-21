@@ -57,8 +57,8 @@ extern "C" {
 typedef void (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
 typedef void (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
 #else
-typedef void (*bqRecordCallback)(char * data, int lens, int timestamp, void *context);
-typedef void (*bqPlayerCallback)(char * data, int lens, int timestamp, void *context);
+typedef void (*bqRecordCallback)(char * data, int lens, void *context);
+typedef void (*bqPlayerCallback)(char * data, int lens, void *context);
 #endif
 
 typedef struct openxl_stream {

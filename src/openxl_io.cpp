@@ -436,7 +436,7 @@ static OSStatus outputCallback(void *inRefCon,
     buffer.mDataByteSize = inNumberFrames * 2;
     buffer.mData = malloc(sizeof(buffer.mDataByteSize));
     
-    hOS->cbp((char*)buffer.mData,buffer.mDataByteSize,0,hOS);
+    hOS->cbp((char*)buffer.mData,buffer.mDataByteSize,hOS);
     
     AudioBufferList bufferArray;
     bufferArray.mNumberBuffers = 1;
@@ -501,7 +501,7 @@ static int audioUnitOutputOpen(OPENXL_STREAM * p){
     
     AURenderCallbackStruct cbst;
     cbst.inputProc = outputCallback;
-    cbst.inputProcRefCon = p->context;
+    cbst.inputProcRefCon = p;
     
     status = AudioUnitSetProperty(
                 *hInst,
@@ -565,7 +565,7 @@ static int audioUnitRecordOpen(OPENXL_STREAM * p){
     
     AURenderCallbackStruct cbst;
     cbst.inputProc = recordCallback;
-    cbst.inputProcRefCon = p->context;
+    cbst.inputProcRefCon = p;
     
     status = AudioUnitSetProperty(
                 *hInst,
@@ -681,10 +681,10 @@ OPENXL_STREAM * InitOpenXLStream(
     p->cbp = cbp;
     p->recordBuffer = NULL;
     p->outputBuffer = NULL;
+    p->context = context;
 
 #ifdef PLATFORM_ANDROID
     
-    p->context = context;
     p->bqPlayerBufferQueue = NULL;
     p->recorderBufferQueue = NULL;
     
@@ -709,8 +709,6 @@ OPENXL_STREAM * InitOpenXLStream(
     }
     
 #else
-    
-    p->context = p;
     
     // for openal on ios
     if(audioUnitCreateEngine(p) != 0){
