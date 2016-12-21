@@ -40,13 +40,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #else
 
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-
-typedef struct SLSimpleBufferQueue{
-    void  * OXLPtr;
-    void (*Enqueue)(SLSimpleBufferQueue ** bq,char * buffer,int lens);
-}SLSimpleBufferQueue,**SLAndroidSimpleBufferQueueItf;
+#define kIBus 1
+#define kOBus 0
 
 #endif
 
@@ -56,6 +51,14 @@ typedef struct SLSimpleBufferQueue{
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+    
+#ifdef PLATFORM_ANDROID
+typedef void (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
+typedef void (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
+#else
+typedef void (*bqRecordCallback)(char * data, int lens, int timestamp, void *context);
+typedef void (*bqPlayerCallback)(char * data, int lens, int timestamp, void *context);
 #endif
 
 typedef struct openxl_stream {
@@ -79,27 +82,20 @@ typedef struct openxl_stream {
     SLRecordItf recorderRecord;
 
     SLVolumeItf bqPlayerVolume;
-
-#else
-    
-    ALuint          sourceID;
-    ALCcontext *    alctx;
-    
-    ALCdevice *     aloutputdev;
-    ALCdevice *     alrecorddev;
-    
-    pthread_t       aloutputtid;
-    pthread_t       alrecordtid;
-    
-    volatile char   exit;
-    
-#endif
     
     SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
     SLAndroidSimpleBufferQueueItf recorderBufferQueue;
 
-    void (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
-    void (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf bq, void *context);
+#else
+    
+    void *      hAUInst;
+//  void *      hAURecordInst;
+//  void *      hAUPlayerInst;
+    
+#endif
+
+    bqRecordCallback cbr;
+    bqPlayerCallback cbp;
 
     long long   time;
     int 		ichannels;
@@ -120,12 +116,13 @@ typedef struct openxl_stream {
   Open the audio device with a given sampling rate (sr), input and output channels and IO buffer size
   in frames. Returns a handle to the OpenSL stream
   */
-OPENXL_STREAM * InitOpenXLStream(int 	sr,
-	int 	ichannels, 
-	int 	ochannels, 
-	void * 	context,
-	void  (*bqRecordCallback)(SLAndroidSimpleBufferQueueItf,void *),
-	void  (*bqPlayerCallback)(SLAndroidSimpleBufferQueueItf,void *)
+OPENXL_STREAM * InitOpenXLStream(
+    int                 sr,
+	int                 ichannels,
+	int                 ochannels,
+	void *              context,
+    bqRecordCallback    cbr,
+    bqPlayerCallback    cbp
 );
     
   /* 

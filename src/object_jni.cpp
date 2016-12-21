@@ -243,6 +243,7 @@ JNIEXPORT int JNICALL PPPPSetCallbackContext(JNIEnv *env, jobject obj, jobject c
         g_Callback_UILayerNotify = (void*)CBUILayerNotify;
         g_CallBack_VideoDataProcess = (void*)CBVideoDataProcess;
         g_CallBack_ConnectionNotify = (void*)CBConnectionNotify;
+        g_CallBack_AlarmNotifyDoorBell = (void*)CBAlarmNotifyByDevice;
 #endif
 		
 		PUT_LOCK(&g_CallbackContextLock);

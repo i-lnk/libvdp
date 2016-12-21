@@ -60,8 +60,10 @@ unsigned long GetAudioTime(){
 #endif
 }
 
+#ifdef PLATFORM_ANDORID
+
 // this callback handler is called every time a buffer finishes recording
-void bqRecordCallback(
+static void recordCallback(
 	SLAndroidSimpleBufferQueueItf bq, 
 	void *context
 ){
@@ -78,7 +80,7 @@ void bqRecordCallback(
 }
 
 // this callback handler is called every time a buffer finishes playing
-void bqPlayerCallback(
+static void playerCallback(
 	SLAndroidSimpleBufferQueueItf bq, 
 	void *context
 ){
@@ -96,16 +98,24 @@ void bqPlayerCallback(
 		hPC->hSoundBuffer->Read((char*)hFrame,AEC_CACHE_LEN);
 	}else{
         memset((char*)hFrame,0,AEC_CACHE_LEN);
-#ifdef PLATFORM_ANDROID
-#else
-        return;
-#endif
 	}
 
 	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
 
     p->oBufferIndex = (p->oBufferIndex+1)%CBC_CACHE_NUM;
 }
+
+#else
+
+static void recordCallback(char * data, int lens, int timestamp, void *context){
+    
+}
+
+static void playerCallback(char * data, int lens, int timestamp, void *context){
+    
+}
+
+#endif
 
 void * audio_agc_init(
 	int 	gain,
@@ -1086,8 +1096,8 @@ static void * AudioSendProcess(
 	OPENXL_STREAM * hOSL = NULL;
 	hOSL = InitOpenXLStream(
 		8000,1,1,hVoid,
-		bqRecordCallback,
-		bqPlayerCallback
+		recordCallback,
+		playerCallback
 		);
 	
 	if(!hOSL){
