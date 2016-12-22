@@ -70,8 +70,8 @@ int CPPPPChannelManagement::Start(char * szDID, char *user, char *pwd,char *serv
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            memset(m_PPPPChannel[i].szDID, 0, sizeof(m_PPPPChannel[i].szDID));
             SAFE_DELETE(m_PPPPChannel[i].pPPPPChannel);
+            memset(m_PPPPChannel[i].szDID, 0, sizeof(m_PPPPChannel[i].szDID));
             strcpy(m_PPPPChannel[i].szDID, szDID);
 			m_PPPPChannel[i].pPPPPChannel = new CPPPPChannel(szDID, user, pwd, server);
             m_PPPPChannel[i].pPPPPChannel->Start();

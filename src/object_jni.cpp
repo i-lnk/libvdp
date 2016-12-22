@@ -488,7 +488,6 @@ JNIEXPORT int JNICALL SendCtrlCommand(
 	return Ret;
 }
 
-
 JNIEXPORT int JNICALL StartRecorder(
 	JNIEnv *env, jobject obj, jstring did, jstring filepath
 ){

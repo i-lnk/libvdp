@@ -164,7 +164,6 @@ public:
 	unsigned int		deviceType;		// …Ë±∏¿‡–Õ
 
 	int					SID; 			// P2P ª·ª∞
-    int 				restartConnectionNow;	
 	
     int 				mediaEnabled;	// enable recv thread get media stream data.
 	int					voiceEnabled;	// enable voice

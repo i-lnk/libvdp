@@ -117,11 +117,11 @@ static void playerCallback(char * data, int lens, void *context){
     
     int stocksize = hPC->hSoundBuffer->GetStock();
     
-    if(stocksize >= AEC_CACHE_LEN){
+    if(stocksize >= lens){
         //      Log3("read audio data from sound buffer with lens:[%d]",stocksize);
-        hPC->hSoundBuffer->Read((char*)data,AEC_CACHE_LEN);
+        hPC->hSoundBuffer->Read((char*)data,lens);
     }else{
-        memset((char*)data,0,AEC_CACHE_LEN);
+        memset((char*)data,0,lens);
     }
     
     hPC->hAudioPutList->Write((short*)data,GetAudioTime());
@@ -441,13 +441,12 @@ connect:
 	while(hPC->mediaLinking){
 		struct st_SInfo sInfo;
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
-		if(ret < 0 || hPC->restartConnectionNow == 1){
+		if(ret < 0){
 			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
 			Log3("[7:%s]=====>stop old media process start.\n",hPC->szDID);
 			hPC->PPPPClose();
     	    hPC->CloseMediaThreads();
 			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
-			hPC->restartConnectionNow = 0;
 			goto connect;
 		}
 		sleep(1);
@@ -460,6 +459,8 @@ jumperr:
 #ifdef PLATFORM_ANDROID
 	if(isAttached) g_JavaVM->DetachCurrentThread();
 #endif
+    
+    hPC->CloseMediaThreads(); // make sure other service thread all exit.
 	
 	Log3("MediaCoreProcess Exit.");
 
@@ -584,8 +585,6 @@ void * IOCmdRecvProcess(
 			}
 
 			Log3("[X:%s]=====>iocmd get sid:[%d] error:[%d]",hPC->szDID,hPC->SID,ret);
-
-			hPC->restartConnectionNow = 1;
 			
 			break;
 		}
@@ -1350,13 +1349,12 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 	avIdx = spIdx = sessionID = -1;
 
     SID = -1;
-    restartConnectionNow = 0;
 
-	hAVCodecContext = NULL;
-	hAVFmtContext = NULL;
 	hAudioStream = NULL;
 	hVideoStream = NULL;
 	hAVFmtOutput = NULL;
+    hAVFmtContext = NULL;
+    hAVCodecContext = NULL;
 	hRecordFile = NULL;
 
 	vIdx = aIdx = 0;
@@ -1403,8 +1401,13 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 }
 
 CPPPPChannel::~CPPPPChannel()
-{	
+{
+    Log3("start free class pppp channel:[0] start.");
+    Log3("start free class pppp channel:[1] close p2p connection and threads.");
+    
     Close();
+    
+    Log3("start free class pppp channel:[2] free buffer.");
 
 	hAudioBuffer->Release();
 	hVideoBuffer->Release();
@@ -1420,12 +1423,16 @@ CPPPPChannel::~CPPPPChannel()
 	hAudioBuffer = 
 	hSoundBuffer = 
 	hVideoBuffer = NULL;
+    
+    Log3("start free class pppp channel:[3] free lock.");
 
 	DEL_LOCK(&AviDataLock);
 	DEL_LOCK(&DisplayLock);
 	DEL_LOCK(&SndplayLock);
 	DEL_LOCK(&StartAVLock);
 	DEL_LOCK(&AVProcsLock);
+    
+    Log3("start free class pppp channel:[4] close done.");
 }
 
 void CPPPPChannel::MsgNotify(
@@ -1487,7 +1494,7 @@ void CPPPPChannel::Close()
 		mediaCoreThread = (pthread_t)-1;
 	}
 
-	CloseMediaThreads();
+//	CloseMediaThreads(); // already called by mediaCoreThread exit.
 }
 
 int CPPPPChannel::StartMediaChannel()

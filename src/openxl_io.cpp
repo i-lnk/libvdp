@@ -412,7 +412,9 @@ static OSStatus recordCallback(void *inRefCon,
                                   UInt32 inBusNumber,
                                   UInt32 inNumberFrames,
                                   AudioBufferList *ioData) {
-    OPENXL_STREAM * hOS = (OPENXL_STREAM *)inRefCon;
+//    OPENXL_STREAM * hOS = (OPENXL_STREAM *)inRefCon;
+    
+//    Log3("audio unit record frames:[%d].",inNumberFrames);
     
     return noErr;
 }
@@ -429,33 +431,22 @@ static OSStatus outputCallback(void *inRefCon,
     // much data is in the buffer.
     
     OPENXL_STREAM * hOS = (OPENXL_STREAM *)inRefCon;
-    AudioComponentInstance * hInst = (AudioComponentInstance *)hOS->hAUInst;
+//  AudioComponentInstance * hInst = (AudioComponentInstance *)hOS->hAUInst;
+//  AudioUnitRender(*hInst, ioActionFlags, inTimeStamp, 1, inNumberFrames, ioData);
     
-    AudioBuffer buffer;
-    buffer.mNumberChannels = 1;
-    buffer.mDataByteSize = inNumberFrames * 2;
-    buffer.mData = malloc(sizeof(buffer.mDataByteSize));
+    if(ioData == NULL){
+        Log3("audio unit invalid io data.");
+        return noErr;
+    }
     
-    hOS->cbp((char*)buffer.mData,buffer.mDataByteSize,hOS);
+    hOS->cbp((char*)ioData->mBuffers[0].mData,ioData->mBuffers[0].mDataByteSize,hOS);
     
-    AudioBufferList bufferArray;
-    bufferArray.mNumberBuffers = 1;
-    bufferArray.mBuffers[0] = buffer;
-    
-    int status = AudioUnitRender(
-                    *hInst,
-                    ioActionFlags,
-                    inTimeStamp,
-                    inBusNumber,
-                    inNumberFrames,
-                    &bufferArray);
-    
-    Log3("audio unit play result:[%d].",status);
+    Log3("audio unit play buffer count:[%d] size:[%d].",ioData->mNumberBuffers,(unsigned int)ioData->mBuffers[0].mDataByteSize);
     
     return noErr;
 }
 
-static int audioUnitOutputOpen(OPENXL_STREAM * p){
+static int audioUnitOutputOpen(OPENXL_STREAM * p, AudioStreamBasicDescription format){
     
     int status = 0;
     int flag = 1;
@@ -475,21 +466,10 @@ static int audioUnitOutputOpen(OPENXL_STREAM * p){
         return -1;
     }
     
-    AudioStreamBasicDescription format;
-    memset(&format,0,sizeof(format));
-    format.mSampleRate = p->sr;
-    format.mFormatID = kAudioFormatLinearPCM;
-    format.mFormatFlags = 1;
-    format.mFramesPerPacket = 1;
-    format.mChannelsPerFrame = 1;
-    format.mBitsPerChannel = 16;
-    format.mBytesPerPacket = 2;
-    format.mBytesPerFrame = 2;
-    
     status = AudioUnitSetProperty(
                 *hInst,
                 kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Output,
+                kAudioUnitScope_Input,
                 kOBus,
                 &format,
                 sizeof(format));
@@ -505,8 +485,8 @@ static int audioUnitOutputOpen(OPENXL_STREAM * p){
     
     status = AudioUnitSetProperty(
                 *hInst,
-                kAudioOutputUnitProperty_SetInputCallback,
-                kAudioUnitScope_Global,
+                kAudioUnitProperty_SetRenderCallback,
+                kAudioUnitScope_Output,
                 kOBus,
                 &cbst,
                 sizeof(cbst));
@@ -519,7 +499,7 @@ static int audioUnitOutputOpen(OPENXL_STREAM * p){
     return 0;
 }
 
-static int audioUnitRecordOpen(OPENXL_STREAM * p){
+static int audioUnitRecordOpen(OPENXL_STREAM * p, AudioStreamBasicDescription format){
     
     int status = 0;
     int flag = 1;
@@ -539,21 +519,10 @@ static int audioUnitRecordOpen(OPENXL_STREAM * p){
         return -1;
     }
     
-    AudioStreamBasicDescription format;
-    memset(&format,0,sizeof(format));
-    format.mSampleRate = p->sr;
-    format.mFormatID = kAudioFormatLinearPCM;
-    format.mFormatFlags = 1;
-    format.mFramesPerPacket = 1;
-    format.mChannelsPerFrame = 1;
-    format.mBitsPerChannel = 16;
-    format.mBytesPerPacket = 2;
-    format.mBytesPerFrame = 2;
-    
     status = AudioUnitSetProperty(
                 *hInst,
                 kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Input,
+                kAudioUnitScope_Output,
                 kIBus,
                 &format,
                 sizeof(format));
@@ -569,8 +538,8 @@ static int audioUnitRecordOpen(OPENXL_STREAM * p){
     
     status = AudioUnitSetProperty(
                 *hInst,
-                kAudioUnitProperty_SetRenderCallback,
-                kAudioUnitScope_Global,
+                kAudioOutputUnitProperty_SetInputCallback,
+                kAudioUnitScope_Input,
                 kIBus,
                 &cbst,
                 sizeof(cbst));
@@ -598,21 +567,93 @@ static int audioUnitRecordOpen(OPENXL_STREAM * p){
     return 0;
 }
 
+static int audioUnitSessionInit(OPENXL_STREAM * p){
+    AVAudioSession * sesInstance = [AVAudioSession sharedInstance];
+    p->hAVAudioSession = (__bridge void*)sesInstance;
+    p->hAUInst = (void *)malloc(sizeof(AudioComponentInstance));
+    
+    // we are going to play and record so we pick that category
+    NSError * error = nil;
+    [sesInstance setCategory:AVAudioSessionCategoryPlayAndRecord error:&error];
+    
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+    
+    [sesInstance setMode:AVAudioSessionModeVideoChat error:&error];
+    
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+
+    
+    [sesInstance overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+    
+    NSTimeInterval bufferDuration = .01;
+    [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
+    
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+    
+    [sesInstance setPreferredSampleRate:p->sr error:&error];
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+    
+    [[AVAudioSession sharedInstance] setActive:YES error:&error];
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+    
+    return 0;
+}
+
 static int audioUnitCreateEngine(OPENXL_STREAM * p){
     int err = 0;
     
-    p->hAUInst = (void *)malloc(sizeof(AudioComponentInstance));
+    if(audioUnitSessionInit(p) != 0){
+        return -1;
+    }
+    
     memset(p->hAUInst,0,sizeof(AudioComponentInstance));
     
     AudioComponentInstance * hInst = (AudioComponentInstance *)p->hAUInst;
     
+    AudioStreamBasicDescription format;
+    memset(&format,0,sizeof(format));
+    format.mSampleRate          = p->sr;
+    format.mFormatID            = kAudioFormatLinearPCM;
+    format.mFormatFlags         = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+    format.mFramesPerPacket     = 1;
+    format.mChannelsPerFrame    = 1;
+    format.mBitsPerChannel      = 16;
+    format.mBytesPerFrame       = format.mBitsPerChannel * format.mChannelsPerFrame/8;
+    format.mBytesPerPacket      = format.mBytesPerFrame * format.mFramesPerPacket;
+    format.mReserved            = 0;
+    
     AudioComponentDescription desc;
-    desc.componentType = kAudioUnitType_Output;
-    desc.componentSubType = kAudioUnitSubType_RemoteIO;
-    //  desc.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
-    desc.componentFlags = 0;
-    desc.componentFlagsMask = 0;
-    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+    desc.componentType          = kAudioUnitType_Output;
+    desc.componentSubType       = kAudioUnitSubType_RemoteIO;
+    //  desc.componentSubType   = kAudioUnitSubType_VoiceProcessingIO;
+    desc.componentFlags         = 0;
+    desc.componentFlagsMask     = 0;
+    desc.componentManufacturer  = kAudioUnitManufacturer_Apple;
     
     AudioComponent inputComponent = AudioComponentFindNext(NULL, &desc);
     
@@ -622,7 +663,13 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
         goto jumperr;
     }
     
-    if(audioUnitRecordOpen(p) != 0 || audioUnitOutputOpen(p) != 0){
+    if(audioUnitRecordOpen(p, format) != 0){
+        Log3("audio unit initialize record and player failed.");
+        goto jumperr;
+    }
+    
+    if(audioUnitOutputOpen(p, format) != 0){
+        Log3("audio unit initialize record and player failed.");
         goto jumperr;
     }
     
@@ -655,7 +702,6 @@ static int audioUnitDestroyEngine(OPENXL_STREAM * p){
     AudioComponentInstanceDispose(*hInst);
     
     free(p->hAUInst);
-    free(p);
     
     return 0;
 }

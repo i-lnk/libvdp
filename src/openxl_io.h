@@ -89,6 +89,7 @@ typedef struct openxl_stream {
 #else
     
     void *      hAUInst;
+    void *      hAVAudioSession;
 //  void *      hAURecordInst;
 //  void *      hAUPlayerInst;
     
