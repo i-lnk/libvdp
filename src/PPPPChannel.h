@@ -127,11 +127,11 @@ public:
 	
 	int CloseMediaStreams();
 	
+	int CloseWholeThreads();
+	
 	int SendAVAPIStartIOCtrl();
 	int SendAVAPICloseIOCtrl();
 	int SetSystemParams(int type, char *msg, int len);
- 
-    void CloseMediaThreads();
 	
     void MsgNotify(JNIEnv * hEnv,int MsgType, int Param);
 

@@ -60,6 +60,27 @@ unsigned long GetAudioTime(){
 #endif
 }
 
+int avSendIOCtrlEx(
+	int nAVChannelID, 
+	unsigned int nIOCtrlType, 
+	const char *cabIOCtrlData, 
+	int nIOCtrlDataSize
+){
+	while(1){
+		int ret = avSendIOCtrl(nAVChannelID, nIOCtrlType, cabIOCtrlData, nIOCtrlDataSize);
+
+		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
+//			Log3("avSendIOCtrl is running by other process.");
+			usleep(1000); continue;
+		}
+
+		return ret;
+	}
+
+	return -1;
+}
+
+
 #ifdef PLATFORM_ANDROID
 
 // this callback handler is called every time a buffer finishes recording
@@ -445,7 +466,7 @@ connect:
 			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
 			Log3("[7:%s]=====>stop old media process start.\n",hPC->szDID);
 			hPC->PPPPClose();
-    	    hPC->CloseMediaThreads();
+    	    hPC->CloseWholeThreads();
 			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
 			goto connect;
 		}
@@ -460,7 +481,7 @@ jumperr:
 	if(isAttached) g_JavaVM->DetachCurrentThread();
 #endif
     
-    hPC->CloseMediaThreads(); // make sure other service thread all exit.
+    hPC->CloseWholeThreads(); // make sure other service thread all exit.
 	
 	Log3("MediaCoreProcess Exit.");
 
@@ -770,23 +791,16 @@ static void * VideoRecvProcess(
 		hPC->szURL
 		);
 
-	while(1){
-		ret = avSendIOCtrl(
-			avIdx, 
-			IOTYPE_USER_IPCAM_START, 
-			(char *)&ioMsg, 
-			sizeof(SMsgAVIoctrlAVStream)
-			);
-
-		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-//			Log3("avSendIOCtrl is running by other process.");
-			usleep(1000); continue;
-		}else if(ret == AV_ER_NoERROR){
-			break;
-		}else{
-			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
-			return NULL;
-		}
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_START, 
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+	
+	if(ret != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+		return NULL;
 	}
     
     int FrmSize = hPC->YUVSize/3;
@@ -927,24 +941,18 @@ static void * AudioRecvProcess(
 	char Codec[8192] = {0};	
 	AV_HEAD * hAV = (AV_HEAD*)Cache;
 	
-	while(1){
-		ret = avSendIOCtrl(
-			avIdx, 
-			IOTYPE_USER_IPCAM_AUDIOSTART, 
-			(char *)&ioMsg, 
-			sizeof(SMsgAVIoctrlAVStream)
-			);
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_AUDIOSTART, 
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
 
-		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-//			Log3("avSendIOCtrl is running by other process.");
-			usleep(1000); continue;
-		}else if(ret == AV_ER_NoERROR){
-			break;
-		}else{
-			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
-			return NULL;
-		}
+	if(ret != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+		return NULL;
 	}
+	
 
 	void * hAgc = audio_agc_init(
 		20,
@@ -1060,23 +1068,16 @@ static void * AudioSendProcess(
 
 	Log3("5:sid:[%d].",hPC->SID);
 
-	while(1){
-		ret = avSendIOCtrl(
-			avIdx, 
-			IOTYPE_USER_IPCAM_SPEAKERSTART,
-			(char *)&ioMsg, 
-			sizeof(SMsgAVIoctrlAVStream)
-			);
-		
-		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-//			Log3("avSendIOCtrl is running by other process.");
-			usleep(1000); continue;
-		}else if(ret == AV_ER_NoERROR){
-			break;
-		}else{
-			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
-			return NULL;
-		}
+	ret = avSendIOCtrl(
+		avIdx, 
+		IOTYPE_USER_IPCAM_SPEAKERSTART,
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+	
+	if(ret != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+		return NULL;
 	}
 
 	hPC->speakerChannel = speakerChannel;
@@ -1220,42 +1221,6 @@ static void * AudioSendProcess(
 	return NULL;
 }
 
-static void * ProcsExitProcess(
-	void * hVoid
-){    
-	SET_THREAD_NAME("CheckExitProcess");
-
-	pthread_detach(pthread_self());
-	
-	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
-
-	GET_LOCK(&hPC->AVProcsLock);
-
-	hPC->SendAVAPICloseIOCtrl();
-
-	Log3("stop video process.");
-    if((long)hPC->videoRecvThread != -1) pthread_join(hPC->videoRecvThread,NULL);
-	if((long)hPC->videoPlayThread != -1) pthread_join(hPC->videoPlayThread,NULL);
-	
-	Log3("stop audio process.");
-    if((long)hPC->audioRecvThread != -1) pthread_join(hPC->audioRecvThread,NULL);
-  	if((long)hPC->audioSendThread != -1) pthread_join(hPC->audioSendThread,NULL);
-
-	Log3("stop recording process.");
-	hPC->CloseRecorder();
-
-	Log3("stop media process done.");
-	hPC->videoRecvThread = (pthread_t)-1;
-	hPC->videoPlayThread = (pthread_t)-1;
-	hPC->audioRecvThread = (pthread_t)-1;
-	hPC->audioSendThread = (pthread_t)-1;
-
-	PUT_LOCK(&hPC->AVProcsLock);
-
-	pthread_exit(0);
-}
-
-
 //
 // avi recording process
 //
@@ -1313,6 +1278,40 @@ void * RecordingProcess(void * Ptr){
 	return NULL;
 }
 
+static void * MediaExitProcess(
+	void * hVoid
+){    
+	SET_THREAD_NAME("CheckExitProcess");
+
+	pthread_detach(pthread_self());
+	
+	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
+
+	GET_LOCK(&hPC->AVProcsLock);
+
+	hPC->SendAVAPICloseIOCtrl();
+
+	Log3("stop video process.");
+    if((long)hPC->videoRecvThread != -1) pthread_join(hPC->videoRecvThread,NULL);
+	if((long)hPC->videoPlayThread != -1) pthread_join(hPC->videoPlayThread,NULL);
+	
+	Log3("stop audio process.");
+    if((long)hPC->audioRecvThread != -1) pthread_join(hPC->audioRecvThread,NULL);
+  	if((long)hPC->audioSendThread != -1) pthread_join(hPC->audioSendThread,NULL);
+
+	Log3("stop recording process.");
+	hPC->CloseRecorder();
+
+	Log3("stop media process done.");
+	hPC->videoRecvThread = (pthread_t)-1;
+	hPC->videoPlayThread = (pthread_t)-1;
+	hPC->audioRecvThread = (pthread_t)-1;
+	hPC->audioSendThread = (pthread_t)-1;
+
+	PUT_LOCK(&hPC->AVProcsLock);
+
+	pthread_exit(0);
+}
 
 CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){ 
     memset(szDID, 0, sizeof(szDID));
@@ -1510,8 +1509,10 @@ int CPPPPChannel::StartIOCmdChannel()
 {
 	iocmdSending = 1;
     iocmdRecving = 1;
+	
 	pthread_create(&iocmdSendThread,NULL,IOCmdSendProcess,(void*)this);
     pthread_create(&iocmdRecvThread,NULL,IOCmdRecvProcess,(void*)this);
+	
     return 1;
 }
 
@@ -1573,7 +1574,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 	memset(&ioMsg,0,sizeof(ioMsg));
 	int ret = 0;
 
-	ret = avSendIOCtrl(
+	ret = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_STOP, 
 		(char *)&ioMsg, 
@@ -1585,7 +1586,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 		return ret;
 	}
 
-	ret = avSendIOCtrl(
+	ret = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_AUDIOSTOP, 
 		(char *)&ioMsg, 
@@ -1599,7 +1600,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 
 	ioMsg.channel = spIdx;
 
-	ret = avSendIOCtrl(
+	ret = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_SPEAKERSTOP, 
 		(char *)&ioMsg, 
@@ -1616,7 +1617,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 	return ret;
 }
 
-void CPPPPChannel::CloseMediaThreads()
+int CPPPPChannel::CloseWholeThreads()
 {
     //F_LOG;
 	iocmdSending = 0;
@@ -1653,6 +1654,8 @@ void CPPPPChannel::CloseMediaThreads()
 
 	PUT_LOCK(&AVProcsLock);
 
+	return 0;
+
 }
 
 int CPPPPChannel::CloseMediaStreams(
@@ -1672,7 +1675,7 @@ int CPPPPChannel::CloseMediaStreams(
 	speakerChannel = -1;
 	spIdx = -1;		
 	pthread_t tid;
-	pthread_create(&tid,NULL,ProcsExitProcess,(void*)this);
+	pthread_create(&tid,NULL,MediaExitProcess,(void*)this);
 
 	CloseRecorder();
 
