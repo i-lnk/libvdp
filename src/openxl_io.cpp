@@ -412,9 +412,28 @@ static OSStatus recordCallback(void *inRefCon,
                                   UInt32 inBusNumber,
                                   UInt32 inNumberFrames,
                                   AudioBufferList *ioData) {
-//    OPENXL_STREAM * hOS = (OPENXL_STREAM *)inRefCon;
+    OPENXL_STREAM * hOS = (OPENXL_STREAM *)inRefCon;
+    AudioComponentInstance * hInst = (AudioComponentInstance *)hOS->hAUInst;
     
-//    Log3("audio unit record frames:[%d].",inNumberFrames);
+    char PCM[AEC_CACHE_LEN] = {0};
+    
+    AudioBufferList bufferArray;
+    bufferArray.mNumberBuffers = 1;
+    bufferArray.mBuffers[0].mDataByteSize = sizeof(short)*inNumberFrames;
+    bufferArray.mBuffers[0].mNumberChannels = 1;
+    bufferArray.mBuffers[0].mData = PCM;
+    
+    OSStatus status;
+    status = AudioUnitRender(*hInst,
+                             ioActionFlags,
+                             inTimeStamp,
+                             inBusNumber,
+                             inNumberFrames,
+                             &bufferArray);
+    
+    hOS->cbr(PCM,sizeof(short)*inNumberFrames,hOS);
+    Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
+    
     
     return noErr;
 }
@@ -441,7 +460,7 @@ static OSStatus outputCallback(void *inRefCon,
     
     hOS->cbp((char*)ioData->mBuffers[0].mData,ioData->mBuffers[0].mDataByteSize,hOS);
     
-    Log3("audio unit play buffer count:[%d] size:[%d].",ioData->mNumberBuffers,(unsigned int)ioData->mBuffers[0].mDataByteSize);
+    Log3("audio unit play buffer count:[%d] size:[%d].",(int)ioData->mNumberBuffers,(int)ioData->mBuffers[0].mDataByteSize);
     
     return noErr;
 }
