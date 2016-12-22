@@ -60,7 +60,7 @@ unsigned long GetAudioTime(){
 #endif
 }
 
-#ifdef PLATFORM_ANDORID
+#ifdef PLATFORM_ANDROID
 
 // this callback handler is called every time a buffer finishes recording
 static void recordCallback(
