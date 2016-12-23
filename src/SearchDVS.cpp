@@ -7,7 +7,7 @@
 
 extern COMMO_LOCK		g_CallbackContextLock;
 
-#ifdef PLATFROM_ANDROID
+#ifdef PLATFORM_ANDROID
 #include <jni.h>
 
 extern JavaVM *         g_JavaVM ;
@@ -203,7 +203,7 @@ void* CSearchDVS::RecvThread(void *pParam)
 {
     CSearchDVS* pSearchDVS = (CSearchDVS*)pParam ;
  
-#ifdef PLATFROM_ANDROID
+#ifdef PLATFORM_ANDROID
     bool isAttached = false;
     int status;
     
@@ -222,7 +222,7 @@ void* CSearchDVS::RecvThread(void *pParam)
     
     pSearchDVS->RecvProcess() ;
 
-#ifdef PLATFROM_ANDROID
+#ifdef PLATFORM_ANDROID
     if(isAttached) 
         g_JavaVM->DetachCurrentThread();
 #endif

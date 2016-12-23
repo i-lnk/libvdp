@@ -784,7 +784,7 @@ int SendCmds(
 	for(i = 0;hACC[i].CmdCall != NULL;i++){
 		if(MsgType == hACC[i].CmdType){
 
-			Log3("app cmd send IOCTRL cmd:[%03X].",hACC[i].CmdType);
+//			Log3("app cmd send IOCTRL cmd:[%03X].",hACC[i].CmdType);
 			
 			return hACC[i].CmdCall(
 				Idx,

@@ -12,6 +12,7 @@
 #include "apprsp.h"
 
 jobject   g_CallBack_Handle = NULL;
+
 jmethodID g_CallBack_SearchResults = NULL;
 jmethodID g_CallBack_VideoDataProcess = NULL;
 jmethodID g_CallBack_AlarmNotifyDoorBell = NULL;
@@ -263,7 +264,9 @@ JNIEXPORT void JNICALL StartSearch(JNIEnv *env ,jobject obj,jstring ssid,jstring
     GET_LOCK(&g_FindDevsProcessLock);
 	
     SAFE_DELETE(g_PSearchDVS);
-    g_PSearchDVS = new CSearchDVS();    
+	
+    g_PSearchDVS = new CSearchDVS();
+	
     g_PSearchDVS->Open(gkwifiname,gkwifipwd) ; 
     
     env->ReleaseStringUTFChars(ssid, gkwifiname);

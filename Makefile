@@ -27,7 +27,7 @@ CFLAGS_EXTRA +=
 CROSS = $(ARM_PREBUILT)/bin/arm-linux-androideabi-
 CC = g++ --sysroot=$(SYSROOT)
 
-ANDROID_CFLAGS = -msoft-float -fPIC -mthumb-interwork \
+ANDROID_CFLAGS = -Os -msoft-float -fPIC -mthumb-interwork \
 	-DX264_VERSION -DANDROID -DPLATFORM_ANDROID -DHAVE_PTHREAD \
 	-I$(CYGWIN_BASE)/$(ARM_PLATFORM)/usr/include \
 	-I$(INCPATH)/ffmpeg \
@@ -36,21 +36,24 @@ ANDROID_CFLAGS = -msoft-float -fPIC -mthumb-interwork \
 	-I$(INCPATH)/webrtc_aec
 
 # Android link flags 
-ANDROID_LDFLAGS +=  -shared -nostdlib -Bsymbolic -lGLESv2 -lEGL -llog -lOpenSLES -landroid -fPIC
+ANDROID_LDFLAGS +=  -shared -nostdlib -Bsymbolic -lGLESv2 -lEGL -llog -lOpenSLES -landroid -fPIC  -lAVAPIs -lIOTCAPIs
 FFMPEG_STATIC_LIB += $(LIBPATH)\libavformat.a \
 	$(LIBPATH)\libavcodec.a \
 	$(LIBPATH)\libavutil.a \
 	$(LIBPATH)\libswresample.a \
 	$(LIBPATH)\libswscale.a	\
-	$(LIBPATH)\libx264.a 
+	$(LIBPATH)\libx264.a \
+	$(LIBPATH)\libopus.a \
+	$(LIBPATH)\libaec.a
+	
 
-ANDROID_LIBS = -L$(SYSROOT)\usr\lib \
+ANDROID_LIBS = -L$(SYSROOT)\usr\lib -L$(LIBPATH) \
 	-lm -llog -g -lc -lstdc++ -landroid \
 	$(SYSROOT)\usr\lib\crtbegin_so.o \
 	$(SYSROOT)\usr\lib\crtend_so.o \
 	$(SOURCES)\cxx-stl\gnu-libstdc++\4.8\libs\armeabi-v7a\libsupc++.a \
 	$(SOURCES)\cxx-stl\gnu-libstdc++\4.8\libs\armeabi-v7a\libgnustl_static.a \
-	$(TOOLCHAIN)\lib\gcc\arm-linux-androideabi\4.8\armv7-a\libgcc.a
+	$(TOOLCHAIN)\lib\gcc\arm-linux-androideabi\4.8\armv7-a\libgcc.a  
 	
 
 OBJECT_FILE = src/CircleBuf.o \
