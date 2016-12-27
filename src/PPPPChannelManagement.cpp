@@ -16,13 +16,17 @@ CPPPPChannelManagement::CPPPPChannelManagement()
 {
 
 	IOTC_Set_Max_Session_Number(128);
-	IOTC_Setup_Session_Alive_Timeout(6);
+//	IOTC_Setup_Session_Alive_Timeout(6);
 
 	int ret = IOTC_Initialize2(0);
 	if(ret != IOTC_ER_NoERROR){
 		Log2("IOTCAPIs_Device exit...!!\n");
 		exit(0);
 	}
+
+	IOTC_Setup_DetectNetwork_Timeout(5000);
+	IOTC_Setup_LANConnection_Timeout(300);
+	IOTC_Setup_P2PConnection_Timeout(900);
 
 	avInitialize(32);
 	unsigned int iotcVer;

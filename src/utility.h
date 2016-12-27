@@ -66,7 +66,7 @@ typedef	pthread_t		PROCESS_HANDLE;
 #define LOG_TAG "utilityCode"
 #endif
 
-#ifdef PLATFROM_ANDROID
+#ifdef PLATFORM_ANDROID
 #define Log(...)
 #define Log2(fmt, args...)
 #define Log3(fmt, args...) \

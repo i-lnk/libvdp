@@ -35,12 +35,12 @@
 #include "utility.h"
 #include "openxl_io.h"
 
-#ifdef PLATFROM_ANDROID
+#ifdef PLATFORM_ANDROID
 
 #include <jni.h>
 
 // creates the OpenSL ES audio engine
-static SLresult openSLCreateEngine(OPENSL_STREAM *p)
+static SLresult openSLCreateEngine(OPENXL_STREAM *p)
 {
 	SLEngineOption EngineOption[] = {
 		(SLuint32) SL_ENGINEOPTION_THREADSAFE,
@@ -65,7 +65,7 @@ engine_end:
 }
 
 // close the OpenSL IO and destroy the audio engine
-static void openSLDestroyEngine(OPENSL_STREAM *p){
+static void openSLDestroyEngine(OPENXL_STREAM *p){
 
   // destroy buffer queue audio player object, and invalidate all associated interfaces
   if (p->bqPlayerObject != NULL) {
@@ -130,7 +130,7 @@ static void openSLDestroyEngine(OPENSL_STREAM *p){
 }
 
 // opens the OpenSL ES device for output
-static SLresult openSLPlayerOpen(OPENSL_STREAM *p)
+static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
 {
   SLresult result;
   SLuint32 sr = p->sr;
@@ -254,7 +254,7 @@ static SLresult openSLPlayerOpen(OPENSL_STREAM *p)
     if(result != SL_RESULT_SUCCESS) return result;
 
     // register callback on the buffer queue
-    result = (*p->bqPlayerBufferQueue)->RegisterCallback(p->bqPlayerBufferQueue, p->bqPlayerCallback, p);
+    result = (*p->bqPlayerBufferQueue)->RegisterCallback(p->bqPlayerBufferQueue, p->cbp, p);
     if(result != SL_RESULT_SUCCESS) return result;
 
     // set the player's state to playing
@@ -265,7 +265,7 @@ static SLresult openSLPlayerOpen(OPENSL_STREAM *p)
       return -1;
     }
     pBuffer =  (char*)p->outputBuffer;
-    p->outBufIndex = 0;
+    p->oBufferIndex= 0;
     for(int i = 0;i< CBC_CACHE_NUM;i++)
     {
     (*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
@@ -279,7 +279,7 @@ static SLresult openSLPlayerOpen(OPENSL_STREAM *p)
 }
 
 // Open the OpenSL ES device for input
-static SLresult openSLRecordOpen(OPENSL_STREAM *p){
+static SLresult openSLRecordOpen(OPENXL_STREAM *p){
 
   SLresult result;
   SLuint32 sr = p->sr;
@@ -371,7 +371,7 @@ static SLresult openSLRecordOpen(OPENSL_STREAM *p){
 
 
     // register callback on the buffer queue
-    result = (*p->recorderBufferQueue)->RegisterCallback(p->recorderBufferQueue, p->bqRecordCallback, p);
+    result = (*p->recorderBufferQueue)->RegisterCallback(p->recorderBufferQueue, p->cbr, p);
     if (SL_RESULT_SUCCESS != result) goto end_recopen;
 
 	/* Set the duration of the recording - 20 milliseconds) */
@@ -384,7 +384,7 @@ static SLresult openSLRecordOpen(OPENSL_STREAM *p){
       return -1;
     }
     pBuffer =  (char*)p->recordBuffer;
-    p->inBufIndex = 0;
+    p->iBufferIndex= 0;
     for(int i = 0;i< CBC_CACHE_NUM;i++)
     {
     (*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
@@ -757,19 +757,19 @@ OPENXL_STREAM * InitOpenXLStream(
     
     if(openSLCreateEngine(p) != SL_RESULT_SUCCESS) {
         Log2("open sl engine failed.");
-        FreeOpenSLStream(p);
+        FreeOpenXLStream(p);
         goto jumperr;
     }
 
     if(openSLRecordOpen(p) != SL_RESULT_SUCCESS) {
         Log2("open sl record failed.");
-        FreeOpenSLStream(p);
+        FreeOpenXLStream(p);
         goto jumperr;
     } 
 
     if(openSLPlayerOpen(p) != SL_RESULT_SUCCESS) {
         Log2("open sl player failed.");
-        FreeOpenSLStream(p);
+        FreeOpenXLStream(p);
         goto jumperr;
     }
     

@@ -18,6 +18,7 @@
 #include "echo_control_mobile.h"
 #include "gain_control.h"
 #include "noise_suppression_x.h"
+#include "digital_agc.h"
 
 #include "IOTCAPIs.h"
 #include "AVAPIs.h"
@@ -25,6 +26,12 @@
 #include "AVIOCTRLDEFs.h"
 
 #include "object_jni.h"
+
+#define ENABLE_AGC
+#define ENABLE_AEC
+#define ENABLE_NSX_I
+#define ENABLE_NSX_O
+#define ENABLE_VAD
 
 #ifdef PLATFORM_ANDROID
 
@@ -60,7 +67,28 @@ unsigned long GetAudioTime(){
 #endif
 }
 
-#ifdef PLATFORM_ANDORID
+int avSendIOCtrlEx(
+	int nAVChannelID, 
+	unsigned int nIOCtrlType, 
+	const char *cabIOCtrlData, 
+	int nIOCtrlDataSize
+){
+	while(1){
+		int ret = avSendIOCtrl(nAVChannelID, nIOCtrlType, cabIOCtrlData, nIOCtrlDataSize);
+
+		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
+//			Log3("avSendIOCtrl is running by other process.");
+			usleep(1000); continue;
+		}
+
+		return ret;
+	}
+
+	return -1;
+}
+
+
+#ifdef PLATFORM_ANDROID
 
 // this callback handler is called every time a buffer finishes recording
 static void recordCallback(
@@ -130,7 +158,62 @@ static void playerCallback(char * data, int lens, void *context){
 
 #endif
 
-void * audio_agc_init(
+static inline void * audio_nsx_init(
+	int 	mode,
+	int 	sampleRate
+){
+	NsxHandle * hNsx = WebRtcNsx_Create();
+	
+	if(hNsx == NULL){
+		Log3("create webrtc nsx failed.");
+		return NULL;
+	}
+
+	if(WebRtcNsx_Init(hNsx,sampleRate) != 0){
+		Log3("failed in WebRtcNsx_set_policy.");
+		WebRtcNsx_Free(hNsx);
+		return NULL;
+	}
+
+	if(WebRtcNsx_set_policy(hNsx,mode) != 0){
+		Log3("failed in WebRtcNsx_set_policy.");
+		WebRtcNsx_Free(hNsx);
+		return NULL;
+	}
+
+	return hNsx;
+}
+
+static inline int    audio_nsx_proc(
+	void * 	hNsx,
+	char *	AudioBuffer
+){
+	if(!hNsx) return -1;
+
+	int i = 0;
+
+	short * I_FrmArray[1] = {0};
+	short * O_FrmArray[1] = {0};
+
+	short NsxData[80] = {0};
+
+	I_FrmArray[0] = (short*)AudioBuffer;
+	O_FrmArray[0] = (short*)NsxData;
+
+	WebRtcNsx_Process((NsxHandle *)hNsx, I_FrmArray, 1, O_FrmArray);
+
+	memcpy(AudioBuffer,NsxData,80*sizeof(short));
+
+	return 0;
+}
+
+static inline void   audio_nsx_free(
+	void *	hNsx
+){
+	if(hNsx) WebRtcNsx_Free((NsxHandle *)hNsx);
+}
+
+static inline void * audio_agc_init(
 	int 	gain,
 	int 	mode,
 	int 	minLv,
@@ -168,50 +251,36 @@ void * audio_agc_init(
 	return Handle;
 }
 
-int audio_agc_proc(
+static inline int audio_agc_proc(
 	void * 	hAgc,
-	char * 	AudioBuffer,
-	int		AudioBufferLens
+	char * 	AudioBuffer
 ){
 	if(hAgc == NULL) return -1;
 
-	if(AudioBuffer == NULL 
-	|| AudioBufferLens <= 0 
-	|| AudioBufferLens > 80 * 32){
-		Log3("Invalid audio buffer or buffer too large to process.\n");
-		return -1;
-	}
-
 	PT_AGC_HANDLE Handle = (PT_AGC_HANDLE)hAgc;
 
-	int sample = 80;
-	int times = AudioBufferLens / (sample * sizeof(short));
-	int i = 0;
+	short * I_FrmArray[1] = {0};
+	short * O_FrmArray[1] = {0};
 
-	short * I_FrmArray[32] = {0};
-	short * O_FrmArray[32] = {0};
+	short AgcData[80] = {0};
 
-	short AgcData[80 * 32] = {0};
-
-	for(i = 0;i < times;i ++){
-		I_FrmArray[i] = (short*)(&AudioBuffer[sample*sizeof(short)*i]);
-		O_FrmArray[i] = (short*)(&AgcData[sample*i]);
-	}
-
+	I_FrmArray[0] = (short*)AudioBuffer;
+	O_FrmArray[0] = (short*)AgcData;
+	
 	int IMicLv = 0;
 	int OMicLv = 0;
 	
 	int status = 0;
 
-	unsigned char saturationWarning;
+	unsigned char saturationWarning = 0;
 
 	IMicLv = Handle->MicLvO;
 	OMicLv = 0;
 
 	status = WebRtcAgc_Process(Handle->hAgc,
 		I_FrmArray,
-		times,
-		sample,
+		1,
+		80,
 		O_FrmArray,
 		IMicLv,&OMicLv,
 		0,
@@ -229,12 +298,12 @@ int audio_agc_proc(
 	
 	Handle->MicLvO = OMicLv;
 
-	memcpy(AudioBuffer,AgcData,sample*times*sizeof(short));
+	memcpy(AudioBuffer,AgcData,80*sizeof(short));
 
 	return 0;
 }
 
-void audio_agc_free(
+static inline void audio_agc_free(
 	void * 	hAgc
 ){
 	if(hAgc == NULL) return;
@@ -248,7 +317,28 @@ void audio_agc_free(
 	free(hAgc);
 }
 
-void * audio_echo_cancellation_init(
+static inline void * audio_vad_init(){
+	AgcVad * hVad = (AgcVad*)malloc(sizeof(AgcVad));
+	WebRtcAgc_InitVad(hVad);
+	return hVad;
+}
+
+static inline short  audio_vad_proc(
+	void * hVad,
+	char * AudioBuffer,
+	int	   SampleCount
+){
+	return WebRtcAgc_ProcessVad((AgcVad *)hVad,(short *)AudioBuffer,SampleCount);
+}
+
+static inline void audio_vad_free(
+	void * hVad
+){
+	if(hVad) free(hVad);
+	hVad = NULL;
+}
+
+static inline void * audio_echo_cancellation_init(
 	int echoMode,
 	int sampleRate
 ){
@@ -282,7 +372,7 @@ jumperr:
 	return NULL;
 }
 
-int audio_echo_cancellation_farend(
+static inline int audio_echo_cancellation_farend(
 	void * 		hAEC,
 	char *		audioPlayingBuffer,
 	int			frameSize
@@ -292,7 +382,7 @@ int audio_echo_cancellation_farend(
 		);
 }
 
-int audio_echo_cancellation_proc(
+static inline int audio_echo_cancellation_proc(
 	void *		hAEC,
 	char *		audioCaptureBuffer,
 	char *		audioProcessBuffer,
@@ -303,7 +393,7 @@ int audio_echo_cancellation_proc(
 		);
 }
 
-void audio_echo_cancellation_free(
+static inline void audio_echo_cancellation_free(
 	void *		hAEC
 ){
 	WebRtcAecm_Free(hAEC);
@@ -333,7 +423,7 @@ void * MeidaCoreProcess(
 	}
 #endif
 
-	int resend = 1;
+	int resend = 0;
 
 	hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
 
@@ -425,12 +515,12 @@ connect:
 		goto connect;
 	}
 
-	Log3("[4:%s]=====>start media connection with session:[%d] avIdx:[%d] did:[%s] devType:[%d].",
+	Log3("[4:%s]=====>session:[%d] idx:[%d] did:[%s] resend:[%d].",
         hPC->szDID,
 		hPC->SID,
 		hPC->avIdx,
 		hPC->szDID,
-		hPC->deviceType
+		resend
 		);
 
 	Log3("[5:%s]=====>channel init command proc here.",hPC->szDID);
@@ -446,10 +536,11 @@ connect:
 			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
 			Log3("[7:%s]=====>stop old media process start.\n",hPC->szDID);
 			hPC->PPPPClose();
-    	    hPC->CloseMediaThreads();
+    	    hPC->CloseWholeThreads();
 			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
 			goto connect;
 		}
+		
 		sleep(1);
 	}
 
@@ -461,7 +552,7 @@ jumperr:
 	if(isAttached) g_JavaVM->DetachCurrentThread();
 #endif
     
-    hPC->CloseMediaThreads(); // make sure other service thread all exit.
+    hPC->CloseWholeThreads(); // make sure other service thread all exit.
 	
 	Log3("MediaCoreProcess Exit.");
 
@@ -515,10 +606,10 @@ void * IOCmdSendProcess(
 						break;
 					}
 
-					Log3("[X:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
+//					Log3("[X:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
 
 					if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-						sleep(1); continue;
+						usleep(1000); continue;
 					}else if(ret == -1){
 						Log3("[X:%s]=====>unsupport cmd type:[%d].\n",hPC->szDID,hCmds->AppType);
 						break;
@@ -771,25 +862,20 @@ static void * VideoRecvProcess(
 		hPC->szURL
 		);
 
-	while(1){
-		ret = avSendIOCtrl(
-			avIdx, 
-			IOTYPE_USER_IPCAM_START, 
-			(char *)&ioMsg, 
-			sizeof(SMsgAVIoctrlAVStream)
-			);
-
-		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-//			Log3("avSendIOCtrl is running by other process.");
-			usleep(1000); continue;
-		}else if(ret == AV_ER_NoERROR){
-			break;
-		}else{
-			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
-			return NULL;
-		}
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_START, 
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+	
+	if(ret != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+		return NULL;
 	}
-    
+
+	Log3("START LIVING STREAM CMD POST DONE.");
+	
     int FrmSize = hPC->YUVSize/3;
 	AV_HEAD * hFrm = (AV_HEAD*)malloc(FrmSize);
 	char    * hYUV = (char*)malloc(hPC->YUVSize);
@@ -829,10 +915,16 @@ static void * VideoRecvProcess(
 			switch(ret){
 				case AV_ER_LOSED_THIS_FRAME:
 				case AV_ER_INCOMPLETE_FRAME:
-//					Log3("tutk lost frame with error:[%d].",ret);
+					Log3("tutk lost frame with error:[%d].",ret);
 					firstKeyFrameComming = 0;
 					continue;
 				case AV_ER_DATA_NOREADY:
+					if(firstKeyFrameComming == 0){
+						avSendIOCtrlEx(avIdx, IOTYPE_USER_IPCAM_START, (char *)&ioMsg, sizeof(SMsgAVIoctrlAVStream));
+						Log3("ask for video stream again.");
+					}else{
+//						Log3("tutk data not ready.");
+					}
 					continue;
 				default:
 					Log3("tutk recv frame with error:[%d],avIdx:[%d].",ret,hPC->avIdx);
@@ -928,26 +1020,23 @@ static void * AudioRecvProcess(
 	char Codec[8192] = {0};	
 	AV_HEAD * hAV = (AV_HEAD*)Cache;
 	
-	while(1){
-		ret = avSendIOCtrl(
-			avIdx, 
-			IOTYPE_USER_IPCAM_AUDIOSTART, 
-			(char *)&ioMsg, 
-			sizeof(SMsgAVIoctrlAVStream)
-			);
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_AUDIOSTART, 
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
 
-		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-//			Log3("avSendIOCtrl is running by other process.");
-			usleep(1000); continue;
-		}else if(ret == AV_ER_NoERROR){
-			break;
-		}else{
-			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
-			return NULL;
-		}
+	if(ret != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+		return NULL;
 	}
 
-	void * hAgc = audio_agc_init(
+	void * hAgc = NULL;
+	void * hNsx = NULL;
+
+#ifdef ENABLE_AGC
+	hAgc = audio_agc_init(
 		20,
 		kAgcModeAdaptiveDigital,
 		0,
@@ -958,6 +1047,16 @@ static void * AudioRecvProcess(
 		Log3("initialize audio agc failed.\n");
 		goto jumperr;
 	}
+#endif
+
+#ifdef ENABLE_NSX_I
+	hNsx = audio_nsx_init(2,8000);
+
+	if(hNsx == NULL){
+		Log3("initialize audio nsx failed.\n");
+		goto jumperr;
+	}
+#endif
 	
 	while(hPC->audioPlaying){
 
@@ -1005,21 +1104,36 @@ static void * AudioRecvProcess(
 		}
 		
 		if((ret = audio_dec_process(hCodec,hAV->d,hAV->len,Codec,sizeof(Codec))) < 0){
+			
 			Log3("audio decodec process run error:%d with codec:[%02X] lens:[%d].\n",
 				ret,
 				hPC->AudioRecvFormat,
 				hAV->len
 				);
+			
 			continue;
 		}
 
-		audio_agc_proc(hAgc,Codec,ret);
-		
+		int times = ret/160;
+		for(int i = 0; i < times; i++){
+#ifdef ENABLE_NSX_I
+			audio_nsx_proc(hNsx,&Codec[160*i]);
+#endif
+#ifdef ENABLE_AGC
+			audio_agc_proc(hAgc,&Codec[160*i]);
+#endif
+		}
+
 		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
 		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
 	}
 
+#ifdef ENABLE_AGC
 	audio_agc_free(hAgc);
+#endif
+#ifdef ENABLE_NSX_I
+	audio_nsx_free(hNsx);
+#endif
 
 jumperr:
 
@@ -1058,44 +1172,72 @@ static void * AudioSendProcess(
 	int speakerChannel = IOTC_Session_Get_Free_Channel(hPC->SID);
 
 	ioMsg.channel = speakerChannel;
+	int resend = 1;
+	int spIdx = -1;
 
 	Log3("5:sid:[%d].",hPC->SID);
 
-	while(1){
-		ret = avSendIOCtrl(
-			avIdx, 
-			IOTYPE_USER_IPCAM_SPEAKERSTART,
-			(char *)&ioMsg, 
-			sizeof(SMsgAVIoctrlAVStream)
-			);
-		
-		if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-//			Log3("avSendIOCtrl is running by other process.");
-			usleep(1000); continue;
-		}else if(ret == AV_ER_NoERROR){
-			break;
-		}else{
-			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
-			return NULL;
-		}
+tryagain:
+
+	if(!hPC->audioPlaying){
+		return NULL;
+	}
+
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_SPEAKERSTART,
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+	
+	if(ret != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+		return NULL;
 	}
 
 	hPC->speakerChannel = speakerChannel;
 
 	Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
-	int spIdx = avServStart(hPC->SID,NULL,NULL,  5,0,speakerChannel);
+//	int spIdx = avServStart(hPC->SID,NULL,NULL,  5,0,speakerChannel);
+	spIdx = avServStart3(hPC->SID,NULL,5,0,speakerChannel,&resend);
+
+	if(spIdx == AV_ER_TIMEOUT){
+		Log3("tutk start audio send process timeout, try again.");
+		avSendIOCtrlEx(avIdx,IOTYPE_USER_IPCAM_SPEAKERSTOP,(char *)&ioMsg,sizeof(SMsgAVIoctrlAVStream));
+		goto tryagain;
+	}
+	
 	if(spIdx < 0){
 		Log3("create spearker channel:[%d] for tutk pppp connection failed with error:[%d].",speakerChannel,spIdx);
 		return NULL;
 	}
+	
 	Log3("tutk start audio send process by speaker channel:[%d] spIdx:[%d].",speakerChannel,spIdx);
 
 	hPC->spIdx = spIdx;
 	
 	avServResetBuffer(spIdx,RESET_ALL,0);
+	avServSetResendSize(spIdx,512);
 
+#ifdef ENABLE_AEC
 	void * hAEC = audio_echo_cancellation_init(3,8000);
-	
+#endif
+
+#ifdef ENABLE_NSX_O
+	void * hNsx = audio_nsx_init(2,8000);
+
+	if(hNsx == NULL){
+		Log3("initialize audio nsx failed.\n");
+	}
+#endif
+
+#ifdef ENABLE_VAD
+	void * hVad = audio_vad_init();
+	if(hVad == NULL){
+		Log3("initialize audio vad failed.\n");
+	}
+#endif
+
 	hPC->hAudioPutList = new CAudioDataList(100);
 	hPC->hAudioGetList = new CAudioDataList(100);
 	if(hPC->hAudioPutList == NULL || hPC->hAudioGetList == NULL){
@@ -1124,43 +1266,56 @@ static void * AudioSendProcess(
 	char * WritePtr = hAV->d;
 
 	int nBytesNeed = 6*AEC_CACHE_LEN;
+	int nVadFrames = 0;
 
 	while(hPC->audioPlaying){
 		if(hPC->mediaEnabled != 1){
 			usleep(1000); continue;
 		}
 
+		if(hPC->hAudioGetList->CheckData() != 1
+		|| hPC->hAudioPutList->CheckData() != 1
+		){
+			continue;
+		}
+
+		AudioData * hCapture = hPC->hAudioGetList->Read();
+		AudioData * hSpeaker = hPC->hAudioPutList->Read();
+
+		if(hCapture == NULL || hSpeaker == NULL){
+			continue;
+		}
+
 		if(hPC->voiceEnabled != 1){
 			usleep(1000); continue;
 		}
 
-		if(hPC->hAudioGetList->CheckData() != 1
-		|| hPC->hAudioPutList->CheckData() != 1
-		){
-			usleep(10);   continue;
-		}
+#ifdef ENABLE_AEC
+	    short * hAecCapturePCM = hCapture->buf;
+		short * hAecSpeakerPCM = hSpeaker->buf;
 
-		AudioData * hRec = hPC->hAudioGetList->Read();
-		AudioData * hRef = hPC->hAudioPutList->Read();
-
-		if(hRec == NULL || hRef == NULL){
-			usleep(10);   continue;
-		}
-
-		short * hRecPCM = hRec->buf;
-		short * hRefPCM = hRef->buf;
-
-	    short * hAecRecPCM = hRecPCM;
-		short * hAecRefPCM = hRefPCM;
-		short * hAecWritePtr = (short *)WritePtr;
-
-		if (audio_echo_cancellation_farend(hAEC,(char*)hAecRefPCM,80) != 0){
+		if (audio_echo_cancellation_farend(hAEC,(char*)hAecSpeakerPCM,80) != 0){
 				Log3("WebRtcAecm_BufferFarend() failed.");
 		}
 		
-		if (audio_echo_cancellation_proc(hAEC,(char*)hAecRecPCM,(char*)hAecWritePtr,80) != 0){
+		if (audio_echo_cancellation_proc(hAEC,(char*)hAecCapturePCM,(char*)WritePtr,80) != 0){
 				Log3("WebRtcAecm_Process() failed.");
 		}
+#else
+		memcpy(WritePtr,hCapture->buf,80*sizeof(short));
+#endif
+
+#ifdef ENABLE_NSX_O
+		audio_nsx_proc(hNsx,WritePtr);
+#endif
+
+#ifdef ENABLE_VAD
+		int logration = audio_vad_proc(hVad,WritePtr,80);
+		if(logration < 512){
+//			Log3("audio detect vad actived:[%d].\n",logration);
+			nVadFrames ++;
+		}
+#endif
 
 		hAV->len += AEC_CACHE_LEN;
 		WritePtr += AEC_CACHE_LEN;
@@ -1168,6 +1323,12 @@ static void * AudioSendProcess(
 		if(hAV->len < nBytesNeed){
 			 continue;
 		}
+
+		if(nVadFrames == nBytesNeed/AEC_CACHE_LEN){
+			Log3("audio detect vad actived.\n");
+		}
+
+		nVadFrames = 0;
 
 		ret = audio_enc_process(hCodec,hAV->d,hAV->len,hCodecFrame,sizeof(hCodecFrame));
 		if(ret < 2){
@@ -1190,6 +1351,11 @@ static void * AudioSendProcess(
 		ret = avSendAudioData(spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
         
 //      Log3("avSendAudioData with lens:[%d].", frameInfo.reserve2);
+
+		if(ret == AV_ER_EXCEED_MAX_SIZE){
+			avServResetBuffer(spIdx,RESET_AUDIO,0);
+			Log3("tutk av server audio buffer is full.");
+		}
 		
 		if(ret != AV_ER_NoERROR){
 			Log2("tutk av server send audio data failed.err:[%d].", ret);
@@ -1206,7 +1372,17 @@ static void * AudioSendProcess(
 
 	audio_enc_free(hCodec);
 
+#ifdef ENABLE_AEC
 	audio_echo_cancellation_free(hAEC);
+#endif
+
+#ifdef ENABLE_NSX_O
+	audio_nsx_free(hNsx);
+#endif
+
+#ifdef ENABLE_VAD
+	audio_vad_free(hVad);
+#endif
 
 	PUT_LOCK(&OpenSLLock);
 	
@@ -1220,42 +1396,6 @@ static void * AudioSendProcess(
 
 	return NULL;
 }
-
-static void * ProcsExitProcess(
-	void * hVoid
-){    
-	SET_THREAD_NAME("CheckExitProcess");
-
-	pthread_detach(pthread_self());
-	
-	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
-
-	GET_LOCK(&hPC->AVProcsLock);
-
-	hPC->SendAVAPICloseIOCtrl();
-
-	Log3("stop video process.");
-    if((long)hPC->videoRecvThread != -1) pthread_join(hPC->videoRecvThread,NULL);
-	if((long)hPC->videoPlayThread != -1) pthread_join(hPC->videoPlayThread,NULL);
-	
-	Log3("stop audio process.");
-    if((long)hPC->audioRecvThread != -1) pthread_join(hPC->audioRecvThread,NULL);
-  	if((long)hPC->audioSendThread != -1) pthread_join(hPC->audioSendThread,NULL);
-
-	Log3("stop recording process.");
-	hPC->CloseRecorder();
-
-	Log3("stop media process done.");
-	hPC->videoRecvThread = (pthread_t)-1;
-	hPC->videoPlayThread = (pthread_t)-1;
-	hPC->audioRecvThread = (pthread_t)-1;
-	hPC->audioSendThread = (pthread_t)-1;
-
-	PUT_LOCK(&hPC->AVProcsLock);
-
-	pthread_exit(0);
-}
-
 
 //
 // avi recording process
@@ -1314,6 +1454,40 @@ void * RecordingProcess(void * Ptr){
 	return NULL;
 }
 
+static void * MediaExitProcess(
+	void * hVoid
+){    
+	SET_THREAD_NAME("CheckExitProcess");
+
+	pthread_detach(pthread_self());
+	
+	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
+
+	GET_LOCK(&hPC->AVProcsLock);
+
+	hPC->SendAVAPICloseIOCtrl();
+
+	Log3("stop video process.");
+    if((long)hPC->videoRecvThread != -1) pthread_join(hPC->videoRecvThread,NULL);
+	if((long)hPC->videoPlayThread != -1) pthread_join(hPC->videoPlayThread,NULL);
+	
+	Log3("stop audio process.");
+    if((long)hPC->audioRecvThread != -1) pthread_join(hPC->audioRecvThread,NULL);
+  	if((long)hPC->audioSendThread != -1) pthread_join(hPC->audioSendThread,NULL);
+
+	Log3("stop recording process.");
+	hPC->CloseRecorder();
+
+	Log3("stop media process done.");
+	hPC->videoRecvThread = (pthread_t)-1;
+	hPC->videoPlayThread = (pthread_t)-1;
+	hPC->audioRecvThread = (pthread_t)-1;
+	hPC->audioSendThread = (pthread_t)-1;
+
+	PUT_LOCK(&hPC->AVProcsLock);
+
+	pthread_exit(0);
+}
 
 CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){ 
     memset(szDID, 0, sizeof(szDID));
@@ -1375,13 +1549,13 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 		}
 	}
 	
-	if(!hAudioBuffer->Create((3000/20)*320)){
+	if(!hAudioBuffer->Create(512 * 1024)){
 		while(1){
 			Log2("create audio recording buffer failed.\n");
 		}
 	}
 
-	if(!hSoundBuffer->Create((3000/20)*320)){
+	if(!hSoundBuffer->Create(512 * 1024)){
 		while(1){
 			Log2("create sound procssing buffer failed.\n");
 		}
@@ -1511,8 +1685,10 @@ int CPPPPChannel::StartIOCmdChannel()
 {
 	iocmdSending = 1;
     iocmdRecving = 1;
+	
 	pthread_create(&iocmdSendThread,NULL,IOCmdSendProcess,(void*)this);
     pthread_create(&iocmdRecvThread,NULL,IOCmdRecvProcess,(void*)this);
+	
     return 1;
 }
 
@@ -1574,7 +1750,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 	memset(&ioMsg,0,sizeof(ioMsg));
 	int ret = 0;
 
-	ret = avSendIOCtrl(
+	ret = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_STOP, 
 		(char *)&ioMsg, 
@@ -1586,7 +1762,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 		return ret;
 	}
 
-	ret = avSendIOCtrl(
+	ret = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_AUDIOSTOP, 
 		(char *)&ioMsg, 
@@ -1600,7 +1776,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 
 	ioMsg.channel = spIdx;
 
-	ret = avSendIOCtrl(
+	ret = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_SPEAKERSTOP, 
 		(char *)&ioMsg, 
@@ -1617,7 +1793,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 	return ret;
 }
 
-void CPPPPChannel::CloseMediaThreads()
+int CPPPPChannel::CloseWholeThreads()
 {
     //F_LOG;
 	iocmdSending = 0;
@@ -1654,6 +1830,8 @@ void CPPPPChannel::CloseMediaThreads()
 
 	PUT_LOCK(&AVProcsLock);
 
+	return 0;
+
 }
 
 int CPPPPChannel::CloseMediaStreams(
@@ -1673,7 +1851,7 @@ int CPPPPChannel::CloseMediaStreams(
 	speakerChannel = -1;
 	spIdx = -1;		
 	pthread_t tid;
-	pthread_create(&tid,NULL,ProcsExitProcess,(void*)this);
+	pthread_create(&tid,NULL,MediaExitProcess,(void*)this);
 
 	CloseRecorder();
 
@@ -1732,10 +1910,10 @@ int CPPPPChannel::StartMediaStreams(
 		memcpy(szURL,url,strlen(url));
 	}
 
+	Log2("channel init audio proc.");
+	StartAudioChannel();
 	Log2("channel init video proc.");
     StartVideoChannel();
-	Log2("channel init audio proc.");
-    StartAudioChannel();
 
 	ret = 0;
 	
