@@ -14,7 +14,7 @@
 #ifdef WEBRTC_AGC_DEBUG_DUMP
 #include <stdio.h>
 #endif
-#include "signal_processing_library.h"
+//#include "signal_processing_library.h"
 #include "typedefs.h"
 
 // the 32 most significant bits of A(19) * B(26) >> 13
@@ -52,6 +52,10 @@ typedef struct
 #endif
 } DigitalAgc;
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 int32_t WebRtcAgc_InitDigital(DigitalAgc* digitalAgcInst, int16_t agcMode);
 
 int32_t WebRtcAgc_ProcessDigital(DigitalAgc* digitalAgcInst,
@@ -76,5 +80,9 @@ int32_t WebRtcAgc_CalculateGainTable(int32_t *gainTable, // Q16
                                      int16_t targetLevelDbfs,// Q0 (in dB)
                                      uint8_t limiterEnable,
                                      int16_t analogTarget);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // WEBRTC_MODULES_AUDIO_PROCESSING_AGC_LEGACY_DIGITAL_AGC_H_

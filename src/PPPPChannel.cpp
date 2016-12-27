@@ -18,6 +18,7 @@
 #include "echo_control_mobile.h"
 #include "gain_control.h"
 #include "noise_suppression_x.h"
+#include "digital_agc.h"
 
 #include "IOTCAPIs.h"
 #include "AVAPIs.h"
@@ -28,7 +29,9 @@
 
 #define ENABLE_AGC
 #define ENABLE_AEC
-//#define ENABLE_NSX
+#define ENABLE_NSX_I
+#define ENABLE_NSX_O
+#define ENABLE_VAD
 
 #ifdef PLATFORM_ANDROID
 
@@ -154,7 +157,7 @@ static void playerCallback(char * data, int lens, void *context){
 
 #endif
 
-void * audio_nsx_init(
+static inline void * audio_nsx_init(
 	int 	mode,
 	int 	sampleRate
 ){
@@ -180,41 +183,36 @@ void * audio_nsx_init(
 	return hNsx;
 }
 
-int    audio_nsx_proc(
+static inline int    audio_nsx_proc(
 	void * 	hNsx,
-	char *	AudioBuffer,
-	int		AudioBufferLens
+	char *	AudioBuffer
 ){
-	int sample = 80;
-	int times = AudioBufferLens / (sample * sizeof(short));
+	if(!hNsx) return -1;
+
 	int i = 0;
 
-	if(times <= 0) return -1;
+	short * I_FrmArray[1] = {0};
+	short * O_FrmArray[1] = {0};
 
-	short * I_FrmArray[32] = {0};
-	short * O_FrmArray[32] = {0};
+	short NsxData[80] = {0};
 
-	short NsxData[80 * 32] = {0};
+	I_FrmArray[0] = (short*)AudioBuffer;
+	O_FrmArray[0] = (short*)NsxData;
 
-	for(i = 0;i < times;i ++){
-		I_FrmArray[i] = (short*)(&AudioBuffer[sample*sizeof(short)*i]);
-		O_FrmArray[i] = (short*)(&NsxData[sample*i]);
-	}
+	WebRtcNsx_Process((NsxHandle *)hNsx, I_FrmArray, 1, O_FrmArray);
 
-	WebRtcNsx_Process((NsxHandle *)hNsx, I_FrmArray, times, O_FrmArray);
-
-	memcpy(AudioBuffer,NsxData,sample*times*sizeof(short));
+	memcpy(AudioBuffer,NsxData,80*sizeof(short));
 
 	return 0;
 }
 
-void   audio_nsx_free(
+static inline void   audio_nsx_free(
 	void *	hNsx
 ){
 	if(hNsx) WebRtcNsx_Free((NsxHandle *)hNsx);
 }
 
-void * audio_agc_init(
+static inline void * audio_agc_init(
 	int 	gain,
 	int 	mode,
 	int 	minLv,
@@ -254,34 +252,20 @@ void * audio_agc_init(
 
 static inline int audio_agc_proc(
 	void * 	hAgc,
-	char * 	AudioBuffer,
-	int		AudioBufferLens
+	char * 	AudioBuffer
 ){
 	if(hAgc == NULL) return -1;
 
-	if(AudioBuffer == NULL 
-	|| AudioBufferLens <= 0 
-	|| AudioBufferLens > 80 * 32){
-		Log3("Invalid audio buffer or buffer too large to process.\n");
-		return -1;
-	}
-
 	PT_AGC_HANDLE Handle = (PT_AGC_HANDLE)hAgc;
 
-	int sample = 80;
-	int times = AudioBufferLens / (sample * sizeof(short));
-	int i = 0;
+	short * I_FrmArray[1] = {0};
+	short * O_FrmArray[1] = {0};
 
-	short * I_FrmArray[32] = {0};
-	short * O_FrmArray[32] = {0};
+	short AgcData[80] = {0};
 
-	short AgcData[80 * 32] = {0};
-
-	for(i = 0;i < times;i ++){
-		I_FrmArray[i] = (short*)(&AudioBuffer[sample*sizeof(short)*i]);
-		O_FrmArray[i] = (short*)(&AgcData[sample*i]);
-	}
-
+	I_FrmArray[0] = (short*)AudioBuffer;
+	O_FrmArray[0] = (short*)AgcData;
+	
 	int IMicLv = 0;
 	int OMicLv = 0;
 	
@@ -294,8 +278,8 @@ static inline int audio_agc_proc(
 
 	status = WebRtcAgc_Process(Handle->hAgc,
 		I_FrmArray,
-		times,
-		sample,
+		1,
+		80,
 		O_FrmArray,
 		IMicLv,&OMicLv,
 		0,
@@ -313,12 +297,12 @@ static inline int audio_agc_proc(
 	
 	Handle->MicLvO = OMicLv;
 
-	memcpy(AudioBuffer,AgcData,sample*times*sizeof(short));
+	memcpy(AudioBuffer,AgcData,80*sizeof(short));
 
 	return 0;
 }
 
-void audio_agc_free(
+static inline void audio_agc_free(
 	void * 	hAgc
 ){
 	if(hAgc == NULL) return;
@@ -330,6 +314,27 @@ void audio_agc_free(
 	}
 
 	free(hAgc);
+}
+
+static inline void * audio_vad_init(){
+	AgcVad * hVad = (AgcVad*)malloc(sizeof(AgcVad));
+	WebRtcAgc_InitVad(hVad);
+	return hVad;
+}
+
+static inline short  audio_vad_proc(
+	void * hVad,
+	char * AudioBuffer,
+	int	   SampleCount
+){
+	return WebRtcAgc_ProcessVad((AgcVad *)hVad,(short *)AudioBuffer,SampleCount);
+}
+
+static inline void audio_vad_free(
+	void * hVad
+){
+	if(hVad) free(hVad);
+	hVad = NULL;
 }
 
 static inline void * audio_echo_cancellation_init(
@@ -1043,8 +1048,8 @@ static void * AudioRecvProcess(
 	}
 #endif
 
-#ifdef ENABLE_NSX
-	hNsx = audio_nsx_init(0,8000);
+#ifdef ENABLE_NSX_I
+	hNsx = audio_nsx_init(2,8000);
 
 	if(hNsx == NULL){
 		Log3("initialize audio nsx failed.\n");
@@ -1108,13 +1113,16 @@ static void * AudioRecvProcess(
 			continue;
 		}
 
-#ifdef ENABLE_NSX
-		audio_nsx_proc(hNsx,Codec,ret);
+		int times = ret/160;
+		for(int i = 0; i < times; i++){
+#ifdef ENABLE_NSX_I
+			audio_nsx_proc(hNsx,&Codec[160*i]);
 #endif
 #ifdef ENABLE_AGC
-		audio_agc_proc(hAgc,Codec,ret);
+			audio_agc_proc(hAgc,&Codec[160*i]);
 #endif
-		
+		}
+
 		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
 		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
 	}
@@ -1122,7 +1130,7 @@ static void * AudioRecvProcess(
 #ifdef ENABLE_AGC
 	audio_agc_free(hAgc);
 #endif
-#ifdef ENABLE_NSX
+#ifdef ENABLE_NSX_I
 	audio_nsx_free(hNsx);
 #endif
 
@@ -1163,12 +1171,16 @@ static void * AudioSendProcess(
 	int speakerChannel = IOTC_Session_Get_Free_Channel(hPC->SID);
 
 	ioMsg.channel = speakerChannel;
-	int resend = 0;
+	int resend = 1;
 	int spIdx = -1;
 
 	Log3("5:sid:[%d].",hPC->SID);
 
 tryagain:
+
+	if(!hPC->audioPlaying){
+		return NULL;
+	}
 
 	ret = avSendIOCtrlEx(
 		avIdx, 
@@ -1204,10 +1216,25 @@ tryagain:
 	hPC->spIdx = spIdx;
 	
 	avServResetBuffer(spIdx,RESET_ALL,0);
-	avServSetResendSize(spIdx,0);
+	avServSetResendSize(spIdx,512);
 
 #ifdef ENABLE_AEC
 	void * hAEC = audio_echo_cancellation_init(3,8000);
+#endif
+
+#ifdef ENABLE_NSX_O
+	void * hNsx = audio_nsx_init(2,8000);
+
+	if(hNsx == NULL){
+		Log3("initialize audio nsx failed.\n");
+	}
+#endif
+
+#ifdef ENABLE_VAD
+	void * hVad = audio_vad_init();
+	if(hVad == NULL){
+		Log3("initialize audio vad failed.\n");
+	}
 #endif
 
 	hPC->hAudioPutList = new CAudioDataList(100);
@@ -1238,6 +1265,7 @@ tryagain:
 	char * WritePtr = hAV->d;
 
 	int nBytesNeed = 6*AEC_CACHE_LEN;
+	int nVadFrames = 0;
 
 	while(hPC->audioPlaying){
 		if(hPC->mediaEnabled != 1){
@@ -1276,12 +1304,30 @@ tryagain:
 		memcpy(WritePtr,hCapture->buf,80*sizeof(short));
 #endif
 
+#ifdef ENABLE_NSX_O
+		audio_nsx_proc(hNsx,WritePtr);
+#endif
+
+#ifdef ENABLE_VAD
+		int logration = audio_vad_proc(hVad,WritePtr,80);
+		if(logration < 512){
+//			Log3("audio detect vad actived:[%d].\n",logration);
+			nVadFrames ++;
+		}
+#endif
+
 		hAV->len += AEC_CACHE_LEN;
 		WritePtr += AEC_CACHE_LEN;
 
 		if(hAV->len < nBytesNeed){
 			 continue;
 		}
+
+		if(nVadFrames == nBytesNeed/AEC_CACHE_LEN){
+			Log3("audio detect vad actived.\n");
+		}
+
+		nVadFrames = 0;
 
 		ret = audio_enc_process(hCodec,hAV->d,hAV->len,hCodecFrame,sizeof(hCodecFrame));
 		if(ret < 2){
@@ -1304,6 +1350,11 @@ tryagain:
 		ret = avSendAudioData(spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
         
 //      Log3("avSendAudioData with lens:[%d].", frameInfo.reserve2);
+
+		if(ret == AV_ER_EXCEED_MAX_SIZE){
+			avServResetBuffer(spIdx,RESET_AUDIO,0);
+			Log3("tutk av server audio buffer is full.");
+		}
 		
 		if(ret != AV_ER_NoERROR){
 			Log2("tutk av server send audio data failed.err:[%d].", ret);
@@ -1322,6 +1373,14 @@ tryagain:
 
 #ifdef ENABLE_AEC
 	audio_echo_cancellation_free(hAEC);
+#endif
+
+#ifdef ENABLE_NSX_O
+	audio_nsx_free(hNsx);
+#endif
+
+#ifdef ENABLE_VAD
+	audio_vad_free(hVad);
 #endif
 
 	PUT_LOCK(&OpenSLLock);
@@ -1489,13 +1548,13 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 		}
 	}
 	
-	if(!hAudioBuffer->Create((3000/20)*320)){
+	if(!hAudioBuffer->Create(512 * 1024)){
 		while(1){
 			Log2("create audio recording buffer failed.\n");
 		}
 	}
 
-	if(!hSoundBuffer->Create((3000/20)*320)){
+	if(!hSoundBuffer->Create(512 * 1024)){
 		while(1){
 			Log2("create sound procssing buffer failed.\n");
 		}
