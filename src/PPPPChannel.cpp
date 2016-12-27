@@ -138,7 +138,18 @@ static void playerCallback(
 static void recordCallback(char * data, int lens, void *context){
     OPENXL_STREAM * p = (OPENXL_STREAM *)context;
     CPPPPChannel * hPC = (CPPPPChannel *)p->context;
-    hPC->hAudioGetList->Write((short*)data,GetAudioTime());
+    
+    char * pr = (char*)p->recordBuffer;
+    memcpy(pr + p->recordSize,data,lens);
+    p->recordSize += lens;
+    
+    if(p->recordSize >= AEC_CACHE_LEN){
+        hPC->hAudioGetList->Write((short*)pr,GetAudioTime());
+        p->recordSize -= AEC_CACHE_LEN;
+        memcpy(pr,
+               pr + p->recordSize,
+               p->recordSize);
+    }
 }
 
 static void playerCallback(char * data, int lens, void *context){
@@ -153,7 +164,17 @@ static void playerCallback(char * data, int lens, void *context){
         memset((char*)data,0,lens);
     }
     
-    hPC->hAudioPutList->Write((short*)data,GetAudioTime());
+    char * po = (char*)p->outputBuffer;
+    memcpy(po + p->outputSize,data,lens);
+    p->outputSize += lens;
+    
+    if(p->outputSize >= AEC_CACHE_LEN){
+        hPC->hAudioPutList->Write((short*)po,GetAudioTime());
+        p->outputSize -= AEC_CACHE_LEN;
+        memcpy(po,
+               po + p->outputSize,
+               p->outputSize);
+    }
 }
 
 #endif

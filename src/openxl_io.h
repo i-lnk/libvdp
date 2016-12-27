@@ -93,6 +93,9 @@ typedef struct openxl_stream {
 //  void *      hAURecordInst;
 //  void *      hAUPlayerInst;
     
+    int         outputSize;
+    int         recordSize;
+    
 #endif
 
     bqRecordCallback cbr;

@@ -432,7 +432,7 @@ static OSStatus recordCallback(void *inRefCon,
                              &bufferArray);
     
     hOS->cbr(PCM,sizeof(short)*inNumberFrames,hOS);
-    Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
+//    Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
     
     
     return noErr;
@@ -460,7 +460,7 @@ static OSStatus outputCallback(void *inRefCon,
     
     hOS->cbp((char*)ioData->mBuffers[0].mData,ioData->mBuffers[0].mDataByteSize,hOS);
     
-    Log3("audio unit play buffer count:[%d] size:[%d].",(int)ioData->mNumberBuffers,(int)ioData->mBuffers[0].mDataByteSize);
+//    Log3("audio unit play buffer count:[%d] size:[%d].",(int)ioData->mNumberBuffers,(int)ioData->mBuffers[0].mDataByteSize);
     
     return noErr;
 }
@@ -601,14 +601,13 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         return -1;
     }
     
-    [sesInstance setMode:AVAudioSessionModeVideoChat error:&error];
+    [sesInstance setMode:AVAudioSessionModeMeasurement error:&error];
     
     if(error)
     if(error.code != 0){
         Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
         return -1;
     }
-
     
     [sesInstance overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
     if(error)
@@ -617,7 +616,30 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         return -1;
     }
     
-    NSTimeInterval bufferDuration = .01;
+    [sesInstance setInputGain:1.0 error:&error];
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+    
+    /*
+    NSArray* availableInputs = [sesInstance availableInputs];
+    NSLog(@"available inputs:%@",availableInputs);
+    
+    for (AVAudioSessionPortDescription* desc in availableInputs) {
+        if ([desc.portType isEqualToString:AVAudioSessionPortBuiltInMic]) {
+            [[AVAudioSession sharedInstance] setPreferredInput:desc error:&error];
+            if(error)
+            if(error.code != 0){
+                Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+                return -1;
+            }
+        }  
+    }
+    */
+    
+    NSTimeInterval bufferDuration = .04;
     [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
     
     if(error)
@@ -704,6 +726,12 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
         goto jumperr;
     }
     
+    p->outputBuffer = (short*)malloc(AEC_CACHE_LEN*3);
+    p->recordBuffer = (short*)malloc(AEC_CACHE_LEN*3);
+    
+    p->outputSize = 0;
+    p->recordSize = 0;
+    
     return 0;
 
 jumperr:
@@ -721,6 +749,8 @@ static int audioUnitDestroyEngine(OPENXL_STREAM * p){
     AudioComponentInstanceDispose(*hInst);
     
     free(p->hAUInst);
+    if(p->outputBuffer) free(p->outputBuffer);
+    if(p->recordBuffer) free(p->recordBuffer);
     
     return 0;
 }
