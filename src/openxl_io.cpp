@@ -614,14 +614,14 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
         return -1;
     }
-    */
     
-    [sesInstance setInputGain:0.7 error:&error];
+    [sesInstance setInputGain:0.2 error:&error];
     if(error)
     if(error.code != 0){
         Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
         return -1;
     }
+    */
     
     /*
     NSArray* availableInputs = [sesInstance availableInputs];

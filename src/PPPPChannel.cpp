@@ -1345,7 +1345,11 @@ tryagain:
 
 #ifdef ENABLE_VAD
 		int logration = audio_vad_proc(hVad,WritePtr,80);
+#ifdef PLATFORM_ANDROID
 		if(logration < 512){
+#else
+        if(logration < 256){
+#endif
 //			Log3("audio detect vad actived:[%d].\n",logration);
 			nVadFrames ++;
 		}
@@ -1355,11 +1359,15 @@ tryagain:
 		WritePtr += AEC_CACHE_LEN;
 
 		if(hAV->len < nBytesNeed){
-			 continue;
+			continue;
 		}
 
 		if(nVadFrames == nBytesNeed/AEC_CACHE_LEN){
 			Log3("audio detect vad actived.\n");
+            hAV->len = 0;
+            WritePtr = hAV->d;
+            nVadFrames = 0;
+            continue;
 		}
 
 		nVadFrames = 0;
