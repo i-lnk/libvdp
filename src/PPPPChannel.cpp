@@ -27,10 +27,12 @@
 
 #include "object_jni.h"
 
-#define ENABLE_AGC
 #define ENABLE_AEC
+#ifdef PLATFORM_ANDROID
+#define ENABLE_AGC
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
+#endif
 #define ENABLE_VAD
 
 #ifdef PLATFORM_ANDROID
@@ -137,7 +139,7 @@ static void playerCallback(
 
 static void recordCallback(char * data, int lens, void *context){
     if(lens > AEC_CACHE_LEN){
-        Log3("audio record sample is too large.");
+        Log3("audio record sample is too large:[%d].",lens);
         return;
     }
     
@@ -159,7 +161,7 @@ static void recordCallback(char * data, int lens, void *context){
 
 static void playerCallback(char * data, int lens, void *context){
     if(lens > AEC_CACHE_LEN){
-        Log3("audio output sample is too large.");
+        Log3("audio output sample is too large:[%d].",lens);
         return;
     }
     
@@ -1232,8 +1234,8 @@ tryagain:
 	hPC->speakerChannel = speakerChannel;
 
 	Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
-//	int spIdx = avServStart(hPC->SID,NULL,NULL,  5,0,speakerChannel);
-	spIdx = avServStart3(hPC->SID,NULL,5,0,speakerChannel,&resend);
+//	spIdx = avServStart(hPC->SID, NULL, NULL,  5, 0, speakerChannel);
+	spIdx = avServStart3(hPC->SID, NULL, 5, 0, speakerChannel, &resend);
 
 	if(spIdx == AV_ER_TIMEOUT){
 		Log3("tutk start audio send process timeout, try again.");
@@ -1317,6 +1319,7 @@ tryagain:
 		AudioData * hSpeaker = hPC->hAudioPutList->Read();
 
 		if(hCapture == NULL || hSpeaker == NULL){
+            Log3("audio data lost...");
 			continue;
 		}
 
@@ -1363,7 +1366,7 @@ tryagain:
 		}
 
 		if(nVadFrames == nBytesNeed/AEC_CACHE_LEN){
-			Log3("audio detect vad actived.\n");
+//			Log3("audio detect vad actived.\n");
             hAV->len = 0;
             WritePtr = hAV->d;
             nVadFrames = 0;

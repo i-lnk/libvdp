@@ -432,7 +432,7 @@ static OSStatus recordCallback(void *inRefCon,
                              &bufferArray);
     
     hOS->cbr(PCM,sizeof(short)*inNumberFrames,hOS);
-//  Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
+//    Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
     
     return noErr;
 }
@@ -589,8 +589,16 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     p->hAVAudioSession = (__bridge void*)sesInstance;
     p->hAUInst = (void *)malloc(sizeof(AudioComponentInstance));
     
-    // we are going to play and record so we pick that category
     NSError * error = nil;
+    
+    [sesInstance setActive:YES error:&error];
+    if(error)
+    if(error.code != 0){
+        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+        return -1;
+    }
+
+    // we are going to play and record so we pick that categor
     [sesInstance setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:(AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionAllowBluetooth) error:&error];
     
     if(error)
@@ -600,6 +608,7 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     }
     
     [sesInstance setMode:AVAudioSessionModeDefault error:&error];
+//    [sesInstance setMode:AVAudioSessionModeVideoChat error:&error];
     
     if(error)
     if(error.code != 0){
@@ -623,31 +632,6 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     }
     */
     
-    /*
-    NSArray* availableInputs = [sesInstance availableInputs];
-    NSLog(@"available inputs:%@",availableInputs);
-    
-    for (AVAudioSessionPortDescription* desc in availableInputs) {
-        if ([desc.portType isEqualToString:AVAudioSessionPortBuiltInMic]) {
-            [[AVAudioSession sharedInstance] setPreferredInput:desc error:&error];
-            if(error)
-            if(error.code != 0){
-                Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
-                return -1;
-            }
-        }  
-    }
-    */
-    
-    NSTimeInterval bufferDuration = .005;
-    [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
-    
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
-        return -1;
-    }
-    
     [sesInstance setPreferredSampleRate:p->sr error:&error];
     if(error)
     if(error.code != 0){
@@ -655,7 +639,15 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         return -1;
     }
     
-    [[AVAudioSession sharedInstance] setActive:YES error:&error];
+    Log3("AVAudioSession set sample rate as:[%f]",[sesInstance sampleRate]);
+    
+    NSTimeInterval bufferDuration = 16/[sesInstance sampleRate];
+    [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
+    
+    Log3("AVAudioSession get sample each time is:[%f] duration is:[%f]",
+         [sesInstance IOBufferDuration] * [sesInstance sampleRate],
+         [sesInstance IOBufferDuration]);
+    
     if(error)
     if(error.code != 0){
         Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
@@ -691,7 +683,7 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     AudioComponentDescription desc;
     desc.componentType          = kAudioUnitType_Output;
     desc.componentSubType       = kAudioUnitSubType_RemoteIO;
-    //  desc.componentSubType   = kAudioUnitSubType_VoiceProcessingIO;
+//    desc.componentSubType       = kAudioUnitSubType_VoiceProcessingIO;
     desc.componentFlags         = 0;
     desc.componentFlagsMask     = 0;
     desc.componentManufacturer  = kAudioUnitManufacturer_Apple;
