@@ -51,8 +51,11 @@ CH264Decoder::CH264Decoder()
 
 void CH264Decoder::DeleteYUVTab()
 {	
-	av_free(colortab);
+    av_free(colortab);
 	av_free(rgb_2_pix);
+    
+    colortab = NULL;
+    rgb_2_pix = NULL;
 }
 
 void CH264Decoder::CreateYUVTab_16()
@@ -282,15 +285,14 @@ void CH264Decoder::YUV4202RGB565(uint8_t *out)
 
 CH264Decoder::~CH264Decoder()
 {
-    if(m_pFrame)
-    {
+    if(m_pFrame){
         av_frame_free(&m_pFrame);
         m_pFrame = NULL;
     }
 
-    if(m_pCodecCtx)	
-    {       
-        avcodec_close(m_pCodecCtx);       
+    if(m_pCodecCtx){
+        avcodec_close(m_pCodecCtx);
+        avcodec_free_context(&m_pCodecCtx);
         m_pCodecCtx = NULL;   
     }
     

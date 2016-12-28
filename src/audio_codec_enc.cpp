@@ -133,6 +133,8 @@ void audio_enc_free(
 		case E_CODEC_AUDIO_G711U:
 			break;
 		case E_CODEC_AUDIO_OPUS:
+            opus_encoder_destroy((OpusEncoder *)hCodec->henc);
+            hCodec->henc = NULL;
 			break;
 		case E_CODEC_AUDIO_PCM:
 			break;

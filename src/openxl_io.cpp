@@ -415,7 +415,7 @@ static OSStatus recordCallback(void *inRefCon,
     OPENXL_STREAM * hOS = (OPENXL_STREAM *)inRefCon;
     AudioComponentInstance * hInst = (AudioComponentInstance *)hOS->hAUInst;
     
-    char PCM[AEC_CACHE_LEN] = {0};
+    char PCM[1024] = {0};
     
     AudioBufferList bufferArray;
     bufferArray.mNumberBuffers = 1;
@@ -432,8 +432,7 @@ static OSStatus recordCallback(void *inRefCon,
                              &bufferArray);
     
     hOS->cbr(PCM,sizeof(short)*inNumberFrames,hOS);
-//    Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
-    
+//  Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
     
     return noErr;
 }
@@ -451,7 +450,6 @@ static OSStatus outputCallback(void *inRefCon,
     
     OPENXL_STREAM * hOS = (OPENXL_STREAM *)inRefCon;
 //  AudioComponentInstance * hInst = (AudioComponentInstance *)hOS->hAUInst;
-//  AudioUnitRender(*hInst, ioActionFlags, inTimeStamp, 1, inNumberFrames, ioData);
     
     if(ioData == NULL){
         Log3("audio unit invalid io data.");
@@ -593,7 +591,7 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     
     // we are going to play and record so we pick that category
     NSError * error = nil;
-    [sesInstance setCategory:AVAudioSessionCategoryPlayAndRecord error:&error];
+    [sesInstance setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:(AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionAllowBluetooth) error:&error];
     
     if(error)
     if(error.code != 0){
@@ -601,7 +599,7 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         return -1;
     }
     
-    [sesInstance setMode:AVAudioSessionModeMeasurement error:&error];
+    [sesInstance setMode:AVAudioSessionModeDefault error:&error];
     
     if(error)
     if(error.code != 0){
@@ -609,14 +607,16 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         return -1;
     }
     
+    /*
     [sesInstance overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
     if(error)
     if(error.code != 0){
         Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
         return -1;
     }
+    */
     
-    [sesInstance setInputGain:1.0 error:&error];
+    [sesInstance setInputGain:0.7 error:&error];
     if(error)
     if(error.code != 0){
         Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
@@ -639,7 +639,7 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     }
     */
     
-    NSTimeInterval bufferDuration = .04;
+    NSTimeInterval bufferDuration = .005;
     [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
     
     if(error)
@@ -698,6 +698,22 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     
     AudioComponent inputComponent = AudioComponentFindNext(NULL, &desc);
     
+    p->outputBuffer = (short*)malloc(AEC_CACHE_LEN*3);
+    if(p->outputBuffer == NULL){
+        Log3("audio unit initialize output buffer failed.");
+        goto jumperr;
+    }
+    
+    p->recordBuffer = (short*)malloc(AEC_CACHE_LEN*3);
+    if(p->recordBuffer == NULL){
+        Log3("audio unit initialize output buffer failed.");
+        goto jumperr;
+    }
+    
+    p->outputSize = 0;
+    p->recordSize = 0;
+
+    
     err = AudioComponentInstanceNew(inputComponent,hInst);
     if(err != 0){
         Log3("audio unit instance create failed:[%d].",err);
@@ -726,16 +742,17 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
         goto jumperr;
     }
     
-    p->outputBuffer = (short*)malloc(AEC_CACHE_LEN*3);
-    p->recordBuffer = (short*)malloc(AEC_CACHE_LEN*3);
-    
-    p->outputSize = 0;
-    p->recordSize = 0;
-    
     return 0;
 
 jumperr:
+    if(p->outputBuffer) free(p->outputBuffer);
+    if(p->recordBuffer) free(p->recordBuffer);
     free(p->hAUInst);
+    
+    p->outputBuffer = NULL;
+    p->recordBuffer = NULL;
+    p->hAUInst = NULL;
+
     return -1;
 }
 
@@ -751,6 +768,10 @@ static int audioUnitDestroyEngine(OPENXL_STREAM * p){
     free(p->hAUInst);
     if(p->outputBuffer) free(p->outputBuffer);
     if(p->recordBuffer) free(p->recordBuffer);
+    
+    p->outputBuffer = NULL;
+    p->recordBuffer = NULL;
+    p->hAUInst = NULL;
     
     return 0;
 }

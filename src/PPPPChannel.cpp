@@ -136,6 +136,11 @@ static void playerCallback(
 #else
 
 static void recordCallback(char * data, int lens, void *context){
+    if(lens > AEC_CACHE_LEN){
+        Log3("audio record sample is too large.");
+        return;
+    }
+    
     OPENXL_STREAM * p = (OPENXL_STREAM *)context;
     CPPPPChannel * hPC = (CPPPPChannel *)p->context;
     
@@ -153,6 +158,11 @@ static void recordCallback(char * data, int lens, void *context){
 }
 
 static void playerCallback(char * data, int lens, void *context){
+    if(lens > AEC_CACHE_LEN){
+        Log3("audio output sample is too large.");
+        return;
+    }
+    
     OPENXL_STREAM * p = (OPENXL_STREAM *)context;
     CPPPPChannel * hPC = (CPPPPChannel *)p->context;
     
@@ -851,6 +861,9 @@ static void * VideoPlayProcess(
 
 #ifdef PLATFORM_ANDROID
 	if(isAttached) g_JavaVM->DetachCurrentThread();
+#else
+    jbyteArray_yuv = NULL;
+    jstring_did = NULL;
 #endif
 	Log3("video play proc exit.");
 
