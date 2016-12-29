@@ -573,7 +573,7 @@ connect:
 			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
 			goto connect;
 		}
-		
+        
 		sleep(1);
 	}
 
@@ -1555,7 +1555,7 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 	audioEnabled = 0;
 	mediaEnabled = 0;
 	speakEnabled = 1;
-
+    
 	mediaCoreThread = (pthread_t)-1;
 	iocmdSendThread = (pthread_t)-1;
 	iocmdRecvThread = (pthread_t)-1;

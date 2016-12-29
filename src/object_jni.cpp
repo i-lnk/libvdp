@@ -17,7 +17,7 @@ jmethodID g_CallBack_SearchResults = NULL;
 jmethodID g_CallBack_VideoDataProcess = NULL;
 jmethodID g_CallBack_AlarmNotifyDoorBell = NULL;
 jmethodID g_CallBack_ConnectionNotify = NULL;
-jmethodID g_Callback_UILayerNotify = NULL;
+jmethodID g_CallBack_UILayerNotify = NULL;
 
 #ifdef PLATFORM_ANDROID
 #include <jni.h>
@@ -78,7 +78,7 @@ void   JNIEnv::CallVoidMethod(void * a, void * b, ...){
         Call(va_arg(args,int),va_arg(args,const char *),va_arg(args,const char *),va_arg(args,const char *),va_arg(args,const char *),va_arg(args,int),va_arg(args,int));
         goto jumpout;
     }
-    if(b == g_Callback_UILayerNotify){
+    if(b == g_CallBack_UILayerNotify){
         void (*Call)(const char *,int,const char *) = (void (*)(const char *,int,const char *))b;
         Call(va_arg(args,const char *),va_arg(args,int),va_arg(args,const char *));
         goto jumpout;
@@ -241,7 +241,7 @@ JNIEXPORT int JNICALL PPPPSetCallbackContext(JNIEnv *env, jobject obj, jobject c
 #else
         g_CallBack_Handle = (jobject)malloc(sizeof(jobject));
         g_CallBack_SearchResults = (void*)CBSearchResults;
-        g_Callback_UILayerNotify = (void*)CBUILayerNotify;
+        g_CallBack_UILayerNotify = (void*)CBUILayerNotify;
         g_CallBack_VideoDataProcess = (void*)CBVideoDataProcess;
         g_CallBack_ConnectionNotify = (void*)CBConnectionNotify;
         g_CallBack_AlarmNotifyDoorBell = (void*)CBAlarmNotifyByDevice;
