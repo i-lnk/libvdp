@@ -23,11 +23,11 @@
 #include "apprsp.h"
 
 #define ENABLE_AEC
-#ifdef PLATFORM_ANDROID
+//#ifdef PLATFORM_ANDROID
 #define ENABLE_AGC
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
-#endif
+//#endif
 #define ENABLE_VAD
 
 #ifdef PLATFORM_ANDROID
@@ -1235,14 +1235,14 @@ void * RecordingProcess(void * Ptr){
 			nBytesRead = hClass->hVideoBuffer->Read(hFrm->d,hFrm->len);
 			hClass->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
 
-			Log3("video frame write size:[%d].\n",hFrm->len);
+//			Log3("video frame write size:[%d].\n",hFrm->len);
 		}
 
 		if(aBytesHave >= 640){
 			nBytesRead = hClass->hAudioBuffer->Read(hFrm->d,640);
 			hClass->WriteRecorder(hFrm->d,nBytesRead,0,0,ts);
 
-			Log3("audio frame write size:[%d].\n",nBytesRead);
+//			Log3("audio frame write size:[%d].\n",nBytesRead);
 		}
 	}
 
@@ -1937,17 +1937,18 @@ int CPPPPChannel::WriteRecorder(
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
 
-	aCTS = vCTS = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-	if(sSTS == 0) sSTS = aCTS;
+//	aCTS = vCTS = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+//	if(sSTS == 0) sSTS = aCTS;
 
 	if(FrameCode){
+/*
 		vPTS = (vCTS - sSTS)/(1000/hAVStream->codec->time_base.den);
 		if((vPTS != 0) && (vPTS <= vLTS)){
 			vPTS = vPTS + 1;
 		}
 		vLTS = vPTS;
-
-		sAVPacket.pts=sAVPacket.dts = vPTS;
+*/
+		sAVPacket.pts = sAVPacket.dts = vIdx;
 		sAVPacket.stream_index = hAVStream->index;
 		sAVPacket.data = (uint8_t*)FrameData;
 		sAVPacket.size = FrameSize;
