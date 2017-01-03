@@ -46,7 +46,7 @@ extern jmethodID g_CallBack_ConnectionNotify;
 extern jmethodID g_CallBack_MessageNotify;
 extern jmethodID g_CallBack_VideoDataProcess;
 extern jmethodID g_CallBack_AlarmNotifyDoorBell;
-extern jmethodID g_Callback_UILayerNotify;
+extern jmethodID g_CallBack_UILayerNotify;
 
 extern COMMO_LOCK g_CallbackContextLock;
 
@@ -512,7 +512,7 @@ void * IOCmdRecvProcess(
         jstring jstring_did = hEnv->NewStringUTF(hPC->szDID);
         jstring jstring_msg = hEnv->NewStringUTF(MsgStr);
         
-        hEnv->CallVoidMethod(g_CallBack_Handle,g_Callback_UILayerNotify,jstring_did,IOCtrlType,jstring_msg);
+        hEnv->CallVoidMethod(g_CallBack_Handle,g_CallBack_UILayerNotify,jstring_did,IOCtrlType,jstring_msg);
         
         hEnv->DeleteLocalRef(jstring_did);
         hEnv->DeleteLocalRef(jstring_msg);
