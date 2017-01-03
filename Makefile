@@ -68,6 +68,7 @@ src/audio_codec_adpcm.o \
 src/audio_codec_g711.o \
 src/audio_codec_dec.o \
 src/audio_codec_enc.o \
+src/audio_codec_ext.o \
 src/appreq.o \
 src/apprsp.o \
 src/audiodatalist.o \

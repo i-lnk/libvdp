@@ -233,7 +233,7 @@ JNIEXPORT int JNICALL PPPPSetCallbackContext(JNIEnv *env, jobject obj, jobject c
 			) ;
 
 		// void UILayerNotify(String DeviceID,int MsgType,String MsgData)
-		g_Callback_UILayerNotify = env->GetMethodID(
+		g_CallBack_UILayerNotify = env->GetMethodID(
 			clazz,
 			"UILayerNotify",
 			"(Ljava/lang/String;ILjava/lang/String;)V"

@@ -63,4 +63,69 @@ int audio_dec_process(
 );
 
 
+void * audio_nsx_init(
+	int 	mode,
+	int 	sampleRate
+);
+
+int    audio_nsx_proc(
+	void * 	hNsx,
+	char *	AudioBuffer
+);
+
+void   audio_nsx_free(
+	void *	hNsx
+);
+
+void * audio_agc_init(
+	int 	gain,
+	int 	mode,
+	int 	minLv,
+	int 	maxLv,
+	int 	sampleRate
+);
+
+int audio_agc_proc(
+	void * 	hAgc,
+	char * 	AudioBuffer
+);
+
+void audio_agc_free(
+	void * 	hAgc
+);
+
+void * audio_vad_init();
+
+short  audio_vad_proc(
+	void * hVad,
+	char * AudioBuffer,
+	int	   SampleCount
+);
+
+void audio_vad_free(
+	void * hVad
+);
+
+void * audio_echo_cancellation_init(
+	int echoMode,
+	int sampleRate
+);
+
+int audio_echo_cancellation_farend(
+	void * 		hAEC,
+	char *		audioPlayingBuffer,
+	int			frameSize
+);
+
+int audio_echo_cancellation_proc(
+	void *		hAEC,
+	char *		audioCaptureBuffer,
+	char *		audioProcessBuffer,
+	int			frameSize
+);
+
+void audio_echo_cancellation_free(
+	void *		hAEC
+);
+
 #endif

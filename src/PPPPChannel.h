@@ -94,12 +94,6 @@ typedef struct _CMD_CHANNEL_HEAD
 	char 		   d[0];
 }CMD_CHANNEL_HEAD, *PCMD_CHANNEL_HEAD;
 
-typedef struct{
-	void *		hAgc;
-	int 		MicLvI;
-	int 		MicLvO;
-}T_AGC_HANLE,*PT_AGC_HANDLE;
-
 typedef double UINT64;
 
 class CPPPPChannel
