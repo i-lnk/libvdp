@@ -275,8 +275,9 @@ typedef struct{
 }SMsgAVIoctrlUpdateReq,SMsgAVIoctrlUpdateResp;
 
 typedef struct{
+    char version[16];
+    unsigned int  progress;
     int  status;
-    int  progress;
 }SMsgAVIoctrlUpdateProgReq,SMsgAVIoctrlUpdateProgResp;
 
 typedef struct{
