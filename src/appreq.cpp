@@ -40,7 +40,7 @@ static int Base64Decode(
 ) {
     if (decoding_table == NULL) Base64DecodeTableInit();
 
-    if (input_length % 4 != 0) return NULL;
+    if (input_length % 4 != 0) return -1;
 
     int output_length = input_length / 4 * 3;
     if (data[input_length - 1] == '=') output_length--;
