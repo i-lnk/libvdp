@@ -22,7 +22,15 @@ static char encoding_table[] = {
 };
 
 static char * decoding_table = NULL;
-static int mod_table[] = {0, 2, 1};
+
+static void Base64DecodeTableInit() {
+    static char table[256] = {0};
+    decoding_table = table;
+    
+    int i = 0;
+    for (i = 0; i < 64; i++)
+        decoding_table[(unsigned char) encoding_table[i]] = i;
+}
 
 static int Base64Decode(
 	const char *data,
@@ -63,15 +71,6 @@ static int Base64Decode(
     }
 
     return output_length;
-}
-
-void Base64DecodeTableInit() {
-	static table[256] = {0};
-    decoding_table = table;
-
-	int i = 0;
-    for (i = 0; i < 64; i++)
-        decoding_table[(unsigned char) encoding_table[i]] = i;
 }
 
 //
