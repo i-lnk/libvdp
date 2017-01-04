@@ -473,6 +473,42 @@ int             JsonBufferSize
     return 0;
 }
 
+int GetUpdateResp2JSON(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+
+    SMsgAVIoctrlUpdateResp * hRQ = (SMsgAVIoctrlUpdateResp *)Msg;
+
+    sprintf(JsonBuffer,"{\"%s\":\"%d\"}","result",0);
+
+    return 0;
+}
+
+int GetUpdateProgressResp2JSON(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlUpdateProgResp * hRQ = (SMsgAVIoctrlUpdateProgResp *)Msg;
+    
+    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\"}",
+            "status",hRQ->status,
+            "result",hRQ->progress
+            );
+    
+    return 0;
+}
 
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUIDResp2JSON},
@@ -505,6 +541,8 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_CFG_433_RESP,Get433Resp2JSON},
 {IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP,Get433Resp2JSON},
 {IOTYPE_USER_IPCAM_GET_433_RESP,Get433ListResp2JSON},
+{IOTYPE_USER_IPCAM_UPDATE_RESP,GetUpdateResp2JSON},
+{IOTYPE_USER_IPCAM_UPDATE_PROG_RESP,GetUpdateProgressResp2JSON},
 {0,NULL}
 };
 

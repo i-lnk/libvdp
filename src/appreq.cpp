@@ -319,8 +319,8 @@ int SetLockPass(
 	const char *	szCgi,
 	void *			lpParams
 ){
-	char szOrigPass[32]  = {0};
-	char szDoorPass[32]  = {0};
+	char szOrigPass[32] = {0};
+	char szDoorPass[32] = {0};
 
 	SMsgAVIoctrlDoorPassReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
@@ -730,6 +730,44 @@ int Cfg433DevExit(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+int SetUpdateUrl(
+     int			avIdx,
+     int			avMsgType,
+     const char *	szCgi,
+     void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlUpdateReq sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+    
+    char sUpdateType[8] = {0};
+    
+    StringSafeCopyEx(sUpdateType,Cgi,sizeof(sUpdateType),"type=","&");
+    StringSafeCopyEx(sMsg.url,Cgi,sizeof(sMsg.url),"url=","&");
+    StringSafeCopyEx(sMsg.md5,Cgi,sizeof(sMsg.md5),"md5=","&");
+    
+    sMsg.updateType = atoi(sUpdateType);
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+int GetUpdateProgress(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlUpdateProgReq sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -769,6 +807,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_CFG_433_REQ,Cfg433Dev},	// ø™ º 433 ≈‰∂‘
 	{IOTYPE_USER_IPCAM_DEL_433_REQ,Del433Dev},  // …æ≥˝ 433 …Ë±∏
 	{IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ,Cfg433DevExit},	// ÕÀ≥ˆ 433 …Ë±∏≈‰∂‘
+    {IOTYPE_USER_IPCAM_UPDATE_REQ,SetUpdateUrl},
+    {IOTYPE_USER_IPCAM_UPDATE_PROG_REQ,GetUpdateProgress},
 	{0,NULL}
 };
 

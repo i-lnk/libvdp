@@ -177,111 +177,127 @@ typedef enum
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_REQ      = 0x502,
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_RESP     = 0x503,
 
-	IOTYPE_USER_IPCAM_DOOROPEN_REQ              = 0x800,	// ¿ªÃÅ
-	IOTYPE_USER_IPCAM_DOOROPEN_RESP             = 0x801,	// ¿ªÃÅÓ¦´ğ
+	IOTYPE_USER_IPCAM_DOOROPEN_REQ              = 0x800,	// Ã¸â„¢âˆšâ‰ˆ
+	IOTYPE_USER_IPCAM_DOOROPEN_RESP             = 0x801,	// Ã¸â„¢âˆšâ‰ˆâ€Â¶Â¥ï£¿
 
 	// for IP02/IPC product
-	IOTYPE_USER_IPCAM_SET_PUSH_REQ              = 0x802,	// ÏûÏ¢ÍÆËÍ×¢²á
-	IOTYPE_USER_IPCAM_SET_PUSH_RESP             = 0x803,	// ÏûÏ¢ÍÆËÍ×¢²áÓ¦´ğ
+	IOTYPE_USER_IPCAM_SET_PUSH_REQ              = 0x802,	// Å“ËšÅ“Â¢Ã•âˆ†Ã€Ã•â—ŠÂ¢â‰¤Â·
+	IOTYPE_USER_IPCAM_SET_PUSH_RESP             = 0x803,	// Å“ËšÅ“Â¢Ã•âˆ†Ã€Ã•â—ŠÂ¢â‰¤Â·â€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_DEL_PUSH_REQ              = 0x804,	// ÏûÏ¢ÍÆËÍ×¢Ïú
-	IOTYPE_USER_IPCAM_DEL_PUSH_RESP             = 0x805,	// ÏûÏ¢ÍÆËÍ×¢ÏúÓ¦´ğ
+	IOTYPE_USER_IPCAM_DEL_PUSH_REQ              = 0x804,	// Å“ËšÅ“Â¢Ã•âˆ†Ã€Ã•â—ŠÂ¢Å“Ë™
+	IOTYPE_USER_IPCAM_DEL_PUSH_RESP             = 0x805,	// Å“ËšÅ“Â¢Ã•âˆ†Ã€Ã•â—ŠÂ¢Å“Ë™â€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_SET_MDP_REQ				= 0x806,	// ÉèÖÃÒÆ¶¯Õì²â²ÎÊıÇëÇóÏûÏ¢
-	IOTYPE_USER_IPCAM_SET_MDP_RESP				= 0x807,	// ÉèÖÃÒÆ¶¯Õì²â²ÎÊıÓ¦´ğÏûÏ¢
-	IOTYPE_USER_IPCAM_GET_MDP_REQ				= 0x808,	// »ñÈ¡ÒÆ¶¯Õì²â²ÎÊıÇëÇóÏûÏ¢
-	IOTYPE_USER_IPCAM_GET_MDP_RESP				= 0x809,	// »ñÈ¡ÒÆ¶¯Õì²â²ÎÊıÓ¦´ğÏûÏ¢
+	IOTYPE_USER_IPCAM_SET_MDP_REQ				= 0x806,	// â€¦Ã‹Ã·âˆšâ€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâ‰¤Å’Â ËÂ«ÃÂ«Ã›Å“ËšÅ“Â¢
+	IOTYPE_USER_IPCAM_SET_MDP_RESP				= 0x807,	// â€¦Ã‹Ã·âˆšâ€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâ‰¤Å’Â Ëâ€Â¶Â¥ï£¿Å“ËšÅ“Â¢
+	IOTYPE_USER_IPCAM_GET_MDP_REQ				= 0x808,	// ÂªÃ’Â»Â°â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâ‰¤Å’Â ËÂ«ÃÂ«Ã›Å“ËšÅ“Â¢
+	IOTYPE_USER_IPCAM_GET_MDP_RESP				= 0x809,	// ÂªÃ’Â»Â°â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâ‰¤Å’Â Ëâ€Â¶Â¥ï£¿Å“ËšÅ“Â¢
 
-	IOTYPE_USER_IPCAM_DOORPASS_REQ              = 0x812,	// ÃÅËøÃÜÂëÉèÖÃ
-	IOTYPE_USER_IPCAM_DOORPASS_RESP             = 0x813,	// ÃÅËøÃÜÂëÉèÖÃÓ¦´ğ
+	IOTYPE_USER_IPCAM_DOORPASS_REQ              = 0x812,	// âˆšâ‰ˆÃ€Â¯âˆšâ€¹Â¬Ãâ€¦Ã‹Ã·âˆš
+	IOTYPE_USER_IPCAM_DOORPASS_RESP             = 0x813,	// âˆšâ‰ˆÃ€Â¯âˆšâ€¹Â¬Ãâ€¦Ã‹Ã·âˆšâ€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_ALARMING_REQ				= 0x850,	// ÏûÏ¢Í¨ÖªÇëÇó
-	IOTYPE_USER_IPCAM_ALARMING_RESP				= 0x851,	// ÏûÏ¢Í¨ÖªÓ¦´ğ
+	IOTYPE_USER_IPCAM_ALARMING_REQ				= 0x850,	// Å“ËšÅ“Â¢Ã•Â®Ã·â„¢Â«ÃÂ«Ã›
+	IOTYPE_USER_IPCAM_ALARMING_RESP				= 0x851,	// Å“ËšÅ“Â¢Ã•Â®Ã·â„¢â€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_SET_SYSTEM_REQ			= 0x852,	// ÉèÖÃÏµÍ³
+	IOTYPE_USER_IPCAM_SET_SYSTEM_REQ			= 0x852,	// â€¦Ã‹Ã·âˆšÅ“ÂµÃ•â‰¥
 	IOTYPE_USER_IPCAM_SET_SYSTEM_RESP			= 0x853,
 
-	IOTYPE_USER_IPCAM_GET_SYSTEM_REQ			= 0x854,	// »ñÈ¡ÏµÍ³ÉèÖÃ
+	IOTYPE_USER_IPCAM_GET_SYSTEM_REQ			= 0x854,	// ÂªÃ’Â»Â°Å“ÂµÃ•â‰¥â€¦Ã‹Ã·âˆš
 	IOTYPE_USER_IPCAM_GET_SYSTEM_RESP			= 0x855,
 
-	IOTYPE_USER_IPCAM_GET_SDCARD_REQ			= 0x856,	// »ñÈ¡SD¿¨×´Ì¬	
-	IOTYPE_USER_IPCAM_GET_SDCARD_RESP			= 0x857,	// »ñÈ¡SD¿¨×´Ì¬Ó¦´ğ
+	IOTYPE_USER_IPCAM_GET_SDCARD_REQ			= 0x856,	// ÂªÃ’Â»Â°SDÃ¸Â®â—ŠÂ¥ÃƒÂ¨	
+	IOTYPE_USER_IPCAM_GET_SDCARD_RESP			= 0x857,	// ÂªÃ’Â»Â°SDÃ¸Â®â—ŠÂ¥ÃƒÂ¨â€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_GET_OSD_REQ				= 0x858,	// »ñÈ¡ OSD ÅäÖÃ
-	IOTYPE_USER_IPCAM_GET_OSD_RESP				= 0x859,	// »ñÈ¡ OSD ÅäÖÃÓ¦´ğ
-	IOTYPE_USER_IPCAM_SET_OSD_REQ				= 0x860,	// ÉèÖÃ OSD ÅäÖÃ
-	IOTYPE_USER_IPCAM_SET_OSD_RESP				= 0x861,	// ÉèÖÃ OSD ÅäÖÃÓ¦´ğ
+	IOTYPE_USER_IPCAM_GET_OSD_REQ				= 0x858,	// ÂªÃ’Â»Â° OSD â‰ˆâ€°Ã·âˆš
+	IOTYPE_USER_IPCAM_GET_OSD_RESP				= 0x859,	// ÂªÃ’Â»Â° OSD â‰ˆâ€°Ã·âˆšâ€Â¶Â¥ï£¿
+	IOTYPE_USER_IPCAM_SET_OSD_REQ				= 0x860,	// â€¦Ã‹Ã·âˆš OSD â‰ˆâ€°Ã·âˆš
+	IOTYPE_USER_IPCAM_SET_OSD_RESP				= 0x861,	// â€¦Ã‹Ã·âˆš OSD â‰ˆâ€°Ã·âˆšâ€Â¶Â¥ï£¿
 				
-	IOTYPE_USER_IPCAM_SET_433_REQ				= 0x862,	// ÉèÖÃ 433 Éè±¸
-	IOTYPE_USER_IPCAM_SET_433_RESP				= 0x863,	// ÉèÖÃ 433 Éè±¸Ó¦´ğ
-	IOTYPE_USER_IPCAM_GET_433_REQ				= 0x864,	// »ñÈ¡ 433 Éè±¸ÁĞ±í
-	IOTYPE_USER_IPCAM_GET_433_RESP				= 0x865,	// »ñÈ¡ 433 Éè±¸ÁĞ±íÓ¦´ğ
-	IOTYPE_USER_IPCAM_CFG_433_REQ				= 0x866,	// ¿ªÊ¼ 433 Åä¶Ô
-	IOTYPE_USER_IPCAM_CFG_433_RESP				= 0x867,	// ¿ªÊ¼ 433 Åä¶ÔÓ¦´ğ
-	IOTYPE_USER_IPCAM_DEL_433_REQ				= 0x868,	// É¾³ı 433 Éè±¸
-	IOTYPE_USER_IPCAM_DEL_433_RESP				= 0x869,	// É¾³ı 433 Éè±¸Ó¦´ğ
-	IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ			= 0x870,	// ÍË³ö 433 Éè±¸Åä¶Ô
-	IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP			= 0x871,	// ÍË³ö 433 Éè±¸Åä¶ÔÓ¦´ğ
+	IOTYPE_USER_IPCAM_SET_433_REQ				= 0x862,	// â€¦Ã‹Ã·âˆš 433 â€¦Ã‹Â±âˆ
+	IOTYPE_USER_IPCAM_SET_433_RESP				= 0x863,	// â€¦Ã‹Ã·âˆš 433 â€¦Ã‹Â±âˆâ€Â¶Â¥ï£¿
+	IOTYPE_USER_IPCAM_GET_433_REQ				= 0x864,	// ÂªÃ’Â»Â° 433 â€¦Ã‹Â±âˆÂ¡â€“Â±ÃŒ
+	IOTYPE_USER_IPCAM_GET_433_RESP				= 0x865,	// ÂªÃ’Â»Â° 433 â€¦Ã‹Â±âˆÂ¡â€“Â±ÃŒâ€Â¶Â¥ï£¿
+	IOTYPE_USER_IPCAM_CFG_433_REQ				= 0x866,	// Ã¸â„¢Â Âº 433 â‰ˆâ€°âˆ‚â€˜
+	IOTYPE_USER_IPCAM_CFG_433_RESP				= 0x867,	// Ã¸â„¢Â Âº 433 â‰ˆâ€°âˆ‚â€˜â€Â¶Â¥ï£¿
+	IOTYPE_USER_IPCAM_DEL_433_REQ				= 0x868,	// â€¦Ã¦â‰¥Ë 433 â€¦Ã‹Â±âˆ
+	IOTYPE_USER_IPCAM_DEL_433_RESP				= 0x869,	// â€¦Ã¦â‰¥Ë 433 â€¦Ã‹Â±âˆâ€Â¶Â¥ï£¿
+	IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ			= 0x870,	// Ã•Ã€â‰¥Ë† 433 â€¦Ã‹Â±âˆâ‰ˆâ€°âˆ‚â€˜
+	IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP			= 0x871,	// Ã•Ã€â‰¥Ë† 433 â€¦Ã‹Â±âˆâ‰ˆâ€°âˆ‚â€˜â€Â¶Â¥ï£¿
+    
+    IOTYPE_USER_IPCAM_UPDATE_REQ                = 0x88a,
+    IOTYPE_USER_IPCAM_UPDATE_RESP               = 0x88b,
+    IOTYPE_USER_IPCAM_UPDATE_PROG_REQ           = 0x88c,
+    IOTYPE_USER_IPCAM_UPDATE_PROG_RESP          = 0x88d,
 	
-	IOTYPE_USER_IPCAM_SERIAL_OPEN_REQ			= 0x1001,	// ´ò¿ª´®¿ÚÇëÇó
-	IOTYPE_USER_IPCAM_SERIAL_OPEN_RESP			= 0x1002,	// ´ò¿ª´®¿ÚÓ¦´ğ
+	IOTYPE_USER_IPCAM_SERIAL_OPEN_REQ			= 0x1001,	// Â¥ÃšÃ¸â„¢Â¥Ã†Ã¸â„Â«ÃÂ«Ã›
+	IOTYPE_USER_IPCAM_SERIAL_OPEN_RESP			= 0x1002,	// Â¥ÃšÃ¸â„¢Â¥Ã†Ã¸â„â€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_SERIAL_SEND_REQ			= 0x1003,	// ´®¿Ú·¢ËÍÇëÇó
-	IOTYPE_USER_IPCAM_SERIAL_SEND_RESP			= 0x1004,	// ´®¿Ú·¢ËÍÓ¦´ğ
+	IOTYPE_USER_IPCAM_SERIAL_SEND_REQ			= 0x1003,	// Â¥Ã†Ã¸â„âˆ‘Â¢Ã€Ã•Â«ÃÂ«Ã›
+	IOTYPE_USER_IPCAM_SERIAL_SEND_RESP			= 0x1004,	// Â¥Ã†Ã¸â„âˆ‘Â¢Ã€Ã•â€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_SERIAL_SHUT_REQ			= 0x1005,	// ´®¿Ú¹Ø±ÕÇëÇó	
-	IOTYPE_USER_IPCAM_SERIAL_SHUT_RESP			= 0x1006,	// ´®¿Ú¹Ø±ÕÓ¦´ğ
+	IOTYPE_USER_IPCAM_SERIAL_SHUT_REQ			= 0x1005,	// Â¥Ã†Ã¸â„Ï€Ã¿Â±â€™Â«ÃÂ«Ã›	
+	IOTYPE_USER_IPCAM_SERIAL_SHUT_RESP			= 0x1006,	// Â¥Ã†Ã¸â„Ï€Ã¿Â±â€™â€Â¶Â¥ï£¿
 
-	IOTYPE_USER_IPCAM_SET_GPIO					= 0x1007,	// ÉèÖÃ GPIO
-	IOTYPE_USER_IPCAM_GET_GPIO					= 0x1008,	// »ñÈ¡ GPIO
+	IOTYPE_USER_IPCAM_SET_GPIO					= 0x1007,	// â€¦Ã‹Ã·âˆš GPIO
+	IOTYPE_USER_IPCAM_GET_GPIO					= 0x1008,	// ÂªÃ’Â»Â° GPIO
 
-	IOTYPE_USER_IPCAM_SOUND_CTRL				= 0x1009,	// °ëË«¹¤ÒôÆµ¿ØÖÆ
+	IOTYPE_USER_IPCAM_SOUND_CTRL				= 0x1009,	// âˆÃÃ€Â´Ï€Â§â€œÃ™âˆ†ÂµÃ¸Ã¿Ã·âˆ†
 	
-	IOTYPE_USER_IPCAM_SET_UUID					= 0x9999,	// Ğ´Èë UUID
+	IOTYPE_USER_IPCAM_SET_UUID					= 0x9999,	// â€“Â¥Â»Ã UUID
 	
     IOTYPE_USER_CMD_MAX
 }ENUM_AVIOCTRL_MSGTYPE;
 
 //
-// 433 Åä¶Ô
+// 433 â‰ˆâ€°âˆ‚â€˜
 //
 
 // APP -> [IOTYPE_USER_IPCAM_CFG_433_REQ]  -> IPC
 // IPC -> [IOTYPE_USER_IPCAM_CFG_433_RESP] -> APP
 
 typedef enum{
-	AVIOCTRL_CFG_433_OK = 0,			// ³É¹¦
-	AVIOCTRL_CFG_433_TIMEOUT,			// ³¬Ê±
-	AVIOCTRL_CFG_433_MAX,				// Éè±¸ÉÏÏŞ
-	AVIOCTRL_CFG_433_WAITING,			// ÕıÔÚÑ§Ï°
-	AVIOCTRL_CFG_433_EXISTS,			// Éè±¸ÒÑ´æÔÚ
+	AVIOCTRL_CFG_433_OK = 0,			// â‰¥â€¦Ï€Â¶
+	AVIOCTRL_CFG_433_TIMEOUT,			// â‰¥Â¨Â Â±
+	AVIOCTRL_CFG_433_MAX,				// â€¦Ã‹Â±âˆâ€¦Å“Å“ï¬
+	AVIOCTRL_CFG_433_WAITING,			// â€™Ëâ€˜â„â€”ÃŸÅ“âˆ
+	AVIOCTRL_CFG_433_EXISTS,			// â€¦Ã‹Â±âˆâ€œâ€”Â¥ÃŠâ€˜â„
 }ENUM_AVIOTC_CFG_433_RET;
 
 typedef enum{
-	DEV_433_TYPE_REMOTE_CONTROL = 10,	// Ò£¿Ø
-	DEV_433_TYPE_ALARM,					// ±¨¾¯
-	DEV_433_TYPE_OTHER,					// ÆäËû
+	DEV_433_TYPE_REMOTE_CONTROL = 10,	// â€œÂ£Ã¸Ã¿
+	DEV_433_TYPE_ALARM,					// Â±Â®Ã¦Ã˜
+	DEV_433_TYPE_OTHER,					// âˆ†â€°Ã€Ëš
 }ENUM_DEV_433_TYPE;
 
 typedef struct{
+    int  updateType;                    // update type:[0:automic][1:update by url specified]
+    char md5[64];                       // firmware md5 check sum
+    char url[255];                      // firmware md5 url
+}SMsgAVIoctrlUpdateReq,SMsgAVIoctrlUpdateResp;
+
+typedef struct{
+    int  status;
+    int  progress;
+}SMsgAVIoctrlUpdateProgReq,SMsgAVIoctrlUpdateProgResp;
+
+typedef struct{
 	int		result;			// ENUM_AVIOTC_CFG_433_RET
-	int		none;			// Ô¤Áô
+	int		none;			// â€˜Â§Â¡Ã™
 }SMsgAVIoctrlGet433Req,SMsgAVIoctrlCfg433Resp,SMsgAVIoctrlSet433Resp,SMsgAVIoctrlDel433Resp,
 SMsgAVIoctrlCfg433ExitReq,SMsgAVIoctrlCfg433ExitResp;
 
 typedef struct{
-	int 	id;				// 433 ±êÊ¶
-	int		type;			// 433 Éè±¸ÀàĞÍ ENUM_DEV_433_TYPE
-	char	name[64];		// Éè±¸Ãû³Æ		
+	int 	id;				// 433 Â±ÃÂ âˆ‚
+	int		type;			// 433 â€¦Ã‹Â±âˆÂ¿â€¡â€“Ã• ENUM_DEV_433_TYPE
+	char	name[64];		// â€¦Ã‹Â±âˆâˆšËšâ‰¥âˆ†		
 }SMsgAVIoctrlCfg433Req,SMsgAVIoctrlSet433Req,SMsgAVIoctrlDel433Req,S433Dev;
 
 typedef struct{
-	int		num;			// Éè±¸ÊıÁ¿
-	S433Dev	dev[32];		// Éè±¸
+	int		num;			// â€¦Ã‹Â±âˆÂ ËÂ¡Ã¸
+	S433Dev	dev[32];		// â€¦Ã‹Â±âˆ
 }SMsgAVIoctrlGet433Resp;
 
 //
-// OSD ÉèÖÃÓë»ñÈ¡
+// OSD â€¦Ã‹Ã·âˆšâ€ÃÂªÃ’Â»Â°
 // 
 typedef struct{
 	int 	channel;
@@ -308,7 +324,7 @@ typedef struct{
 }SMsgAVIoctrlSetOSDReq,SMsgAVIoctrlGetOSDReq,SMsgAVIoctrlGetOSDResp;
 
 //
-// °ëË«¹¤ÒôÆµ¿ØÖÆ
+// âˆÃÃ€Â´Ï€Â§â€œÃ™âˆ†ÂµÃ¸Ã¿Ã·âˆ†
 //
 typedef enum{
 	AVIOCTRL_SOUND_PLAY,
@@ -321,17 +337,17 @@ typedef struct{
 }SMsgAVIoctrlSoundCtrlReq,SMsgAVIoctrlSoundCtrlResp;
 
 //
-// »ñÈ¡¡¢ÉèÖÃ GPIO×´Ì¬
+// ÂªÃ’Â»Â°Â°Â¢â€¦Ã‹Ã·âˆš GPIOâ—ŠÂ¥ÃƒÂ¨
 //
 typedef struct{
-	int gpio_no;	// GPIO ±àºÅ
-	int value;		// GPIO Öµ
+	int gpio_no;	// GPIO Â±â€¡âˆ«â‰ˆ
+	int value;		// GPIO Ã·Âµ
 }SMsgAVIoctrlGetGPIOReq,SMsgAVIoctrlGetGPIOResp,
  SMsgAVIoctrlSetGPIOReq,SMsgAVIoctrlSetGPIOResp;
 
 
 //
-// ¼«¹âÏûÏ¢ÍÆËÍ×¢²áÊ¹ÓÃµÄÊı¾İ½á¹¹
+// ÂºÂ´Ï€â€šÅ“ËšÅ“Â¢Ã•âˆ†Ã€Ã•â—ŠÂ¢â‰¤Â·Â Ï€â€âˆšÂµÆ’Â ËÃ¦â€ºÎ©Â·Ï€Ï€
 //
 typedef struct{
 	char	AppKey[64];
@@ -341,50 +357,50 @@ typedef struct{
 }SMsgAVIoctrlSetPushReq,SMsgAVIoctrlDelPushReq;
 
 //
-// ÒÆ¶¯Õì²âÉèÖÃÊ¹ÓÃµÄÊı¾İ½á¹¹
+// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâ€¦Ã‹Ã·âˆšÂ Ï€â€âˆšÂµÆ’Â ËÃ¦â€ºÎ©Â·Ï€Ï€
 //
 typedef struct{
-	int	MotionEnable;			// ÒÆ¶¯Õì²âÊ¹ÄÜ
-	int	MotionLevel;			// ÒÆ¶¯Õì²â¼¶±ğ
-	int	MotionAlarmFrequency;	// ÒÆ¶¯Õì²âÆµÂÊ£¬µ¥Î»Ãë
-	int	MotionAlarmType;		// ÒÆ¶¯Õì²âÀàĞÍ
+	int	MotionEnable;			// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šÂ Ï€Æ’â€¹
+	int	MotionLevel;			// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šÂºâˆ‚Â±ï£¿
+	int	MotionAlarmFrequency;	// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâˆ†ÂµÂ¬Â Â£Â¨Âµâ€¢Å’ÂªâˆšÃ
+	int	MotionAlarmType;		// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šÂ¿â€¡â€“Ã•
 
 	// schedule for every day
-	int	MotionStartHour;		// Ã¿ÌìÆğÊ¼Ê±
-	int MotionStartMins;		// Ã¿ÌìÆğÊ¼·Ö
-	int MotionCloseHour;		// Ã¿Ìì½áÊøÊ±
-	int MotionCloseMins;		// Ã¿Ìì½áÊø·Ö
+	int	MotionStartHour;		// âˆšÃ¸ÃƒÃâˆ†ï£¿Â ÂºÂ Â±
+	int MotionStartMins;		// âˆšÃ¸ÃƒÃâˆ†ï£¿Â Âºâˆ‘Ã·
+	int MotionCloseHour;		// âˆšÃ¸ÃƒÃÎ©Â·Â Â¯Â Â±
+	int MotionCloseMins;		// âˆšÃ¸ÃƒÃÎ©Â·Â Â¯âˆ‘Ã·
 }SMsgAVIoctrlSetMDPReq,SMsgAVIoctrlGetMDPResp;
 
 //
-// ±¨¾¯Ê¹ÓÃµÄÊı¾İ½á¹¹
+// Â±Â®Ã¦Ã˜Â Ï€â€âˆšÂµÆ’Â ËÃ¦â€ºÎ©Â·Ï€Ï€
 //
 typedef struct{
-	int			AlarmType;		// ±¨¾¯ÀàĞÍ
-	long long 	AlarmTime;		// ±¨¾¯Ê±¼ä
-	char		AlarmDID[64];	// ±¨¾¯Éè±¸ID
+	int			AlarmType;		// Â±Â®Ã¦Ã˜Â¿â€¡â€“Ã•
+	long long 	AlarmTime;		// Â±Â®Ã¦Ã˜Â Â±Âºâ€°
+	char		AlarmDID[64];	// Â±Â®Ã¦Ã˜â€¦Ã‹Â±âˆID
 }SMsgAVIoctrlAlarmingReq;
 
 //
-// ¿ªËøÊ¹ÓÃµÄÊı¾İ½á¹¹
+// Ã¸â„¢Ã€Â¯Â Ï€â€âˆšÂµÆ’Â ËÃ¦â€ºÎ©Â·Ï€Ï€
 //
 typedef struct{
-	int			DoorNumb;		// ÃÅËø±àºÅ
-	int			OpenTime;		// ÃÅËø¿ªÆôÊ±¼ä
-	char		DoorPass[32];	// ÃÅËøÃÜÂë
+	int			DoorNumb;		// âˆšâ‰ˆÃ€Â¯Â±â€¡âˆ«â‰ˆ
+	int			OpenTime;		// âˆšâ‰ˆÃ€Â¯Ã¸â„¢âˆ†Ã™Â Â±Âºâ€°
+	char		DoorPass[32];	// âˆšâ‰ˆÃ€Â¯âˆšâ€¹Â¬Ã
 }SMsgAVIoctrlDoorOpenReq;
 
 //
-// ĞŞ¸Ä¿ªËøÃÜÂëÊ¹ÓÃµÄÊı¾İ½á¹¹
+// â€“ï¬âˆÆ’Ã¸â„¢Ã€Â¯âˆšâ€¹Â¬ÃÂ Ï€â€âˆšÂµÆ’Â ËÃ¦â€ºÎ©Â·Ï€Ï€
 //
 typedef struct{
-	char		OrigPass[32];	// Ô´ÃÜÂë
-	char 		DoorPass[32];	// ĞÂÃÜÂë
+	char		OrigPass[32];	// â€˜Â¥âˆšâ€¹Â¬Ã
+	char 		DoorPass[32];	// â€“Â¬âˆšâ€¹Â¬Ã
 }SMsgAVIoctrlDoorPassReq;
 
 /*
 
-// ÉèÖÃÃ¿ÈÕÂ¼ÏñÅÅ³Ì
+// â€¦Ã‹Ã·âˆšâˆšÃ¸Â»â€™Â¬ÂºÅ“Ã’â‰ˆâ‰ˆâ‰¥Ãƒ
 
 IOTYPE_USER_IPCAM_SETRECORD_REQ			= 0x0310,
 IOTYPE_USER_IPCAM_GETRECORD_RESP		= 0x0313,
@@ -396,10 +412,10 @@ typedef struct
 	unsigned int recordType;	// Refer to ENUM_RECORD_TYPE
 	
 	// schedule for every day
-	int	startHour;				// ¿ªÊ¼Ê±
-	int startMins;				// ¿ªÊ¼·Ö
-	int closeHour;				// ½áÊøÊ±
-	int closeMins;				// ½áÊø·Ö
+	int	startHour;				// Ã¸â„¢Â ÂºÂ Â±
+	int startMins;				// Ã¸â„¢Â Âºâˆ‘Ã·
+	int closeHour;				// Î©Â·Â Â¯Â Â±
+	int closeMins;				// Î©Â·Â Â¯âˆ‘Ã·
 	
 	unsigned char reserved[4];
 }SMsgAVIoctrlGetRecordReq, SMsgAVIoctrlGetRecordResp,
@@ -421,20 +437,20 @@ typedef struct
 SMsgAVIoctrlGetSystemReq,SMsgAVIoctrlGetSystemResp;
 
 enum{
-    SD_STATUS_NOTINIT = 0, //sd ¿¨²»´æÔÚ
-    SD_STATUS_OK,          //sd ×´Ì¬Õı³£
-    SD_STATUS_NOTFORMAT,   //sd Î´¸ñÊ½»¯
-    SD_STATUS_FORMAT_OK,   //sd ¸ñÊ½»¯OK
-    SD_STATUS_READONLY,    //sd Ö»¶Á
-    SD_STATUS_FORMATING    //sd ÕıÔÚ¸ñÊ½»¯
+    SD_STATUS_NOTINIT = 0, //sd Ã¸Â®â‰¤ÂªÂ¥ÃŠâ€˜â„
+    SD_STATUS_OK,          //sd â—ŠÂ¥ÃƒÂ¨â€™Ëâ‰¥Â£
+    SD_STATUS_NOTFORMAT,   //sd Å’Â¥âˆÃ’Â Î©ÂªÃ˜
+    SD_STATUS_FORMAT_OK,   //sd âˆÃ’Â Î©ÂªÃ˜OK
+    SD_STATUS_READONLY,    //sd Ã·Âªâˆ‚Â¡
+    SD_STATUS_FORMATING    //sd â€™Ëâ€˜â„âˆÃ’Â Î©ÂªÃ˜
 };
 
 #pragma pack(push,1)
 
 typedef struct{
-	int	status;	//sd ×´Ì¬
-	int size; 	//sd ÈİÁ¿
-	int free;	//sd Ê£Óà¿Õ¼ä
+	int	status;	//sd â—ŠÂ¥ÃƒÂ¨
+	int size; 	//sd Â»â€ºÂ¡Ã¸
+	int free;	//sd Â Â£â€â€¡Ã¸â€™Âºâ€°
 	int progress;
 }SMsgAVIoctrlGetSDCardReq,SMsgAVIoctrlGetSDCardResp;
 
@@ -442,17 +458,17 @@ typedef struct{
 
 typedef struct{
 	int			serial_no;
-	int			size;		// ÓĞĞ§Êı¾İ³¤¶È
-	char		data[16];	// Êı¾İÔØºÉ
+	int			size;		// â€â€“â€“ÃŸÂ ËÃ¦â€ºâ‰¥Â§âˆ‚Â»
+	char		data[16];	// Â ËÃ¦â€ºâ€˜Ã¿âˆ«â€¦
 }SMsgAVIoctrlSerialSendReq;
 
 typedef struct{
-	int			result;		// ÉèÖÃ½á¹û
-	char		uuid[64];	// Éè±¸P2PID
+	int			result;		// â€¦Ã‹Ã·âˆšÎ©Â·Ï€Ëš
+	char		uuid[64];	// â€¦Ã‹Â±âˆP2PID
 }SMsgAVIoctrlSetUUIDReq,SMsgAVIoctrlSetUUIDResp;
 
 //
-// Í¨ÓÃÓ¦´ğÊı¾İ½á¹¹
+// Ã•Â®â€âˆšâ€Â¶Â¥ï£¿Â ËÃ¦â€ºÎ©Â·Ï€Ï€
 //
 typedef struct{
 	int result;	// 0: success; otherwise: failed.
@@ -668,8 +684,8 @@ typedef enum
 	AVIOCTRL_CLEAR_AUX					= 34,
 	AVIOCTRL_MOTOR_RESET_POSITION		= 35,
 
-	AVIOCTRL_PTZ_LEFT_RIGHT_AUTO		= 36,	// ×óÓÒÑ²º½
-	AVIOCTRL_PTZ_UP_DOWN_AUTO			= 37	// ÉÏÏÂÑ²º½
+	AVIOCTRL_PTZ_LEFT_RIGHT_AUTO		= 36,	// â—ŠÃ›â€â€œâ€”â‰¤âˆ«Î©
+	AVIOCTRL_PTZ_UP_DOWN_AUTO			= 37	// â€¦Å“Å“Â¬â€”â‰¤âˆ«Î©
 }ENUM_PTZCMD;
 
 
@@ -1320,28 +1336,28 @@ typedef struct
  */
 
 #if 0
-/*Ê±ÇøºÍÏÄÊ±ÖÆ²ÎÊı*/
+/*Â Â±Â«Â¯âˆ«Ã•Å“Æ’Â Â±Ã·âˆ†â‰¤Å’Â Ë*/
 typedef struct 
 {
-    unsigned int dwMonth;  		//ÔÂ 0-11±íÊ¾1-12¸öÔÂ
-    unsigned int dwWeekNo;  	//µÚ¼¸ÖÜ£º0£­µÚ1ÖÜ£»1£­µÚ2ÖÜ£»2£­µÚ3ÖÜ£» 3£­µÚ4ÖÜ£»4£­×îºóÒ»ÖÜ 
-    unsigned int dwWeekDate;  	//ĞÇÆÚ¼¸£º0£­ĞÇÆÚÈÕ£»1£­ĞÇÆÚÒ»£»2£­ĞÇÆÚ¶ş£»3£­ĞÇÆÚÈı£»4£­ĞÇÆÚËÄ£»5£­ĞÇÆÚÎå£»6£­ĞÇÆÚÁù
-    unsigned int dwHour; 		//Ğ¡Ê±£¬¿ªÊ¼Ê±¼äÈ¡Öµ·¶Î§0£­23£» ½áÊøÊ±¼äÈ¡Öµ·¶Î§1£­23 
-    unsigned int dwMin; 		//·Ö0£­59
+    unsigned int dwMonth;  		//â€˜Â¬ 0-11Â±ÃŒÂ Ã¦1-12âˆË†â€˜Â¬
+    unsigned int dwWeekNo;  	//Âµâ„ÂºâˆÃ·â€¹Â£âˆ«0Â£â‰ Âµâ„1Ã·â€¹Â£Âª1Â£â‰ Âµâ„2Ã·â€¹Â£Âª2Â£â‰ Âµâ„3Ã·â€¹Â£Âª 3Â£â‰ Âµâ„4Ã·â€¹Â£Âª4Â£â‰ â—ŠÃ“âˆ«Ã›â€œÂªÃ·â€¹ 
+    unsigned int dwWeekDate;  	//â€“Â«âˆ†â„ÂºâˆÂ£âˆ«0Â£â‰ â€“Â«âˆ†â„Â»â€™Â£Âª1Â£â‰ â€“Â«âˆ†â„â€œÂªÂ£Âª2Â£â‰ â€“Â«âˆ†â„âˆ‚Ë›Â£Âª3Â£â‰ â€“Â«âˆ†â„Â»ËÂ£Âª4Â£â‰ â€“Â«âˆ†â„Ã€Æ’Â£Âª5Â£â‰ â€“Â«âˆ†â„Å’Ã‚Â£Âª6Â£â‰ â€“Â«âˆ†â„Â¡Ë˜
+    unsigned int dwHour; 		//â€“Â°Â Â±Â£Â¨Ã¸â„¢Â ÂºÂ Â±Âºâ€°Â»Â°Ã·Âµâˆ‘âˆ‚Å’ÃŸ0Â£â‰ 23Â£Âª Î©Â·Â Â¯Â Â±Âºâ€°Â»Â°Ã·Âµâˆ‘âˆ‚Å’ÃŸ1Â£â‰ 23 
+    unsigned int dwMin; 		//âˆ‘Ã·0Â£â‰ 59
 }DMS_NET_TIMEPOINT;
 
 typedef struct
 {
-	unsigned int		dwSize;			//±¾½á¹¹´óĞ¡
-    int					nTimeZone;		//Ê±Çø
-    char                byDstMode;		//ÏÄÁîÊ±Ä£Ê½£¬0-Ä¬ÈÏ£¬1-×Ô¶¨Òå
-    char                byStartDst;     //ÊÇ·ñÒÑ¾­¿ªÊ¼Ö´ĞĞDst;
-    char				byRes1[10];		//±£Áô
-    unsigned int		dwEnableDST;	//ÊÇ·ñÆôÓÃÏÄÊ±ÖÆ 0£­²»ÆôÓÃ 1£­ÆôÓÃ
-    char				byDSTBias;		//ÏÄÁîÊ±Æ«ÒÆÖµ£¬30min, 60min, 90min, 120min, ÒÔ·ÖÖÓ¼Æ£¬´«µİÔ­Ê¼ÊıÖµ
-    char				byRes2[3];		//±£Áô
-    DMS_NET_TIMEPOINT	stBeginPoint;	//ÏÄÊ±ÖÆ¿ªÊ¼Ê±¼ä
-    DMS_NET_TIMEPOINT	stEndPoint;		//ÏÄÊ±ÖÆÍ£Ö¹Ê±¼ä
+	unsigned int		dwSize;			//Â±Ã¦Î©Â·Ï€Ï€Â¥Ã›â€“Â°
+    int					nTimeZone;		//Â Â±Â«Â¯
+    char                byDstMode;		//Å“Æ’Â¡Ã“Â Â±Æ’Â£Â Î©Â£Â¨0-Æ’Â¨Â»Å“Â£Â¨1-â—Šâ€˜âˆ‚Â®â€œÃ‚
+    char                byStartDst;     //Â Â«âˆ‘Ã’â€œâ€”Ã¦â‰ Ã¸â„¢Â ÂºÃ·Â¥â€“â€“Dst;
+    char				byRes1[10];		//Â±Â£Â¡Ã™
+    unsigned int		dwEnableDST;	//Â Â«âˆ‘Ã’âˆ†Ã™â€âˆšÅ“Æ’Â Â±Ã·âˆ† 0Â£â‰ â‰¤Âªâˆ†Ã™â€âˆš 1Â£â‰ âˆ†Ã™â€âˆš
+    char				byDSTBias;		//Å“Æ’Â¡Ã“Â Â±âˆ†Â´â€œâˆ†Ã·ÂµÂ£Â¨30min, 60min, 90min, 120min, â€œâ€˜âˆ‘Ã·Ã·â€Âºâˆ†Â£Â¨Â¥Â´Âµâ€ºâ€˜â‰ Â ÂºÂ ËÃ·Âµ
+    char				byRes2[3];		//Â±Â£Â¡Ã™
+    DMS_NET_TIMEPOINT	stBeginPoint;	//Å“Æ’Â Â±Ã·âˆ†Ã¸â„¢Â ÂºÂ Â±Âºâ€°
+    DMS_NET_TIMEPOINT	stEndPoint;		//Å“Æ’Â Â±Ã·âˆ†Ã•Â£Ã·Ï€Â Â±Âºâ€°
 }SMsgAVIoctrlTimeZone;
 #else
 typedef struct{
