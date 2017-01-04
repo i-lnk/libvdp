@@ -10,10 +10,74 @@
 #include "AVFRAMEINFO.h"
 #include "AVIOCTRLDEFs.h"
 
+static char encoding_table[] = {
+'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+'w', 'x', 'y', 'z', '0', '1', '2', '3',
+'4', '5', '6', '7', '8', '9', '+', '/',
+};
+
+static char * decoding_table = NULL;
+static int mod_table[] = {0, 2, 1};
+
+static int Base64Decode(
+	const char *data,
+	char * output,
+    int input_length,
+    int output_size
+) {
+    if (decoding_table == NULL) Base64DecodeTableInit();
+
+    if (input_length % 4 != 0) return NULL;
+
+    int output_length = input_length / 4 * 3;
+    if (data[input_length - 1] == '=') output_length--;
+    if (data[input_length - 2] == '=') output_length--;
+
+    unsigned char *decoded_data = (unsigned char *)output;
+    if (decoded_data == NULL) return -1;
+	if (output_length > output_size) return -1;
+
+	unsigned int i = 0;
+	unsigned int j = 0;
+
+    for (i = 0, j = 0; i < input_length;) {
+
+        uint32_t sextet_a = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+        uint32_t sextet_b = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+        uint32_t sextet_c = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+        uint32_t sextet_d = data[i] == '=' ? 0 & i++ : decoding_table[data[i++]];
+
+        uint32_t triple = (sextet_a << 3 * 6)
+        + (sextet_b << 2 * 6)
+        + (sextet_c << 1 * 6)
+        + (sextet_d << 0 * 6);
+
+        if (j < output_length) decoded_data[j++] = (triple >> 2 * 8) & 0xFF;
+        if (j < output_length) decoded_data[j++] = (triple >> 1 * 8) & 0xFF;
+        if (j < output_length) decoded_data[j++] = (triple >> 0 * 8) & 0xFF;
+    }
+
+    return output_length;
+}
+
+void Base64DecodeTableInit() {
+	static table[256] = {0};
+    decoding_table = table;
+
+	int i = 0;
+    for (i = 0; i < 64; i++)
+        decoding_table[(unsigned char) encoding_table[i]] = i;
+}
+
 //
 //	string safe copy between string
 //
-char * StringSafeCopyEx(
+char * GetCgiParam(
 	char *			To,
 	const char *	From,
 	int				ToBufferSize,
@@ -45,11 +109,10 @@ char * StringSafeCopyEx(
 		CopyLens = ToBufferSize > CopySize ? CopySize : ToBufferSize;
 	}
 
-/*
-	TRACE("COPY DATE FROM:[%c][%d].\n",
-		lpBegin[0],CopyLens);
-*/	
-	memcpy(To,lpBegin,CopyLens);
+	int DataLens = Base64Decode(lpBegin,To,CopyLens,ToBufferSize);
+	if(DataLens < 0) return NULL;
+	
+//	memcpy(To,lpBegin,CopyLens);
 
 	return To;
 }
@@ -69,7 +132,7 @@ int SetUUIDData(
 	// String msg = "setuuid.cgi?UUID=" + UUID + "&";
 	// Avapi.SendCtrlCommand(ConnectService.device_id, Constant.IOTYPE_USER_IPCAM_SET_UUID, msg, msg.length());
 
-	StringSafeCopyEx((char*)szUUID,szCgi,sizeof(szUUID),"UUID=","&");
+	GetCgiParam((char*)szUUID,szCgi,sizeof(szUUID),"UUID=","&");
 
 	memset(&sMsg,0,sizeof(sMsg));
 	memcpy(sMsg.uuid,szUUID,strlen(szUUID));
@@ -88,7 +151,7 @@ int GetGPIOData(
 
 	char szNo[8] = {0};
 
-	StringSafeCopyEx((char*)szNo,szCgi,sizeof(szNo),"no=","&");
+	GetCgiParam((char*)szNo,szCgi,sizeof(szNo),"no=","&");
 
 	sMsg.gpio_no = atoi(szNo);
 	
@@ -106,8 +169,8 @@ int SetGPIOData(
 	char szNo[8] = {0};
 	char szValue[8] = {0};
 
-	StringSafeCopyEx((char*)szNo,szCgi,sizeof(szNo),"no=","&");
-	StringSafeCopyEx((char*)szValue,szCgi,sizeof(szValue),"value=","&");
+	GetCgiParam((char*)szNo,szCgi,sizeof(szNo),"no=","&");
+	GetCgiParam((char*)szValue,szCgi,sizeof(szValue),"value=","&");
 
 	sMsg.gpio_no = atoi(szNo);
 	sMsg.value = atoi(szValue) > 0 ? 1 : 0;
@@ -140,10 +203,10 @@ int SetWirelessData(
 	char szMode[8] = {0};
 	char szType[8] = {0};
 
-	StringSafeCopyEx((char*)sMsg.ssid,szCgi,sizeof(sMsg.ssid),"ssid=","&");
-	StringSafeCopyEx((char*)sMsg.password,szCgi,sizeof(sMsg.password),"password=","&");
-	StringSafeCopyEx(szMode,szCgi,sizeof(szMode),"mode=","&");
-	StringSafeCopyEx(szType,szCgi,sizeof(szType),"type=","&");
+	GetCgiParam((char*)sMsg.ssid,szCgi,sizeof(sMsg.ssid),"ssid=","&");
+	GetCgiParam((char*)sMsg.password,szCgi,sizeof(sMsg.password),"password=","&");
+	GetCgiParam(szMode,szCgi,sizeof(szMode),"mode=","&");
+	GetCgiParam(szType,szCgi,sizeof(szType),"type=","&");
 
 	sMsg.enctype = atoi(szType);
 	sMsg.mode = atoi(szMode);
@@ -164,11 +227,11 @@ int SetPushData(
 
 	memset(&sMsg,0,sizeof(sMsg));
 	
-	StringSafeCopyEx(sMsg.AppKey,szCgi,sizeof(sMsg.AppKey),"AppKey=","&");
-	StringSafeCopyEx(sMsg.Master,szCgi,sizeof(sMsg.Master),"Master=","&");
-	StringSafeCopyEx(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
+	GetCgiParam(sMsg.AppKey,szCgi,sizeof(sMsg.AppKey),"AppKey=","&");
+	GetCgiParam(sMsg.Master,szCgi,sizeof(sMsg.Master),"Master=","&");
+	GetCgiParam(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
 	
-	StringSafeCopyEx(szType,szCgi,sizeof(szType),"Type=","&");
+	GetCgiParam(szType,szCgi,sizeof(szType),"Type=","&");
 	sMsg.Type = atoi(szType);
 
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
@@ -186,11 +249,11 @@ int DelPushData(
 
 	memset(&sMsg,0,sizeof(sMsg));
 	
-	StringSafeCopyEx(sMsg.AppKey,szCgi,sizeof(sMsg.AppKey),"AppKey=","&");
-	StringSafeCopyEx(sMsg.Master,szCgi,sizeof(sMsg.Master),"Master=","&");
-	StringSafeCopyEx(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
+	GetCgiParam(sMsg.AppKey,szCgi,sizeof(sMsg.AppKey),"AppKey=","&");
+	GetCgiParam(sMsg.Master,szCgi,sizeof(sMsg.Master),"Master=","&");
+	GetCgiParam(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
 	
-	StringSafeCopyEx(szType,szCgi,sizeof(szType),"Type=","&");
+	GetCgiParam(szType,szCgi,sizeof(szType),"Type=","&");
 	sMsg.Type = atoi(szType);
 
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
@@ -205,8 +268,8 @@ int SetPTZ(
 	char szControl[8] = {0};
 	char szSpeed[8] = {0};
 
-	StringSafeCopyEx(szControl,szCgi,sizeof(szControl),"control=","&");
-	StringSafeCopyEx(szSpeed,szCgi,sizeof(szSpeed),"speed=","&");
+	GetCgiParam(szControl,szCgi,sizeof(szControl),"control=","&");
+	GetCgiParam(szSpeed,szCgi,sizeof(szSpeed),"speed=","&");
 	
 	SMsgAVIoctrlPtzCmd sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
@@ -225,8 +288,8 @@ int SetStreamCtrl(
 	char szChannel[8] = {0};
 	char szQuality[8] = {0};
 
-	StringSafeCopyEx(szChannel,szCgi,sizeof(szChannel),"channel=","&");
-	StringSafeCopyEx(szQuality,szCgi,sizeof(szQuality),"quality=","&");
+	GetCgiParam(szChannel,szCgi,sizeof(szChannel),"channel=","&");
+	GetCgiParam(szQuality,szCgi,sizeof(szQuality),"quality=","&");
 	
 	SMsgAVIoctrlSetStreamCtrlReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
@@ -259,12 +322,12 @@ int SetRecordSchedule(
 	char szCloseHour[8] = {0};
 	char szCloseMins[8] = {0};
 
-	StringSafeCopyEx(szChannel,szCgi,sizeof(szChannel),"control=","&");
-	StringSafeCopyEx(szType,szCgi,sizeof(szType),"type=","&");
-	StringSafeCopyEx(szStartHour,szCgi,sizeof(szStartHour),"startHour=","&");
-	StringSafeCopyEx(szStartMins,szCgi,sizeof(szStartMins),"startMins=","&");
-	StringSafeCopyEx(szCloseHour,szCgi,sizeof(szCloseHour),"closeHour=","&");
-	StringSafeCopyEx(szCloseMins,szCgi,sizeof(szCloseMins),"closeMins=","&");
+	GetCgiParam(szChannel,szCgi,sizeof(szChannel),"control=","&");
+	GetCgiParam(szType,szCgi,sizeof(szType),"type=","&");
+	GetCgiParam(szStartHour,szCgi,sizeof(szStartHour),"startHour=","&");
+	GetCgiParam(szStartMins,szCgi,sizeof(szStartMins),"startMins=","&");
+	GetCgiParam(szCloseHour,szCgi,sizeof(szCloseHour),"closeHour=","&");
+	GetCgiParam(szCloseMins,szCgi,sizeof(szCloseMins),"closeMins=","&");
 
 	SMsgAVIoctrlSetRecordReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
@@ -302,9 +365,9 @@ int SetLock(
 	SMsgAVIoctrlDoorOpenReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
 
-	StringSafeCopyEx(szDoorNumb,szCgi,sizeof(szDoorNumb),"doornumb=","&");
-	StringSafeCopyEx(szOpenTime,szCgi,sizeof(szOpenTime),"opentime=","&");
-	StringSafeCopyEx(szOpenTime,szCgi,sizeof(szOpenTime),"doorpass=","&");
+	GetCgiParam(szDoorNumb,szCgi,sizeof(szDoorNumb),"doornumb=","&");
+	GetCgiParam(szOpenTime,szCgi,sizeof(szOpenTime),"opentime=","&");
+	GetCgiParam(szOpenTime,szCgi,sizeof(szOpenTime),"doorpass=","&");
 
 	sMsg.DoorNumb = atoi(szDoorNumb);
 	sMsg.OpenTime = atoi(szOpenTime);
@@ -325,8 +388,8 @@ int SetLockPass(
 	SMsgAVIoctrlDoorPassReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
 
-	StringSafeCopyEx(szOrigPass,szCgi,sizeof(szOrigPass),"origpass=","&");
-	StringSafeCopyEx(szDoorPass,szCgi,sizeof(szDoorPass),"doorpass=","&");
+	GetCgiParam(szOrigPass,szCgi,sizeof(szOrigPass),"origpass=","&");
+	GetCgiParam(szDoorPass,szCgi,sizeof(szDoorPass),"doorpass=","&");
 
 	memcpy(sMsg.OrigPass,szOrigPass,strlen(szOrigPass));
 	memcpy(sMsg.DoorPass,szDoorPass,strlen(szDoorPass));
@@ -343,8 +406,8 @@ int SetVideo(
 	char szFlipEnable[8] = {0};
 	char szMirrEnable[8] = {0};
 
-	StringSafeCopyEx(szFlipEnable,szCgi,sizeof(szFlipEnable),"flip=","&");
-	StringSafeCopyEx(szMirrEnable,szCgi,sizeof(szMirrEnable),"mirror=","&");
+	GetCgiParam(szFlipEnable,szCgi,sizeof(szFlipEnable),"flip=","&");
+	GetCgiParam(szMirrEnable,szCgi,sizeof(szMirrEnable),"mirror=","&");
 
 	int flipEnable = atoi(szFlipEnable) ? 1 : 0;
 	int mirrEnable = atoi(szMirrEnable) ? 1 : 0;
@@ -383,15 +446,15 @@ int SetSystem(
 	char szPower[8] = {0};
 	char szLanguage[8] = {0};
 
-	StringSafeCopyEx(szPower,szCgi,sizeof(szPower),"power=","&");
-	StringSafeCopyEx(szLanguage,szCgi,sizeof(szLanguage),"language=","&");
+	GetCgiParam(szPower,szCgi,sizeof(szPower),"power=","&");
+	GetCgiParam(szLanguage,szCgi,sizeof(szLanguage),"language=","&");
 
 	SMsgAVIoctrlSetSystemReq sMsg;
 
 	sMsg.power_ctrl = atoi(szPower);
 	sMsg.lang = atoi(szLanguage);
 
-	StringSafeCopyEx(sMsg.datetime,szCgi,sizeof(sMsg.datetime),"datetime=","&");
+	GetCgiParam(sMsg.datetime,szCgi,sizeof(sMsg.datetime),"datetime=","&");
 		
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
@@ -424,13 +487,13 @@ int SetMotionSchedule(
 	char sMotionStartMins[8] = {0};
 	char sMotionCloseMins[8] = {0};
 
-	StringSafeCopyEx(sMotionEnable,Cgi,sizeof(sMotionEnable),"enable=","&");
-	StringSafeCopyEx(sMotionSensitivity,Cgi,sizeof(sMotionSensitivity),"level=","&");
-	StringSafeCopyEx(sMotionNotifyDelay,Cgi,sizeof(sMotionNotifyDelay),"delay=","&");
-	StringSafeCopyEx(sMotionStartHour,Cgi,sizeof(sMotionStartHour),"startHour=","&");
-	StringSafeCopyEx(sMotionCloseHour,Cgi,sizeof(sMotionCloseHour),"closeHour=","&");
-	StringSafeCopyEx(sMotionStartMins,Cgi,sizeof(sMotionStartMins),"startMins=","&");
-	StringSafeCopyEx(sMotionCloseMins,Cgi,sizeof(sMotionCloseMins),"closeMins=","&");
+	GetCgiParam(sMotionEnable,Cgi,sizeof(sMotionEnable),"enable=","&");
+	GetCgiParam(sMotionSensitivity,Cgi,sizeof(sMotionSensitivity),"level=","&");
+	GetCgiParam(sMotionNotifyDelay,Cgi,sizeof(sMotionNotifyDelay),"delay=","&");
+	GetCgiParam(sMotionStartHour,Cgi,sizeof(sMotionStartHour),"startHour=","&");
+	GetCgiParam(sMotionCloseHour,Cgi,sizeof(sMotionCloseHour),"closeHour=","&");
+	GetCgiParam(sMotionStartMins,Cgi,sizeof(sMotionStartMins),"startMins=","&");
+	GetCgiParam(sMotionCloseMins,Cgi,sizeof(sMotionCloseMins),"closeMins=","&");
 
 	SMsgAVIoctrlSetMDPReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
@@ -482,7 +545,7 @@ int SetTimeZone(
 
 	char sTimeZone[8] = {0};
 
-	StringSafeCopyEx(sTimeZone,Cgi,sizeof(sTimeZone),"timezone=","&");
+	GetCgiParam(sTimeZone,Cgi,sizeof(sTimeZone),"timezone=","&");
 	
 	sMsg.nTimeZone = atoi(sTimeZone);
 	
@@ -536,7 +599,7 @@ int SetSoundMode(
 	SMsgAVIoctrlSoundCtrlReq sMsg;
 
 	char szMode[8] = {0};
-	StringSafeCopyEx(szMode,Cgi,sizeof(szMode),"mode=","&");
+	GetCgiParam(szMode,Cgi,sizeof(szMode),"mode=","&");
 
 	memset(&sMsg,0,sizeof(sMsg));
 	sMsg.mode = atoi(szMode);
@@ -556,9 +619,9 @@ int SetPassword(
 
 	memset(&sMsg,0,sizeof(sMsg));
 
-	StringSafeCopyEx(sMsg.user,Cgi,sizeof(sMsg.user),"user=","&");
-	StringSafeCopyEx(sMsg.oldpasswd,Cgi,sizeof(sMsg.oldpasswd),"oldpass=","&");
-	StringSafeCopyEx(sMsg.newpasswd,Cgi,sizeof(sMsg.newpasswd),"newpass=","&");
+	GetCgiParam(sMsg.user,Cgi,sizeof(sMsg.user),"user=","&");
+	GetCgiParam(sMsg.oldpasswd,Cgi,sizeof(sMsg.oldpasswd),"oldpass=","&");
+	GetCgiParam(sMsg.newpasswd,Cgi,sizeof(sMsg.newpasswd),"newpass=","&");
 	
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
@@ -577,7 +640,7 @@ int GetOSD(
 
 	char szChannel[8] = {0};
 
-	StringSafeCopyEx(szChannel,Cgi,sizeof(szChannel),"channel=","&");
+	GetCgiParam(szChannel,Cgi,sizeof(szChannel),"channel=","&");
 	sMsg.channel = atoi(szChannel);
 	
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
@@ -613,8 +676,8 @@ int SetOSD(
 	char szChannelIDY[8] = {0};
 	*/
 
-	StringSafeCopyEx(szChannel,Cgi,sizeof(szChannel),"channel=","&");
-	StringSafeCopyEx(sMsg.channel_name_text,Cgi,sizeof(sMsg.channel_name_text),"channel_name_text=","&");
+	GetCgiParam(szChannel,Cgi,sizeof(szChannel),"channel=","&");
+	GetCgiParam(sMsg.channel_name_text,Cgi,sizeof(sMsg.channel_name_text),"channel_name_text=","&");
 	
 	sMsg.channel = atoi(szChannel);
 	
@@ -637,8 +700,8 @@ int Set433Dev(
 	char szName[512] = {0};
 	char szType[  8] = {0};
 
-	StringSafeCopyEx(szName,Cgi,sizeof(szName),"name=","&");
-	StringSafeCopyEx(szType,Cgi,sizeof(szType),"type=","&");
+	GetCgiParam(szName,Cgi,sizeof(szName),"name=","&");
+	GetCgiParam(szType,Cgi,sizeof(szType),"type=","&");
 
 	memcpy(sMsg.name,szName,strlen(szName) > sizeof(sMsg.name) ? sizeof(sMsg.name) - 1 : strlen(szName));
 	sMsg.type = atoi(szType);
@@ -680,8 +743,8 @@ int Cfg433Dev(
 	char szName[512] = {0};
 	char szType[  8] = {0};
 
-	StringSafeCopyEx(szName,Cgi,sizeof(szName),"name=","&");
-	StringSafeCopyEx(szType,Cgi,sizeof(szType),"type=","&");
+	GetCgiParam(szName,Cgi,sizeof(szName),"name=","&");
+	GetCgiParam(szType,Cgi,sizeof(szType),"type=","&");
 
 	memcpy(sMsg.name,szName,strlen(szName) > sizeof(sMsg.name) ? sizeof(sMsg.name) - 1 : strlen(szName));
 	sMsg.type = atoi(szType);
@@ -706,7 +769,7 @@ int Del433Dev(
 
 	char szID[8] = {0};
 
-	StringSafeCopyEx(szID,Cgi,sizeof(szID),"id=","&");
+	GetCgiParam(szID,Cgi,sizeof(szID),"id=","&");
 
 	sMsg.id = atoi(szID);
 
@@ -744,9 +807,9 @@ int SetUpdateUrl(
     
     char sUpdateType[8] = {0};
     
-    StringSafeCopyEx(sUpdateType,Cgi,sizeof(sUpdateType),"type=","&");
-    StringSafeCopyEx(sMsg.url,Cgi,sizeof(sMsg.url),"url=","&");
-    StringSafeCopyEx(sMsg.md5,Cgi,sizeof(sMsg.md5),"md5=","&");
+    GetCgiParam(sUpdateType,Cgi,sizeof(sUpdateType),"type=","&");
+    GetCgiParam(sMsg.url,Cgi,sizeof(sMsg.url),"url=","&");
+    GetCgiParam(sMsg.md5,Cgi,sizeof(sMsg.md5),"md5=","&");
     
     sMsg.updateType = atoi(sUpdateType);
     
