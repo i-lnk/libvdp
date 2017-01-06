@@ -376,7 +376,7 @@ void * IOCmdSendProcess(
                 || hCmds->CgiLens > sizeof(Cmds)
                 || hCmds->CgiLens < 0
                 ){
-                    Log3("[X:%s]=====>Invalid IOCTRL cmds from application. M:[%08X] L:[%d].\n",
+                    Log3("[X:%s]=====>invalid IOCTRL cmds from application. M:[%08X] L:[%d].\n",
                          hPC->szDID,
                          hCmds->Magic,
                          hCmds->CgiLens
@@ -384,8 +384,13 @@ void * IOCmdSendProcess(
                     
                     hPC->hIOCmdBuffer->Reset();
                 }
-                
-				nBytesRead = hPC->hIOCmdBuffer->Read(hCmds->CgiData,hCmds->CgiLens);
+
+				nBytesRead = 0;
+				while(nBytesRead != hCmds->CgiLens){
+					nBytesRead = hPC->hIOCmdBuffer->Read(hCmds->CgiData,hCmds->CgiLens);
+					Log3("[X:%s]=====>data not ready.\n",hPC->szDID);
+					usleep(1000);
+				}
 				
 				while(1){
 					ret = SendCmds(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hPC);
@@ -393,7 +398,7 @@ void * IOCmdSendProcess(
 						break;
 					}
 
-//					Log3("[X:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
+					Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
 
 					if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
 						usleep(1000); continue;
@@ -406,7 +411,7 @@ void * IOCmdSendProcess(
 				}
 			}
 		}
-		usleep(10000);
+		usleep(1000);
     }
 	
 	Log3("[X:%s]=====>IOCmdSendProcess Exit.",hPC->szDID);
@@ -710,8 +715,8 @@ static void * VideoRecvProcess(
 					continue;
 				case AV_ER_DATA_NOREADY:
 					if(firstKeyFrameComming == 0){
-						avSendIOCtrlEx(avIdx, IOTYPE_USER_IPCAM_START, (char *)&ioMsg, sizeof(SMsgAVIoctrlAVStream));
-						Log3("ask for video stream again.");
+//						avSendIOCtrlEx(avIdx, IOTYPE_USER_IPCAM_START, (char *)&ioMsg, sizeof(SMsgAVIoctrlAVStream));
+//						Log3("ask for video stream again.");
 					}else{
 //						Log3("tutk data not ready.");
 					}
@@ -875,7 +880,7 @@ static void * AudioRecvProcess(
 		}
 
 		if(hPC->audioEnabled != 1){
-            Log3("audio pause...");
+//          Log3("audio pause...");
 			continue;
 		}
 
