@@ -94,6 +94,16 @@ typedef struct _CMD_CHANNEL_HEAD
 	char 		   d[0];
 }CMD_CHANNEL_HEAD, *PCMD_CHANNEL_HEAD;
 
+typedef enum{
+	STATUS_SESSION_START = 1,		
+	STATUS_SESSION_CLOSE,		
+	STATUS_SESSION_IDLE,
+	STATUS_SESSION_DIED,
+	STATUS_SESSION_START_PLAY,
+	STATUS_SESSION_PLAYING,
+	STATUS_SESSION_CLOSE_PLAY,
+}SESSION_STATUS;
+
 typedef double UINT64;
 
 class CPPPPChannel
@@ -140,8 +150,8 @@ public:
 	CAudioDataList *	hAudioGetList;
 	CAudioDataList *	hAudioPutList;
 	
-    COMMO_LOCK			Lock;
-	COMMO_LOCK			MediaReleaseLock;
+	COMMO_LOCK			SessionStatusLock;
+	int					SessionStatus;
 
 	char 				szURL[256];		// ªÿ∑≈ ”∆µ¡¥Ω”
 
@@ -175,31 +185,25 @@ public:
 	int					AudioSendFormat;
 	int					AudioEchoCancellationEnable;
 
-	// ª·ª∞ºÏ≤‚œﬂ≥Ã
 	pthread_t			mediaCoreThread;
 
-	// ÷∏¡Ó¥¶¿Ìœﬂ≥Ã
 	pthread_t 			iocmdRecvThread;
 	pthread_t			iocmdSendThread;
 
-	//  ”∆µ¥¶¿Ìœﬂ≥Ã
 	pthread_t 			videoPlayThread;
 	pthread_t			videoRecvThread;
 
-	// “Ù∆µ¥¶¿Ìœﬂ≥Ã
 	pthread_t 			audioRecvThread;
 	pthread_t 			audioSendThread;
 
-	int					MW;				// øÌ∂»
-	int					MH;				// ∏ﬂ∂»
-	int					YUVSize;		// YUV  ˝æ›¥Û–°
+	int					MW;				
+	int					MH;				// 
+	int					YUVSize;		//
 
-	char 			* 	hVideoFrame;	//  ”∆µ≤•∑≈ª∫≥Â«¯
+	char 			* 	hVideoFrame;	//
 	
-	COMMO_LOCK			DisplayLock;	//  ”∆µ≤•∑≈À¯,”√”⁄±£’œ ”∆µª∫ªÊ÷∆≥Â«¯µƒ∂¿’º–‘(jbyte_yuv)
-	COMMO_LOCK			SndplayLock;	// “Ù∆µ≤•∑≈À¯,”√”⁄±£’œ“Ù∆µª∫≤•∑≈≥Â«¯µƒ∂¿’º–‘(hAudioFrame)
-	COMMO_LOCK			StartAVLock;	// “Ù ”∆µ≤•∑≈,Õ£÷π≤Ÿ◊˜À¯
-	COMMO_LOCK			AVProcsLock;	// œﬂ≥Ãæ‰±˙À¯	
+	COMMO_LOCK			DisplayLock;	//
+	COMMO_LOCK			SndplayLock;	//
 
 	AVFormatContext * 	hAVFmtContext;
 	AVOutputFormat  * 	hAVFmtOutput;
@@ -213,7 +217,6 @@ public:
 	char *				hAudioRecCaches;
 	int					aLen;			// 
 
-	//  ”∆µ ±º‰¥¡
 
 	long long		  	vCTS;			// µ±«∞ ±º‰¥¡
 	long long		  	vLTS;			// …œ¥Œ ±º‰¥¡
@@ -224,9 +227,6 @@ public:
 	long long		 	aPTS;			// ø™ º ±º‰¥¡ - µ±«∞÷° ±º‰¥¡
 	
 	long long		  	sSTS;			// ø™ º ±º‰¥¡
-
-
-	// À˜“˝
 
 	long long			vIdx;			//  ”∆µÀ˜“˝
 	long long			aIdx;			// “Ù∆µÀ˜“˝

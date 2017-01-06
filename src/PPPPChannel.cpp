@@ -316,6 +316,10 @@ connect:
 
 	hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,PPPP_STATUS_ON_LINE);
 
+	GET_LOCK(&hPC->SessionStatusLock);
+	hPC->SessionStatus = STATUS_SESSION_IDLE;
+	PUT_LOCK(&hPC->SessionStatusLock);
+
 	while(hPC->mediaLinking){
 		struct st_SInfo sInfo;
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
@@ -342,6 +346,10 @@ jumperr:
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
 	
 	Log3("MediaCoreProcess Exit.");
+
+	GET_LOCK(&hPC->SessionStatusLock);
+	hPC->SessionStatus = STATUS_SESSION_DIED;
+	PUT_LOCK(&hPC->SessionStatusLock);
 
 	return NULL;	
 }
@@ -1267,8 +1275,6 @@ static void * MediaExitProcess(
 	
 	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
 
-	GET_LOCK(&hPC->AVProcsLock);
-
 	Log3("stop media process on device by avapi cmd.");
 	hPC->SendAVAPICloseIOCtrl();
 
@@ -1289,7 +1295,9 @@ static void * MediaExitProcess(
 	hPC->audioRecvThread = (pthread_t)-1;
 	hPC->audioSendThread = (pthread_t)-1;
 
-	PUT_LOCK(&hPC->AVProcsLock);
+	GET_LOCK(&hPC->SessionStatusLock);
+	hPC->SessionStatus = STATUS_SESSION_IDLE;
+	PUT_LOCK(&hPC->SessionStatusLock);
 
 	pthread_exit(0);
 }
@@ -1375,9 +1383,12 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 	INT_LOCK(&AviDataLock);
 	INT_LOCK(&DisplayLock);
 	INT_LOCK(&SndplayLock);
-	INT_LOCK(&StartAVLock);
-	INT_LOCK(&AVProcsLock);
+	
+	INT_LOCK(&SessionStatusLock);
 
+	GET_LOCK(&SessionStatusLock);
+	SessionStatus = STATUS_SESSION_DIED;
+	DEL_LOCK(&SessionStatusLock);
 }
 
 CPPPPChannel::~CPPPPChannel()
@@ -1409,8 +1420,8 @@ CPPPPChannel::~CPPPPChannel()
 	DEL_LOCK(&AviDataLock);
 	DEL_LOCK(&DisplayLock);
 	DEL_LOCK(&SndplayLock);
-	DEL_LOCK(&StartAVLock);
-	DEL_LOCK(&AVProcsLock);
+
+	DEL_LOCK(&SessionStatusLock);
     
     Log3("start free class pppp channel:[4] close done.");
 }
@@ -1456,6 +1467,15 @@ int CPPPPChannel::Start()
 {   
     Log3("start pppp connection to device with uuid:[%s].\n",szDID);
 
+	GET_LOCK(&SessionStatusLock);
+	if(SessionStatus != STATUS_SESSION_DIED){
+		Log3("session status is:[%d],can't start pppp connection.\n",SessionStatus);
+		PUT_LOCK(&SessionStatusLock);
+		return -1;
+	}
+	SessionStatus = STATUS_SESSION_START;
+	PUT_LOCK(&SessionStatusLock);
+
 	StartMediaChannel();
 	
     return 0;
@@ -1463,6 +1483,10 @@ int CPPPPChannel::Start()
 
 void CPPPPChannel::Close()
 {
+	GET_LOCK(&SessionStatusLock);
+	SessionStatus = STATUS_SESSION_CLOSE;
+	PUT_LOCK(&SessionStatusLock);
+
 	mediaLinking = 0;
     
     PPPPClose();
@@ -1472,9 +1496,11 @@ void CPPPPChannel::Close()
 	if(mediaCoreThread != (pthread_t)-1){
 		pthread_join(mediaCoreThread,NULL);
 		mediaCoreThread = (pthread_t)-1;
+	}else{
+		GET_LOCK(&SessionStatusLock);
+		SessionStatus = STATUS_SESSION_DIED;
+		PUT_LOCK(&SessionStatusLock);
 	}
-
-//	CloseMediaThreads(); // already called by mediaCoreThread exit.
 }
 
 int CPPPPChannel::StartMediaChannel()
@@ -1608,8 +1634,6 @@ int CPPPPChannel::CloseWholeThreads()
 	videoPlaying = 0;
 	avExit = 0;
 
-	GET_LOCK(&AVProcsLock);
-
 	Log3("stop iocmd process.");
     if(iocmdSendThread != (pthread_t)-1) pthread_join(iocmdSendThread,NULL);
 	iocmdSendThread = (pthread_t)-1;
@@ -1633,18 +1657,20 @@ int CPPPPChannel::CloseWholeThreads()
 
 	Log3("stop media thread done.");
 
-	PUT_LOCK(&AVProcsLock);
-
 	return 0;
 
 }
 
 int CPPPPChannel::CloseMediaStreams(
 ){
-	while(TRY_LOCK(&StartAVLock) != 0){
-		Log3("start media process already running,wait for exit.");
+	GET_LOCK(&SessionStatusLock);
+	if(SessionStatus != STATUS_SESSION_PLAYING){
+		Log3("session status is:[%d],can't close living stream.\n",SessionStatus);
+		PUT_LOCK(&SessionStatusLock);
 		return -1;
 	}
+	SessionStatus = STATUS_SESSION_CLOSE_PLAY;
+	PUT_LOCK(&SessionStatusLock);
 
 	mediaEnabled = 0;
 	videoPlaying = 0;
@@ -1658,10 +1684,6 @@ int CPPPPChannel::CloseMediaStreams(
 	pthread_t tid;
 	pthread_create(&tid,NULL,MediaExitProcess,(void*)this);
 
-	CloseRecorder();
-
-	PUT_LOCK(&StartAVLock);
-
 	return 0;
 }
 	
@@ -1673,33 +1695,22 @@ int CPPPPChannel::StartMediaStreams(
 ){    
     //F_LOG;	
 	int ret = 0;
-    
+     
     if(SID < 0) return -1;
 
-	while(TRY_LOCK(&StartAVLock) != 0){
-		Log3("start or close media stream already running, wait for exit.");
-		return -1;
+	GET_LOCK(&SessionStatusLock);
+	if(SessionStatus != STATUS_SESSION_IDLE){
+		Log3("session status is:[%d],can't start living stream.\n",SessionStatus);
+		ret = SessionStatus;
+		PUT_LOCK(&SessionStatusLock);
+		goto jumperr;
 	}
+	SessionStatus = STATUS_SESSION_PLAYING;
+	PUT_LOCK(&SessionStatusLock);
 
 	Log3("media stream start here.");
 
 	mediaEnabled = 1;
-
-	if(TRY_LOCK(&AVProcsLock) != 0){
-		Log3("media stream process is busy.");
-		ret = -2;
-		goto jumpout;
-	}
-
-	if(videoRecvThread != (pthread_t)-1
-	|| videoPlayThread != (pthread_t)-1
-	|| audioRecvThread != (pthread_t)-1
-	|| audioSendThread != (pthread_t)-1
-	){
-		Log3("media stream thread still running, please call close first.");
-		ret = -3;
-		goto jumpout;
-	}
 
 	// pppp://usr:pwd@livingstream:[channel id]
 	// pppp://usr:pwd@replay/mnt/sdcard/replay/file
@@ -1721,11 +1732,10 @@ int CPPPPChannel::StartMediaStreams(
     StartVideoChannel();
 
 	ret = 0;
+
+	return 0;
 	
-	PUT_LOCK(&AVProcsLock);
-	
-jumpout:	
-	PUT_LOCK(&StartAVLock);
+jumperr:
 
 	return ret;
 }
