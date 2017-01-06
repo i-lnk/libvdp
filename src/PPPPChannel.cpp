@@ -1269,6 +1269,7 @@ static void * MediaExitProcess(
 
 	GET_LOCK(&hPC->AVProcsLock);
 
+	Log3("stop media process on device by avapi cmd.");
 	hPC->SendAVAPICloseIOCtrl();
 
 	Log3("stop video process.");
