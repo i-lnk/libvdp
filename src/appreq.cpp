@@ -111,7 +111,7 @@ char * GetCgiParam(
 	int DataLens = Base64Decode(lpBegin,To,CopyLens,ToBufferSize);
 	if(DataLens < 0) return NULL;
 
-	Log3("[%s%s]",Begin,To);
+//	Log3("[%s%s]",Begin,To);
 	
 //	memcpy(To,lpBegin,CopyLens);
 
@@ -297,7 +297,7 @@ int SetStreamCtrl(
 	sMsg.channel = atoi(szChannel) > 2 ? 0 : atoi(szChannel);
 	sMsg.quality = atoi(szQuality);
 
-	Log3("tutk cmd set stream channel:[%d] quality:[%d].\n",sMsg.channel,sMsg.quality);
+//	Log3("tutk cmd set stream channel:[%d] quality:[%d].\n",sMsg.channel,sMsg.quality);
 
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }

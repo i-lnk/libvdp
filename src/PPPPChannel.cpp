@@ -24,11 +24,11 @@
 
 #define ENABLE_AEC
 //#ifdef PLATFORM_ANDROID
-#define ENABLE_AGC
+//#define ENABLE_AGC
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
 //#endif
-//#define ENABLE_VAD
+#define ENABLE_VAD
 
 #ifdef PLATFORM_ANDROID
 
@@ -406,7 +406,7 @@ void * IOCmdSendProcess(
 						break;
 					}
 
-					Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
+//					Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
 
 					if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
 						usleep(1000); continue;
@@ -1019,8 +1019,8 @@ tryagain:
 
 	hPC->spIdx = spIdx;
 	
-	avServResetBuffer(spIdx,RESET_ALL,0);
-	avServSetResendSize(spIdx,512);
+//	avServResetBuffer(spIdx,RESET_ALL,0);
+//	avServSetResendSize(spIdx,512);
 
 #ifdef ENABLE_AEC
 	void * hAEC = audio_echo_cancellation_init(3,8000);
@@ -1116,7 +1116,7 @@ tryagain:
 #ifdef ENABLE_VAD
 		int logration = audio_vad_proc(hVad,WritePtr,80);
 
-        if(logration < 256){
+        if(logration < 128){
 //			Log3("audio detect vad actived:[%d].\n",logration);
 			nVadFrames ++;
 		}
@@ -1129,6 +1129,7 @@ tryagain:
 			continue;
 		}
 
+#ifdef ENABLE_VAD
 		if(nVadFrames == nBytesNeed/AEC_CACHE_LEN){
 //			Log3("audio detect vad actived.\n");
             hAV->len = 0;
@@ -1138,6 +1139,7 @@ tryagain:
 		}
 
 		nVadFrames = 0;
+#endif
 
 		ret = audio_enc_process(hCodec,hAV->d,hAV->len,hCodecFrame,sizeof(hCodecFrame));
 		if(ret < 2){
@@ -1147,14 +1149,14 @@ tryagain:
 			continue;
 		}
 		
-		struct timeval tv = {0,0};
-		gettimeofday(&tv,NULL);
+//		struct timeval tv = {0,0};
+//		gettimeofday(&tv,NULL);
 
 		FRAMEINFO_t frameInfo;
 		memset(&frameInfo, 0, sizeof(frameInfo));
 		frameInfo.codec_id = hPC->AudioSendFormat;
 		frameInfo.flags = (AUDIO_SAMPLE_8K << 2) | (AUDIO_DATABITS_16 << 1) | AUDIO_CHANNEL_MONO;
-		frameInfo.timestamp = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+//		frameInfo.timestamp = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
         frameInfo.reserve2 = ret;
 
 		ret = avSendAudioData(spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
