@@ -949,7 +949,7 @@ jumperr:
 
 static void * AudioSendProcess(
 	void * hVoid
-){    
+){
 	SET_THREAD_NAME("AudioSendProcess");
 
 	Log2("current thread id is:[%d].",gettid());
@@ -1115,11 +1115,8 @@ tryagain:
 
 #ifdef ENABLE_VAD
 		int logration = audio_vad_proc(hVad,WritePtr,80);
-#ifdef PLATFORM_ANDROID
-		if(logration < 512){
-#else
+
         if(logration < 256){
-#endif
 //			Log3("audio detect vad actived:[%d].\n",logration);
 			nVadFrames ++;
 		}
@@ -1396,7 +1393,7 @@ CPPPPChannel::~CPPPPChannel()
     Log3("start free class pppp channel:[0] start.");
     Log3("start free class pppp channel:[1] close p2p connection and threads.");
     
-    Close();
+    Close();  
     
     Log3("start free class pppp channel:[2] free buffer.");
 
