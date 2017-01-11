@@ -1388,7 +1388,7 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 
 	GET_LOCK(&SessionStatusLock);
 	SessionStatus = STATUS_SESSION_DIED;
-	DEL_LOCK(&SessionStatusLock);
+	PUT_LOCK(&SessionStatusLock);
 }
 
 CPPPPChannel::~CPPPPChannel()
