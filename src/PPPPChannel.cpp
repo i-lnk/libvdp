@@ -24,7 +24,7 @@
 
 #define ENABLE_AEC
 //#ifdef PLATFORM_ANDROID
-//#define ENABLE_AGC
+#define ENABLE_AGC
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
 //#endif
