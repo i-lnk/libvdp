@@ -257,8 +257,8 @@ connect:
 
 	Log3("[3:%s]=====>start av client service with user:[%s] pass:[%s].\n", hPC->szDID, hPC->szUsr, hPC->szPwd);
 
-	if(strlen(hPC->szUsr) == 0 || strlen(hPC->szPwd) == 0
-	){
+	if(strlen(hPC->szUsr) == 0 || strlen(hPC->szPwd) == 0){
+        
 		hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_NOT_LOGIN);
 		
 		IOTC_Connect_Stop_BySID(hPC->SID);

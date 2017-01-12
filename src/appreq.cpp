@@ -834,6 +834,21 @@ int GetUpdateProgress(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+int GetCapacity(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlGetCapacityReq sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -875,6 +890,7 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ,Cfg433DevExit},	// ÕÀ≥ˆ 433 …Ë±∏≈‰∂‘
     {IOTYPE_USER_IPCAM_UPDATE_REQ,SetUpdateUrl},
     {IOTYPE_USER_IPCAM_UPDATE_PROG_REQ,GetUpdateProgress},
+    {IOTYPE_USER_IPCAM_GET_CAPACITY_REQ,GetCapacity},
 	{0,NULL}
 };
 

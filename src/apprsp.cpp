@@ -510,6 +510,28 @@ int             JsonBufferSize
     return 0;
 }
 
+int GetCapacityResp2JSON(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlGetCapacityResp * hRQ = (SMsgAVIoctrlGetCapacityResp *)Msg;
+    
+    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\"}",
+            "devType",hRQ->devType,
+            "version",hRQ->version,
+            "model",hRQ->model,
+            "language",hRQ->language
+            );
+    
+    return 0;
+}
+
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUIDResp2JSON},
 {IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPasswordResp2JSON},
@@ -543,6 +565,7 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_GET_433_RESP,Get433ListResp2JSON},
 {IOTYPE_USER_IPCAM_UPDATE_RESP,GetUpdateResp2JSON},
 {IOTYPE_USER_IPCAM_UPDATE_PROG_RESP,GetUpdateProgressResp2JSON},
+{IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacityResp2JSON},
 {0,NULL}
 };
 

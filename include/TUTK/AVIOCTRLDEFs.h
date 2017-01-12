@@ -223,6 +223,9 @@ typedef enum
 	IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ			= 0x870,	// ÕÀ≥ˆ 433 …Ë±∏≈‰∂‘
 	IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP			= 0x871,	// ÕÀ≥ˆ 433 …Ë±∏≈‰∂‘”¶¥
     
+    IOTYPE_USER_IPCAM_GET_CAPACITY_REQ          = 0x880,
+    IOTYPE_USER_IPCAM_GET_CAPACITY_RESP         = 0x881,
+    
     IOTYPE_USER_IPCAM_UPDATE_REQ                = 0x88a,
     IOTYPE_USER_IPCAM_UPDATE_RESP               = 0x88b,
     IOTYPE_USER_IPCAM_UPDATE_PROG_REQ           = 0x88c,
@@ -468,13 +471,36 @@ typedef struct{
 	char		uuid[64];	// …Ë±∏P2PID
 }SMsgAVIoctrlSetUUIDReq,SMsgAVIoctrlSetUUIDResp;
 
+typedef struct{
+    unsigned char 	devType;			// 设备类型: 0-卡片机, 1-摇头机, 2-鱼眼摄像机...
+    unsigned char 	netFamily;			// 网络提供商: 1-迈特威视, 2-tutk...
+    unsigned char 	serverID;			// 服务器ID: 保留,默认为0
+    unsigned char 	language;			// 设备固件语言版本: 0为自动适应(即多语言),1为简体中文,2为繁体中文,3为英文
+    unsigned int 	odmID;				// odm商ID: 0-东舜自己, 01-TCL, 02-康佳
+    char 			hid[32];			// 设备序列号
+    char 			videoCodec[8];		// 视频编码: 采用小写, 如: "h264", "h265"
+    char 			audioCodec[8];		// 音频编码: 采用小写, 如: "aac", "mp3", "711a", "711u", "pcm"
+    unsigned int 	audioSampleRate;	// 音频采样: 8000,16000
+    unsigned int 	audioChannelNum;	// 音频通道: 1-单通, 2-双通道
+    unsigned int 	audioBitsPerSample;	// 音频bits: 8, 16
+    unsigned char 	suportPTZ;			// 支持ptz控制: 支持为1,不支持为0
+    unsigned char 	suportAudioIn;		// 支持音频采集: 支持为1,不支持为0
+    unsigned char 	suportAudioOut;		// 支持声音播放: 支持为1,不支持为0
+    unsigned char 	suportStorage;		// 支持存储: 支持为1,不支持为0
+    unsigned int 	panoramaMode;		// 全景安装模式: 0-吸顶式,1-壁挂式
+    char 			version[16];		// 版本号:  采用编译日期201612121816(年月日时分)
+    char 			model[16];			// 产品规格型号
+    char 			reserve2[48];		// 保留2
+}SMsgAVIoctrlGetCapacityResp;
+
 //
 // Õ®”√”¶¥ ˝æ›Ω·ππ
 //
 typedef struct{
 	int result;	// 0: success; otherwise: failed.
 	unsigned char reserved[4];
-}SMsgAVIoctrlGetMDPReq,SMsgAVIoctrlSetMDPResp,
+}SMsgAVIoctrlGetCapacityReq,
+SMsgAVIoctrlGetMDPReq,SMsgAVIoctrlSetMDPResp,
 SMsgAVIoctrlSetPushResp,SMsgAVIoctrlDelPushResp,
 SMsgAVIoctrlAlarmingResp,
 SMsgAVIoctrlDoorOpenResp,SMsgAVIoctrlDoorPassResp,
