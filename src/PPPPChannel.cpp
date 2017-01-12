@@ -400,7 +400,7 @@ void * IOCmdSendProcess(
 					usleep(1000);
 				}
 				
-				while(1){
+				while(hPC->iocmdSending){
 					ret = SendCmds(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hPC);
 					if(ret == 0){
 						break;
