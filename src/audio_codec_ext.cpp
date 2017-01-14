@@ -83,8 +83,8 @@ void * audio_agc_init(
 ){
 	WebRtcAgcConfig agcConfig;
 	agcConfig.compressionGaindB = gain;
-	agcConfig.limiterEnable = 1;
-	agcConfig.targetLevelDbfs = 2;
+	agcConfig.limiterEnable = kAgcTrue;
+	agcConfig.targetLevelDbfs = 3;
 	
 	void * hAgc = WebRtcAgc_Create();
 	if(hAgc == NULL){
@@ -205,7 +205,7 @@ void * audio_echo_cancellation_init(
 ){
 	AecmConfig config;
 	config.cngMode = true;
-	config.echoMode = 3;
+	config.echoMode = echoMode;
 
 	void * hAEC = WebRtcAecm_Create();
 	

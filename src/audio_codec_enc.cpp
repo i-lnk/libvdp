@@ -83,10 +83,10 @@ void * audio_enc_init(
 				return NULL;
 			}
 
-			opus_encoder_ctl(hOpusEnc, OPUS_SET_BITRATE(16000));
-			opus_encoder_ctl(hOpusEnc, OPUS_SET_BANDWIDTH(OPUS_BANDWIDTH_WIDEBAND));
+			opus_encoder_ctl(hOpusEnc, OPUS_SET_BITRATE(12000));
+//			opus_encoder_ctl(hOpusEnc, OPUS_SET_BANDWIDTH(OPUS_BANDWIDTH_WIDEBAND));
 			opus_encoder_ctl(hOpusEnc, OPUS_SET_SIGNAL(OPUS_SIGNAL_VOICE)); 
-    		opus_encoder_ctl(hOpusEnc, OPUS_SET_COMPLEXITY(5));
+    		opus_encoder_ctl(hOpusEnc, OPUS_SET_COMPLEXITY(3));
     		opus_encoder_ctl(hOpusEnc, OPUS_SET_INBAND_FEC(0)); 
 //  		opus_encoder_ctl(hOpusEnc, OPUS_SET_DTX(0));  
 //  		opus_encoder_ctl(hOpusEnc, OPUS_SET_PACKET_LOSS_PERC(0));  

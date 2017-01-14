@@ -29,6 +29,7 @@
 #define ENABLE_NSX_O
 //#endif
 #define ENABLE_VAD
+//#define ENABLE_DEBUG
 
 #ifdef PLATFORM_ANDROID
 
@@ -925,10 +926,12 @@ static void * AudioRecvProcess(
 #ifdef ENABLE_AGC
 			audio_agc_proc(hAgc,&Codec[160*i]);
 #endif
+			hPC->hAudioBuffer->Write(&Codec[160*i],160); // for audio avi record
+			hPC->hSoundBuffer->Write(&Codec[160*i],160); // for audio player callback
 		}
 
-		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
-		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
+//		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
+//		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
 	}
 
 #ifdef ENABLE_AGC
@@ -1001,8 +1004,8 @@ tryagain:
 	hPC->speakerChannel = speakerChannel;
 
 	Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
-//	spIdx = avServStart(hPC->SID, NULL, NULL,  5, 0, speakerChannel);
-	spIdx = avServStart3(hPC->SID, NULL, 5, 0, speakerChannel, &resend);
+	spIdx = avServStart(hPC->SID, NULL, NULL,  5, 0, speakerChannel);
+//	spIdx = avServStart3(hPC->SID, NULL, 5, 0, speakerChannel, &resend);
 
 	if(spIdx == AV_ER_TIMEOUT){
 		Log3("tutk start audio send process timeout, try again.");
@@ -1021,6 +1024,13 @@ tryagain:
 	
 //	avServResetBuffer(spIdx,RESET_ALL,0);
 //	avServSetResendSize(spIdx,512);
+
+#ifdef ENABLE_DEBUG
+	FILE * hOut = fopen("/mnt/sdcard/vdp-output.raw","wb");
+	if(hOut == NULL){
+		Log3("initialize audio output file failed.\n");
+	}
+#endif
 
 #ifdef ENABLE_AEC
 	void * hAEC = audio_echo_cancellation_init(3,8000);
@@ -1079,6 +1089,7 @@ tryagain:
 		if(hPC->hAudioGetList->CheckData() != 1
 		|| hPC->hAudioPutList->CheckData() != 1
 		){
+			usleep(10);
 			continue;
 		}
 
@@ -1087,11 +1098,13 @@ tryagain:
 
 		if(hCapture == NULL || hSpeaker == NULL){
             Log3("audio data lost...");
+			usleep(10);
 			continue;
 		}
 
 		if(hPC->voiceEnabled != 1){
-			usleep(1000); continue;
+			usleep(10); 
+			continue;
 		}
 
 #ifdef ENABLE_AEC
@@ -1116,9 +1129,11 @@ tryagain:
 #ifdef ENABLE_VAD
 		int logration = audio_vad_proc(hVad,WritePtr,80);
 
-        if(logration < 128){
+        if(logration < 1024){
 //			Log3("audio detect vad actived:[%d].\n",logration);
 			nVadFrames ++;
+		}else{
+			nVadFrames = 0;
 		}
 #endif
 
@@ -1129,16 +1144,18 @@ tryagain:
 			continue;
 		}
 
+#ifdef ENABLE_DEBUG
+		fwrite(hAV->d,hAV->len,1,hOut);
+#endif
+
+
 #ifdef ENABLE_VAD
-		if(nVadFrames == nBytesNeed/AEC_CACHE_LEN){
-//			Log3("audio detect vad actived.\n");
+		if(nVadFrames > 300){
+			Log3("audio detect vad actived.\n");
             hAV->len = 0;
             WritePtr = hAV->d;
-            nVadFrames = 0;
             continue;
 		}
-
-		nVadFrames = 0;
 #endif
 
 		ret = audio_enc_process(hCodec,hAV->d,hAV->len,hCodecFrame,sizeof(hCodecFrame));
@@ -1194,6 +1211,11 @@ tryagain:
 #ifdef ENABLE_VAD
 	audio_vad_free(hVad);
 #endif
+
+#ifdef ENABLE_DEBUG
+	if(hOut) fclose(hOut); hOut = NULL;
+#endif
+
 
 	PUT_LOCK(&OpenSLLock);
 	

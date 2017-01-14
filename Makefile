@@ -27,7 +27,7 @@ CFLAGS_EXTRA +=
 CROSS = $(ARM_PREBUILT)/bin/arm-linux-androideabi-
 CC = g++ --sysroot=$(SYSROOT)
 
-ANDROID_CFLAGS = -Os -msoft-float -fPIC -mthumb-interwork \
+ANDROID_CFLAGS = -O2 -msoft-float -fPIC -mthumb-interwork \
 	-DX264_VERSION -DANDROID -DPLATFORM_ANDROID -DHAVE_PTHREAD \
 	-I$(CYGWIN_BASE)/$(ARM_PLATFORM)/usr/include \
 	-I$(INCPATH)/ffmpeg \
