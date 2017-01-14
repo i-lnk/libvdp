@@ -34,7 +34,7 @@ CSearchDVS::CSearchDVS()
 	T_SOCK_ATTR sets[MAX_SOCK] = {
 		{BROADCAST_RECV_PORT0,SOCK_DGRAM ,1},	// for broadcast by goke
 		{BROADCAST_RECV_PORT1,SOCK_DGRAM ,1},	// for broadcast by goke
-		{1025,SOCK_STREAM,0},					// for cooee tcp connection by ov788
+		{1025,SOCK_DGRAM,1},					// for cooee udp connection by ov788
 	};
 
 	memcpy(sockattrs,sets,sizeof(sets));
