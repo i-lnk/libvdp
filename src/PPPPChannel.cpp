@@ -494,10 +494,18 @@ void * IOCmdRecvProcess(
                 char sTYPE[16] = {0};
                 
                 const char * wday[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-                struct tm * p;
+                struct tm stm;
+                struct tm * p = &stm;
                 
                 sprintf(sTYPE,"%d",hRQ->AlarmType);
-                p = localtime((const time_t *)&hRQ->AlarmTime); //
+                
+                p = localtime_r((const time_t *)&hRQ->AlarmTime,&stm); //
+                if(p == NULL){
+                    time_t t;
+                    time(&t);
+                    p = localtime_r(&t,&stm);
+                }
+                
                 sprintf(sTIME,
                         "%04d-%02d-%02d-%s-%02d-%02d-%02d",
                         1900+p->tm_year,
