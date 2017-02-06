@@ -406,6 +406,8 @@ static SLresult openSLRecordOpen(OPENXL_STREAM *p){
 #include <CoreAudio/CoreAudioTypes.h>
 #include <AVFoundation/AVFoundation.h>
 
+static NSTimeInterval bufferDuration = 0;
+
 static OSStatus recordCallback(void *inRefCon,
                                   AudioUnitRenderActionFlags *ioActionFlags,
                                   const AudioTimeStamp *inTimeStamp,
@@ -590,6 +592,7 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     p->hAUInst = (void *)malloc(sizeof(AudioComponentInstance));
     
     NSError * error = nil;
+    bool done = false;
     
     [sesInstance setActive:YES error:&error];
     if(error)
@@ -630,7 +633,6 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
         return -1;
     }
-    */
     
     [sesInstance setPreferredSampleRate:p->sr error:&error];
     if(error)
@@ -639,13 +641,31 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         return -1;
     }
     
-    Log3("AVAudioSession set sample rate as:[%f]",[sesInstance sampleRate]);
+    Log3("AVAudioSession set sample rate as:[%d] but ret:[%f]",
+         p->sr,
+         [sesInstance sampleRate]);
     
-    NSTimeInterval bufferDuration = 16/[sesInstance sampleRate];
-    [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
+    */
     
-    Log3("AVAudioSession get sample each time is:[%f] duration is:[%f]",
+    done = [sesInstance setPreferredIOBufferDuration:0.0 error:&error];
+    
+    Log3("AVAudioSession get sample each time is:[%f] duration set is:[%f]",
          [sesInstance IOBufferDuration] * [sesInstance sampleRate],
+         [sesInstance IOBufferDuration]);
+    
+    int frmlens = [sesInstance IOBufferDuration] * [sesInstance sampleRate];
+    int div = frmlens / 128;
+    bufferDuration = [sesInstance IOBufferDuration] / div;
+    
+    done = [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
+    
+    if(!done){
+        Log3("setPreferredIOBufferDuration failed.\n");
+    }
+    
+    Log3("AVAudioSession get sample each time is:[%f] duration set is:[%f] active is:[%f]",
+         [sesInstance IOBufferDuration] * [sesInstance sampleRate],
+         bufferDuration,
          [sesInstance IOBufferDuration]);
     
     if(error)
