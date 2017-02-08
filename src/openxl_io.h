@@ -115,6 +115,8 @@ typedef struct openxl_stream {
     int         iBufferIndex;
 
 } OPENXL_STREAM;
+    
+void InitOpenXL();
 
   /*
   Open the audio device with a given sampling rate (sr), input and output channels and IO buffer size

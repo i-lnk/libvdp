@@ -45,6 +45,8 @@ CPPPPChannelManagement::CPPPPChannelManagement()
 	INT_LOCK( &PPPPChannelLock );
 	INT_LOCK( &PPPPCommandLock );
 	INT_LOCK( &AudioLock );
+    
+    InitOpenXL();
 }
 
 CPPPPChannelManagement::~CPPPPChannelManagement()

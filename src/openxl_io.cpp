@@ -421,7 +421,7 @@ static OSStatus recordCallback(void *inRefCon,
     
     AudioBufferList bufferArray;
     bufferArray.mNumberBuffers = 1;
-    bufferArray.mBuffers[0].mDataByteSize = sizeof(short)*inNumberFrames;
+    bufferArray.mBuffers[0].mDataByteSize = 1024;
     bufferArray.mBuffers[0].mNumberChannels = 1;
     bufferArray.mBuffers[0].mData = PCM;
     
@@ -434,7 +434,10 @@ static OSStatus recordCallback(void *inRefCon,
                              &bufferArray);
     
     hOS->cbr(PCM,sizeof(short)*inNumberFrames,hOS);
-//    Log3("audio unit record frame lens:[%d].",(int)(sizeof(short)*inNumberFrames));
+    Log3("audio unit record frame lens:[%d][%d].",
+         (int)(sizeof(short)*inNumberFrames),
+         (int)bufferArray.mBuffers[0].mDataByteSize
+         );
     
     return noErr;
 }
@@ -594,85 +597,36 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     NSError * error = nil;
     bool done = false;
     
-    [sesInstance setActive:YES error:&error];
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
-        return -1;
-    }
-
     // we are going to play and record so we pick that categor
-    [sesInstance setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:(AVAudioSessionCategoryOptionDefaultToSpeaker | AVAudioSessionCategoryOptionAllowBluetooth) error:&error];
+    [sesInstance setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:&error];
+//  [sesInstance setCategory:AVAudioSessionCategoryPlayback error:&error];
     
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+    if(error){
+        Log3("AVAudioSession get fucking error:[%ld]",(long)error.code);
         return -1;
     }
     
-    [sesInstance setMode:AVAudioSessionModeDefault error:&error];
-//    [sesInstance setMode:AVAudioSessionModeVideoChat error:&error];
+//  [sesInstance overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
+//  [sesInstance setMode:AVAudioSessionModeDefault error:&error];
     
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+    if(error){
+        Log3("AVAudioSession get fucking error:[%ld]",(long)error.code);
         return -1;
     }
     
-    /*
-    [sesInstance overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
+    done = [sesInstance setPreferredIOBufferDuration:0.004 error:&error];
+    done = [sesInstance setPreferredSampleRate:8000.0 error:&error];
+    
+    [sesInstance setActive:YES error:&error];
+    if(error){
+        Log3("AVAudioSession get fucking error:[%ld]",(long)error.code);
         return -1;
     }
     
-    [sesInstance setInputGain:0.2 error:&error];
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
-        return -1;
-    }
-    
-    [sesInstance setPreferredSampleRate:p->sr error:&error];
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
-        return -1;
-    }
-    
-    Log3("AVAudioSession set sample rate as:[%d] but ret:[%f]",
-         p->sr,
-         [sesInstance sampleRate]);
-    
-    */
-    
-    done = [sesInstance setPreferredIOBufferDuration:0.0 error:&error];
-    
-    Log3("AVAudioSession get sample each time is:[%f] duration set is:[%f]",
-         [sesInstance IOBufferDuration] * [sesInstance sampleRate],
-         [sesInstance IOBufferDuration]);
-    
-    int frmlens = [sesInstance IOBufferDuration] * [sesInstance sampleRate];
-    int div = frmlens / 128;
-    bufferDuration = [sesInstance IOBufferDuration] / div;
-    
-    done = [sesInstance setPreferredIOBufferDuration:bufferDuration error:&error];
-    
-    if(!done){
-        Log3("setPreferredIOBufferDuration failed.\n");
-    }
-    
-    Log3("AVAudioSession get sample each time is:[%f] duration set is:[%f] active is:[%f]",
-         [sesInstance IOBufferDuration] * [sesInstance sampleRate],
-         bufferDuration,
-         [sesInstance IOBufferDuration]);
-    
-    if(error)
-    if(error.code != 0){
-        Log3("AVAudioSession get funking error:[%ld]",(long)error.code);
-        return -1;
-    }
+    Log3("AVAudioSession sample is:[%0.0f] duration set is:[%f]",
+         [sesInstance sampleRate],
+         [sesInstance IOBufferDuration]
+         );
     
     return 0;
 }
@@ -703,7 +657,7 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     AudioComponentDescription desc;
     desc.componentType          = kAudioUnitType_Output;
     desc.componentSubType       = kAudioUnitSubType_RemoteIO;
-//    desc.componentSubType       = kAudioUnitSubType_VoiceProcessingIO;
+//  desc.componentSubType       = kAudioUnitSubType_VoiceProcessingIO;
     desc.componentFlags         = 0;
     desc.componentFlagsMask     = 0;
     desc.componentManufacturer  = kAudioUnitManufacturer_Apple;
@@ -725,7 +679,6 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     p->outputSize = 0;
     p->recordSize = 0;
 
-    
     err = AudioComponentInstanceNew(inputComponent,hInst);
     if(err != 0){
         Log3("audio unit instance create failed:[%d].",err);
@@ -785,10 +738,26 @@ static int audioUnitDestroyEngine(OPENXL_STREAM * p){
     p->recordBuffer = NULL;
     p->hAUInst = NULL;
     
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
+    [session setActive:YES error:nil];
+    
     return 0;
 }
 
 #endif
+
+void InitOpenXL(){
+#ifdef PLATFORM_ANDROID
+    
+#else
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+    [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
+    [session setActive:YES error:nil];
+#endif
+}
 
 // open the android audio device for input and/or output
 OPENXL_STREAM * InitOpenXLStream(

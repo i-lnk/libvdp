@@ -23,12 +23,13 @@
 #include "apprsp.h"
 
 #define ENABLE_AEC
-//#ifdef PLATFORM_ANDROID
 #define ENABLE_AGC
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
-//#endif
+
+#ifdef PLATFORM_ANDROID
 #define ENABLE_VAD
+#endif
 //#define ENABLE_DEBUG
 
 #ifdef PLATFORM_ANDROID
@@ -616,7 +617,6 @@ static void * VideoPlayProcess(
 
 		// put h264 yuv data to java layer
 		GET_LOCK(&g_CallbackContextLock);	
-
 
 		// for yuv draw process
 		hEnv->CallVoidMethod(
