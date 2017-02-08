@@ -150,9 +150,7 @@ static void recordCallback(char * data, int lens, void *context){
     if(p->recordSize >= AEC_CACHE_LEN){
         hPC->hAudioGetList->Write((short*)pr,GetAudioTime());
         p->recordSize -= AEC_CACHE_LEN;
-        memcpy(pr,
-               pr + p->recordSize,
-               p->recordSize);
+        memcpy(pr,pr + AEC_CACHE_LEN,p->recordSize);
     }
 }
 
@@ -181,7 +179,7 @@ static void playerCallback(char * data, int lens, void *context){
         hPC->hAudioPutList->Write((short*)po,GetAudioTime());
         p->outputSize -= AEC_CACHE_LEN;
         memcpy(po,
-               po + p->outputSize,
+               po + AEC_CACHE_LEN,
                p->outputSize);
     }
 }

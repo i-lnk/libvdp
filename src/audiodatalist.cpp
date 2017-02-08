@@ -101,6 +101,7 @@ void CAudioDataList::Write(short *data,unsigned long time)
 			}
 			m_write->buf[i] = data[i];
 		}
+        //memcpy(m_write->buf,data,MIN_PCM_AUDIO_SIZE);
 		m_write->time= time;
 		m_write->state = 1;
 		m_write = m_write->next;   

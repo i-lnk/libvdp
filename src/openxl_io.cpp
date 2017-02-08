@@ -434,11 +434,13 @@ static OSStatus recordCallback(void *inRefCon,
                              &bufferArray);
     
     hOS->cbr(PCM,sizeof(short)*inNumberFrames,hOS);
+    
+    /*
     Log3("audio unit record frame lens:[%d][%d].",
          (int)(sizeof(short)*inNumberFrames),
          (int)bufferArray.mBuffers[0].mDataByteSize
          );
-    
+    */
     return noErr;
 }
 
@@ -614,7 +616,7 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         return -1;
     }
     
-    done = [sesInstance setPreferredIOBufferDuration:0.004 error:&error];
+    done = [sesInstance setPreferredIOBufferDuration:0.008 error:&error];
     done = [sesInstance setPreferredSampleRate:8000.0 error:&error];
     
     [sesInstance setActive:YES error:&error];
