@@ -26,9 +26,9 @@
 #define ENABLE_AGC
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
+#define ENABLE_VAD
 
 #ifdef PLATFORM_ANDROID
-#define ENABLE_VAD
 #endif
 //#define ENABLE_DEBUG
 
