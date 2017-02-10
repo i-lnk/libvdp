@@ -211,6 +211,7 @@ void * MeidaCoreProcess(
 #endif
 
 	int resend = 0;
+	int wakeup_times = 5;
 
 	hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
 
@@ -246,6 +247,13 @@ connect:
 				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_EXCEED_SESSION);
 				goto jumperr;
 			case IOTC_ER_DEVICE_OFFLINE:
+				if(wakeup_times--){
+					if(IOTC_WakeUp_WakeDevice(hPC->szDID) < 0){
+						Log3("[2:%s]=====>device not support wakeup function.\n",hPC->szDID);
+					}else{
+						goto connect;
+					}
+				}
 			case IOTC_ER_DEVICE_NOT_LISTENING:
 				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_NOT_ON_LINE);
 				goto jumperr;
