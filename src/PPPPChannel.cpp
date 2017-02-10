@@ -14,6 +14,7 @@
 #include "PPPPChannel.h"  
 
 #include "IOTCAPIs.h"
+#include "IOTCWakeUp.h"
 #include "AVAPIs.h"
 #include "AVFRAMEINFO.h"
 #include "AVIOCTRLDEFs.h"
