@@ -212,11 +212,12 @@ void * MeidaCoreProcess(
 #endif
 
 	int resend = 0;
-	int wakeup_times = 5;
-
-	hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
+	int wakeup_times = 20;
+    int online_times = 5;
 
 connect:
+    hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
+    
 	hPC->speakerChannel = -1;
 	hPC->avstremChannel =  0;
 	
@@ -247,14 +248,26 @@ connect:
 			case IOTC_ER_DEVICE_EXCEED_MAX_SESSION:
 				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_EXCEED_SESSION);
 				goto jumperr;
+            case IOTC_ER_DEVICE_IS_SLEEP:
+                if(wakeup_times-- && hPC->deviceStandby){
+                    Log3("[2:%s]=====>device is in sleep mode.",hPC->szDID);
+                    if(IOTC_WakeUp_WakeDevice(hPC->szDID) < 0){
+                        Log3("[2:%s]=====>device not support wakeup function.\n",hPC->szDID);
+                    }else{
+                        IOTC_Session_Close(hPC->sessionID);
+                        goto connect;
+                    }
+                }
+                hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
+                hPC->deviceStandby = 1;
+                goto jumperr;
 			case IOTC_ER_DEVICE_OFFLINE:
-				if(wakeup_times--){
-					if(IOTC_WakeUp_WakeDevice(hPC->szDID) < 0){
-						Log3("[2:%s]=====>device not support wakeup function.\n",hPC->szDID);
-					}else{
-						goto connect;
-					}
-				}
+                if(online_times--){
+                    Log3("[2:%s]=====>device not online,ask again.\n",hPC->szDID);
+                    IOTC_Session_Close(hPC->sessionID);
+                    sleep(1);
+                    goto connect;
+                }
 			case IOTC_ER_DEVICE_NOT_LISTENING:
 				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_NOT_ON_LINE);
 				goto jumperr;
@@ -263,6 +276,8 @@ connect:
 				goto jumperr;
 		}
 	}
+    
+    hPC->deviceStandby = 0; // wakeup successful.
 
 	Log3("[3:%s]=====>start av client service with user:[%s] pass:[%s].\n", hPC->szDID, hPC->szUsr, hPC->szPwd);
 
@@ -1762,9 +1777,9 @@ int CPPPPChannel::StartMediaStreams(
 		memcpy(szURL,url,strlen(url));
 	}
 
-	Log2("channel init audio proc.");
+	Log3("channel init audio proc.");
 	StartAudioChannel();
-	Log2("channel init video proc.");
+	Log3("channel init video proc.");
     StartVideoChannel();
 
 	ret = 0;

@@ -32,8 +32,8 @@ CSearchDVS::CSearchDVS()
 	}
 
 	T_SOCK_ATTR sets[MAX_SOCK] = {
-		{BROADCAST_RECV_PORT0,SOCK_DGRAM ,1},	// for broadcast by goke
-		{BROADCAST_RECV_PORT1,SOCK_DGRAM ,1},	// for broadcast by goke
+		{BROADCAST_RECV_PORT0,SOCK_DGRAM,1},	// for broadcast by goke
+		{BROADCAST_RECV_PORT1,SOCK_DGRAM,1},	// for broadcast by goke
 		{1025,SOCK_DGRAM,1},					// for cooee udp connection by ov788
 	};
 
@@ -50,9 +50,8 @@ void CSearchDVS::CloseSocket()
 {
 	for(int i = 0;i < MAX_SOCK;i++){
 		if(socks[i] < 0) continue;
-
-		shutdown(socks[i], SHUT_RDWR);
 		close(socks[i]);
+//      shutdown(socks[i], SHUT_RDWR);
 		socks[i] = -1;
 	}
 }
@@ -107,7 +106,7 @@ int CSearchDVS::Open(char *ssid,char *psd)
 			listen(socks[i],8);
 		}
 
-		Log3("==========>>>> open device find socket:[%d].\n",socks[i]);
+		Log3("==========>>>> open device find socket:[%d] port:[%d].\n",socks[i],sockattrs[i].sock_port);
 	}
 
     m_bRecvThreadRuning = 1;
@@ -150,10 +149,9 @@ void CSearchDVS::Close()
 	}
 }
 
-//Ïòdvs·¢ËÍËÑË÷ÃüÁî
 int CSearchDVS::SearchDVS()
 {  
-	struct sockaddr_in servAddr;
+	struct sockaddr_in servAddr[2];
 
 	PHONE_INFO phone_info;
 	memset(&phone_info,0,sizeof(phone_info));
@@ -163,30 +161,32 @@ int CSearchDVS::SearchDVS()
 	Log3("Check WIFI's Name Is:%s",phone_info.ssid);
 	SEARCH_CMD	searchCmd = {STARTCODE,CMD_PHONE_SEARCH,phone_info};
 
-	memset(&servAddr, 0, sizeof(servAddr));
+	memset(servAddr, 0, sizeof(struct sockaddr_in)*2);
 
-	int nbytesSend = -1;
+	ssize_t nbytesSend = -1;
 	
-	servAddr.sin_family = AF_INET;
-	servAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-	servAddr.sin_port = htons(BROADCAST_SEND_PORT0);
-	
-	nbytesSend = sendto(socks[0], &searchCmd, sizeof(searchCmd), 0, (sockaddr *)&servAddr, sizeof(servAddr)); 
+	servAddr[0].sin_family = AF_INET;
+	servAddr[0].sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	servAddr[0].sin_port = htons(BROADCAST_SEND_PORT0);
+    
+    servAddr[1].sin_family = AF_INET;
+    servAddr[1].sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    servAddr[1].sin_port = htons(BROADCAST_SEND_PORT1);
+    
+	nbytesSend = sendto(socks[0], &searchCmd, sizeof(searchCmd), 0, (sockaddr *)&servAddr[0], sizeof(struct sockaddr_in));
 
-	Log3("broadcast search msg to sock:[%d] port:[%d] ret = %d,err = %d.\n",
-		socks[0],BROADCAST_SEND_PORT0,nbytesSend,errno);
+	Log3("broadcast search msg to sock:[%d] port:[%d][%d] ret = %ld,err = %d.",
+		socks[0],ntohs(servAddr[0].sin_port),BROADCAST_SEND_PORT0,nbytesSend,errno);
 
 	char * p = (char*)&searchCmd;
     *((short*)p) = (short)STARTCODE;
     p += sizeof(short);
     *((short*)p) = (short)CMD_GET;
 	
-	servAddr.sin_port = htons(BROADCAST_SEND_PORT1);
-	
-	nbytesSend = sendto(socks[1], &searchCmd, sizeof(short) * 2, 0, (sockaddr *)&servAddr, sizeof(servAddr));
+	nbytesSend = sendto(socks[1], &searchCmd, sizeof(short) * 2, 0, (sockaddr *)&servAddr[1], sizeof(struct sockaddr_in));
 
-	Log3("broadcast search msg to sock:[%d] port:[%d] ret = %d,err = %d.\n",
-		socks[1],BROADCAST_SEND_PORT1,nbytesSend,errno);
+	Log3("broadcast search msg to sock:[%d] port:[%d][%d] ret = %ld,err = %d.",
+		socks[1],ntohs(servAddr[1].sin_port),BROADCAST_SEND_PORT1,nbytesSend,errno);
     
 	return 1;
 }
@@ -234,10 +234,10 @@ void* CSearchDVS::RecvThread(void *pParam)
 void CSearchDVS::SendProcess()
 { 
     int i;
-    for(i = 0; i < 10; i++){
+    for(i = 0; i < 30; i++){
         SearchDVS();
 		if(m_bSendThreadRuning != 1){
-			Log3("broadcast search msg send proc stop now.\n");
+			Log3("broadcast search msg send proc stop now.");
 			break;
 		}
         sleep(1);
@@ -252,7 +252,6 @@ void CSearchDVS::RecvProcess()
 	struct sockaddr_in caddr;
 
 	fd_set fds;
-//    struct timeval timeout={1,0};
 
 	int maxsock = -1;
 	int i = 0;
@@ -286,29 +285,16 @@ void CSearchDVS::RecvProcess()
 		err = select(maxsock+1,&fds,NULL,NULL,&to);
 
 		if(err < 0){
-			Log3("select search socket failed:[%d] on socket.\n",errno);
+			Log3("select search socket failed:[%d] on socket.",errno);
 //			goto jumperr;
 		}else if(err == 0){
-			usleep(10000);
+//          Log3("select timeout");
 			continue;
 		}else{
-			// for udp broadcast message and tcp server listen.
+			// for udp broadcast message listen.
 			for(i=0;i<MAX_SOCK;i++){
 				if(FD_ISSET(socks[i],&fds)){
 					int alens = sizeof(caddr);
-				
-					if(sockattrs[i].sock_type == SOCK_STREAM 
-					&& csocks_num < csocks_max
-					){
-						csocks[csocks_num] = accept(socks[i],(sockaddr*)&caddr,(socklen_t *)&alens);
-						if(csocks[csocks_num] < 0){
-							Log3("accept sock connection failed.\n");
-						}else{
-							Log3("accept new tcp client socket:[%d]\n",csocks[csocks_num]);
-							csocks_num ++;
-						}
-						continue;
-					}
 					
 					int bytes = recvfrom(
 						socks[i],tmps,sizeof(tmps),0,
@@ -317,42 +303,26 @@ void CSearchDVS::RecvProcess()
 						);
 
 					if(bytes < 0){
-						Log3("recv from socket:[%d] failed:[%d].\n",socks[i],errno);
+						Log3("recv from socket:[%d] failed:[%d].",socks[i],errno);
 //						goto jumperr;
 						continue;
 					}else if(bytes == 0){
-						usleep(10000);
 						continue;
 					}else{
+                        Log3("recv from socket:[%d] with lens:[%d].",socks[i],bytes);
 						ipstr = (char*)inet_ntoa(caddr.sin_addr);
 						OnMessageProc(tmps,bytes,(const char*)ipstr);
 					}
 				}
 			}
-
-			// for cooee tcp connection data
-			for(i=3;i<csocks_max;i++){
-				if(FD_ISSET(csocks[i],&fds)){
-					int bytes = recv(csocks[i],tmps,sizeof(tmps),0);
-					if(bytes < 0){
-						Log3("recv from socket:[%d] failed:[%d].\n",csocks[i],errno);
-//						goto jumperr;
-					}else if(bytes == 0){
-						usleep(10000);
-						continue;
-					}else{
-						ipstr = (char*)inet_ntoa(caddr.sin_addr);
-						OnMessageProc(tmps,bytes,(const char*)ipstr);
-					}
-				}
-			}
-		}
+        }
 	}
 
 jumperr:
 
 	for(i=0;i<csocks_max;i++){
 		if(csocks[i] > 0){
+            Log3("close device search socket:[%d].",csocks[i]);
 			close(csocks[i]);
 		}
 		csocks[i] = -1;

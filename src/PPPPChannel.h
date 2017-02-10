@@ -62,6 +62,7 @@
 #define PPPP_STATUS_DEVICE_NOT_ON_LINE 6	/* …Ë±∏¿Îœﬂ */
 #define PPPP_STATUS_CONNECT_TIMEOUT 7 		/* ¡¨Ω”≥¨ ± */
 #define PPPP_STATUS_INVALID_USER_PWD 8 		/* Œﬁ–ß’Àªß√‹¬Î */
+#define PPPP_STATUS_DEVICE_SLEEP 9
 
 #define PPPP_STATUS_NOT_LOGIN 11			/* Œ¥µ«¬º */
 #define PPPP_STATUS_EXCEED_SESSION 13		/* √ª”–ø…”√µƒª·ª∞ */
@@ -146,28 +147,29 @@ public:
 public:
 	JNIEnv *            m_JNIMainEnv;	// Java env
 	
-	// ”√”⁄ª∫¥Ê“—æ≠≤•∑≈π˝µƒ“Ù∆µ ˝æ›,”√“‘∂‘∆Î
+	// 
 	CAudioDataList *	hAudioGetList;
 	CAudioDataList *	hAudioPutList;
 	
 	COMMO_LOCK			SessionStatusLock;
 	int					SessionStatus;
 
-	char 				szURL[256];		// ªÿ∑≈ ”∆µ¡¥Ω”
+	char 				szURL[256];		//
 
-	char 				szDID[64];		// …Ë±∏ ID
-    char 				szUsr[64];		// ”√ªß
-    char 				szPwd[64]; 		// √‹¬Î
-    char 				szServer[1024];	// ∑˛ŒÒ∆˜◊÷¥Æ
+	char 				szDID[64];		//
+    char 				szUsr[64];		//
+    char 				szPwd[64]; 		//
+    char 				szServer[1024];	//
 
 	int					avstremChannel; // 
-	int					speakerChannel;	// ”Ô“Ù∑¢ÀÕÕ®µ¿
-	int					sessionID;		// ª·ª∞ID
-	int					avIdx;			// “Ù ”∆µÀ˜“˝
-	int					spIdx;			// ”Ô“ÙÀ˜“˝
-	unsigned int		deviceType;		// …Ë±∏¿‡–Õ
+	int					speakerChannel;	//
+	int					sessionID;		//
+	int					avIdx;			//
+	int					spIdx;			//
+	unsigned int		deviceType;		//
+    int                 deviceStandby;
 
-	int					SID; 			// P2P ª·ª∞
+	int					SID; 			// P2P session id
 	
     int 				mediaEnabled;	// enable recv thread get media stream data.
 	int					voiceEnabled;	// enable voice
