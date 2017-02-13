@@ -51,7 +51,7 @@ void CSearchDVS::CloseSocket()
 	for(int i = 0;i < MAX_SOCK;i++){
 		if(socks[i] < 0) continue;
 		close(socks[i]);
-//      shutdown(socks[i], SHUT_RDWR);
+//        shutdown(socks[i], SHUT_RDWR);
 		socks[i] = -1;
 	}
 }
@@ -108,13 +108,12 @@ int CSearchDVS::Open(char *ssid,char *psd)
 
 		Log3("==========>>>> open device find socket:[%d] port:[%d].\n",socks[i],sockattrs[i].sock_port);
 	}
-
-    m_bRecvThreadRuning = 1;
-    pthread_create(&m_RecvThreadID, NULL, CSearchDVS::RecvThread, this);
-
     m_bSendThreadRuning = 1;
     pthread_create(&m_SendThreadID, NULL, CSearchDVS::SendThread, this);
 
+    m_bRecvThreadRuning = 1;
+    pthread_create(&m_RecvThreadID, NULL, CSearchDVS::RecvThread, this);
+    
 	return 1;
 
 jumperr:
@@ -151,7 +150,7 @@ void CSearchDVS::Close()
 
 int CSearchDVS::SearchDVS()
 {  
-	struct sockaddr_in servAddr[2];
+	struct sockaddr_in servAddr;
 
 	PHONE_INFO phone_info;
 	memset(&phone_info,0,sizeof(phone_info));
@@ -161,32 +160,30 @@ int CSearchDVS::SearchDVS()
 	Log3("Check WIFI's Name Is:%s",phone_info.ssid);
 	SEARCH_CMD	searchCmd = {STARTCODE,CMD_PHONE_SEARCH,phone_info};
 
-	memset(servAddr, 0, sizeof(struct sockaddr_in)*2);
+	memset(&servAddr, 0, sizeof(struct sockaddr_in));
 
 	ssize_t nbytesSend = -1;
 	
-	servAddr[0].sin_family = AF_INET;
-	servAddr[0].sin_addr.s_addr = htonl(INADDR_BROADCAST);
-	servAddr[0].sin_port = htons(BROADCAST_SEND_PORT0);
+	servAddr.sin_family = AF_INET;
+	servAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+	servAddr.sin_port = htons(BROADCAST_SEND_PORT0);
+
     
-    servAddr[1].sin_family = AF_INET;
-    servAddr[1].sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    servAddr[1].sin_port = htons(BROADCAST_SEND_PORT1);
-    
-	nbytesSend = sendto(socks[0], &searchCmd, sizeof(searchCmd), 0, (sockaddr *)&servAddr[0], sizeof(struct sockaddr_in));
+	nbytesSend = sendto(socks[0], &searchCmd, sizeof(searchCmd), 0, (sockaddr *)&servAddr, sizeof(struct sockaddr_in));
 
 	Log3("broadcast search msg to sock:[%d] port:[%d][%d] ret = %ld,err = %d.",
-		socks[0],ntohs(servAddr[0].sin_port),BROADCAST_SEND_PORT0,nbytesSend,errno);
-
+		socks[0],ntohs(servAddr.sin_port),BROADCAST_SEND_PORT0,nbytesSend,errno);
+    
+    servAddr.sin_port = htons(BROADCAST_SEND_PORT1);
 	char * p = (char*)&searchCmd;
-    *((short*)p) = (short)STARTCODE;
+   *((short*)p) = (short)STARTCODE;
     p += sizeof(short);
     *((short*)p) = (short)CMD_GET;
-	
-	nbytesSend = sendto(socks[1], &searchCmd, sizeof(short) * 2, 0, (sockaddr *)&servAddr[1], sizeof(struct sockaddr_in));
+
+	nbytesSend = sendto(socks[1], &searchCmd, sizeof(short) * 2, 0, (sockaddr *)&servAddr, sizeof(struct sockaddr_in));
 
 	Log3("broadcast search msg to sock:[%d] port:[%d][%d] ret = %ld,err = %d.",
-		socks[1],ntohs(servAddr[1].sin_port),BROADCAST_SEND_PORT1,nbytesSend,errno);
+		socks[1],ntohs(servAddr.sin_port),BROADCAST_SEND_PORT1,nbytesSend,errno);
     
 	return 1;
 }
@@ -256,13 +253,6 @@ void CSearchDVS::RecvProcess()
 	int maxsock = -1;
 	int i = 0;
 	int err = 0;
-	int csocks[12] = {0};
-	int csocks_num =  3 ;
-	int csocks_max = 12 ;
-
-	csocks[0] = socks[0];
-	csocks[1] = socks[1];
-	csocks[2] = socks[2];
 
 	char tmps[1500] = {0};
 	char * ipstr = NULL;
@@ -273,12 +263,12 @@ void CSearchDVS::RecvProcess()
 	{  
 		FD_ZERO(&fds);
 
-		for(i = 0;i < csocks_max;i++){
-			if(csocks[i] > 0){
-				FD_SET(csocks[i],&fds);
+		for(i = 0;i < MAX_SOCK;i++){
+			if(socks[i] > 0){
+				FD_SET(socks[i],&fds);
 			}
-			if(csocks[i] > maxsock){
-				maxsock = csocks[i];
+			if(socks[i] > maxsock){
+				maxsock = socks[i];
 			}
 		}
 
@@ -319,14 +309,6 @@ void CSearchDVS::RecvProcess()
 	}
 
 jumperr:
-
-	for(i=0;i<csocks_max;i++){
-		if(csocks[i] > 0){
-            Log3("close device search socket:[%d].",csocks[i]);
-			close(csocks[i]);
-		}
-		csocks[i] = -1;
-	}
 
 	Log3("client close device search recv process.\n");
 
