@@ -1762,6 +1762,7 @@ int CPPPPChannel::StartMediaStreams(
 		PPPPClose();
 	    CloseWholeThreads();
 		Log3("[7:%s]=====>stop old media process close.\n",szDID);
+		return -1;
 	}
 
 	GET_LOCK(&SessionStatusLock);
