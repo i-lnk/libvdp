@@ -1751,10 +1751,10 @@ int CPPPPChannel::StartMediaStreams(
 
 	struct st_SInfo sInfo;
 
-	int ret = IOTC_Session_Check(SID,&sInfo);
+	ret = IOTC_Session_Check(SID,&sInfo);
 	if(ret < 0){
-		MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
-		Log3("[7:%s]=====>stop old media process start.\n"szDID);
+		MsgNotify(m_JNIMainEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
+		Log3("[7:%s]=====>stop old media process start.\n",szDID);
 		PPPPClose();
 	    CloseWholeThreads();
 		Log3("[7:%s]=====>stop old media process close.\n",szDID);
