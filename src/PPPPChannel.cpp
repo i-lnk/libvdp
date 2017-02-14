@@ -1749,6 +1749,17 @@ int CPPPPChannel::StartMediaStreams(
      
     if(SID < 0) return -1;
 
+	struct st_SInfo sInfo;
+
+	int ret = IOTC_Session_Check(SID,&sInfo);
+	if(ret < 0){
+		MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
+		Log3("[7:%s]=====>stop old media process start.\n"szDID);
+		PPPPClose();
+	    CloseWholeThreads();
+		Log3("[7:%s]=====>stop old media process close.\n",szDID);
+	}
+
 	GET_LOCK(&SessionStatusLock);
 	if(SessionStatus != STATUS_SESSION_IDLE){
 		Log3("session status is:[%d],can't start living stream.\n",SessionStatus);
