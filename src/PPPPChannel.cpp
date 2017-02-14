@@ -249,8 +249,9 @@ connect:
 				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_EXCEED_SESSION);
 				goto jumperr;
             case IOTC_ER_DEVICE_IS_SLEEP:
+				
                 if(wakeup_times-- && hPC->deviceStandby){
-                    Log3("[2:%s]=====>device is in sleep mode.",hPC->szDID);
+                    Log3("[2:%s]=====>device is in sleep mode.try to wakeup device.",hPC->szDID);
                     if(IOTC_WakeUp_WakeDevice(hPC->szDID) < 0){
                         Log3("[2:%s]=====>device not support wakeup function.\n",hPC->szDID);
                     }else{
@@ -258,8 +259,11 @@ connect:
                         goto connect;
                     }
                 }
+
+				Log3("[2:%s]]=====>device standby is:%d.",hPC->deviceStandby);
                 hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
                 hPC->deviceStandby = 1;
+				
                 goto jumperr;
 			case IOTC_ER_DEVICE_OFFLINE:
                 if(online_times--){
