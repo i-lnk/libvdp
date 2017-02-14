@@ -260,7 +260,7 @@ connect:
                     }
                 }
 
-				Log3("[2:%s]]=====>device standby is:%d.",hPC->deviceStandby);
+				Log3("[2:%s]=====>device standby is:%d.",hPC->szDID,hPC->deviceStandby);
                 hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
                 hPC->deviceStandby = 1;
 				
