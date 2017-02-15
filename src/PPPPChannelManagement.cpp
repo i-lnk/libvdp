@@ -14,32 +14,6 @@
 
 CPPPPChannelManagement::CPPPPChannelManagement()
 {
-
-	IOTC_Set_Max_Session_Number(128);
-//	IOTC_Setup_Session_Alive_Timeout(6);
-
-	int ret = IOTC_Initialize2(0);
-	if(ret != IOTC_ER_NoERROR){
-		Log2("IOTCAPIs_Device exit...!!\n");
-		exit(0);
-	}
-
-	IOTC_Setup_DetectNetwork_Timeout(5000);
-	IOTC_Setup_LANConnection_Timeout(300);
-	IOTC_Setup_P2PConnection_Timeout(900);
-
-	avInitialize(32);
-	unsigned int iotcVer;
-	IOTC_Get_Version(&iotcVer);
-	int avVer = avGetAVApiVer();
-	unsigned char *p1 = (unsigned char *)&iotcVer;
-	unsigned char *p2 = (unsigned char *)&avVer;
-	char szIOVer[16], szAVVer[16];
-    
-	sprintf(szIOVer, "%d.%d.%d.%d", p1[3], p1[2], p1[1], p1[0]);
-	sprintf(szAVVer, "%d.%d.%d.%d", p2[3], p2[2], p2[1], p2[0]);
-	Log3("IOTCAPI version[%s] AVAPI version[%s]\n", szIOVer, szAVVer);
-
     memset(&m_PPPPChannel, 0 ,sizeof(m_PPPPChannel));
 
 	INT_LOCK( &PPPPChannelLock );
@@ -52,9 +26,6 @@ CPPPPChannelManagement::CPPPPChannelManagement()
 CPPPPChannelManagement::~CPPPPChannelManagement()
 {    
     StopAll();
-
-	avDeInitialize();
-	IOTC_DeInitialize();
 
 	DEL_LOCK( &PPPPChannelLock );
 	DEL_LOCK( &PPPPCommandLock );
