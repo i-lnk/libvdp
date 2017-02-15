@@ -213,7 +213,6 @@ void * MeidaCoreProcess(
 
 	int resend = 0;
 	int wakeup_times = 20;
-    int online_times = 5;
 
 connect:
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
@@ -266,14 +265,10 @@ connect:
 				
                 goto jumperr;
 			case IOTC_ER_DEVICE_OFFLINE:
-                if(online_times--){
-                    Log3("[2:%s]=====>device not online,ask again.\n",hPC->szDID);
-                    IOTC_Session_Close(hPC->sessionID);
-                    sleep(1);
-                    goto connect;
-                }
+                Log3("[2:%s]=====>device not online,ask again.\n",hPC->szDID);
 			case IOTC_ER_DEVICE_NOT_LISTENING:
 				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_NOT_ON_LINE);
+                IOTC_Session_Close(hPC->sessionID);
 				goto jumperr;
 			default:
 				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
@@ -832,7 +827,10 @@ static void * AudioRecvProcess(
 ){    
 	SET_THREAD_NAME("AudioRecvProcess");
 
+    int alreadyGetAudioData = 0;
+    int timeoutForAudioData = 0;
 	int ret = 0;
+    
 	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
 
 	FRAMEINFO_t  frameInfo;
@@ -910,10 +908,23 @@ static void * AudioRecvProcess(
 		hAV->len = ret;
 
 		if(ret < 0){
-			switch(ret){
+            switch(ret){
 				case AV_ER_LOSED_THIS_FRAME:
 				case AV_ER_DATA_NOREADY:
 					usleep(10);
+                    timeoutForAudioData += 10;
+                    if(timeoutForAudioData > 1000*1000
+                    && alreadyGetAudioData == 0
+                    ){
+                        Log3("no audio data,request audio data again.");
+                        avSendIOCtrlEx(
+                           avIdx,
+                           IOTYPE_USER_IPCAM_AUDIOSTART,
+                           (char *)&ioMsg, 
+                           sizeof(SMsgAVIoctrlAVStream)
+                           );
+                        timeoutForAudioData = 0;
+                    }
 					continue;
 				default:
 					Log3("tutk recv frame with error:[%d],avIdx:[%d].",ret,hPC->avIdx);
@@ -923,7 +934,7 @@ static void * AudioRecvProcess(
 		}
 
 		if(hPC->audioEnabled != 1){
-//          Log3("audio pause...");
+            Log3("audio pause...");
 			continue;
 		}
 
@@ -963,6 +974,9 @@ static void * AudioRecvProcess(
 			hPC->hAudioBuffer->Write(&Codec[160*i],160); // for audio avi record
 			hPC->hSoundBuffer->Write(&Codec[160*i],160); // for audio player callback
 		}
+        
+        alreadyGetAudioData = 1;
+        timeoutForAudioData = 0;
 
 //		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
 //		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
