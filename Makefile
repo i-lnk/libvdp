@@ -36,7 +36,7 @@ ANDROID_CFLAGS = -O2 -msoft-float -fPIC -mthumb-interwork \
 	-I$(INCPATH)/webrtc_aec
 
 # Android link flags 
-ANDROID_LDFLAGS +=  -shared -nostdlib -Bsymbolic -lGLESv2 -lEGL -llog -lOpenSLES -landroid -fPIC  -lAVAPIs -lIOTCAPIs
+ANDROID_LDFLAGS +=  -shared -nostdlib -Bsymbolic -lGLESv2 -lEGL -llog -lOpenSLES -landroid -fPIC -lAVAPIs -lIOTCAPIs
 FFMPEG_STATIC_LIB += $(LIBPATH)\libavformat.a \
 	$(LIBPATH)\libavcodec.a \
 	$(LIBPATH)\libavutil.a \
@@ -44,8 +44,7 @@ FFMPEG_STATIC_LIB += $(LIBPATH)\libavformat.a \
 	$(LIBPATH)\libswscale.a	\
 	$(LIBPATH)\libx264.a \
 	$(LIBPATH)\libopus.a \
-	$(LIBPATH)\libaec.a
-	
+	$(LIBPATH)\libaec.a 
 
 ANDROID_LIBS = -L$(SYSROOT)\usr\lib -L$(LIBPATH) \
 	-lm -llog -g -lc -lstdc++ -landroid \

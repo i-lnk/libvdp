@@ -77,6 +77,11 @@ Version     | Name             |Date           |Description
 #define _stdcall
 #endif // #ifdef IOTC_UCOSII
 
+#ifdef IOTC_OV788
+#define AVAPI_API
+#define _stdcall
+#endif // #ifdef IOTC_UCOSII
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -124,7 +129,7 @@ extern "C" {
 #define 	AV_ER_EXCEED_MAX_ALARM				-20005
 
 /** The frame to be sent exceeds the currently remaining video frame buffer.
- * The maximum of video frame buffer is controlled by avServSetMaxBufSize() */
+ * The maximum of video frame buffer is controlled by avServSetResendSize() */
 #define		AV_ER_EXCEED_MAX_SIZE				-20006
 
 /** The specified AV server has no response */
@@ -192,6 +197,20 @@ extern "C" {
 /** IOTC channel is used by other av channel */
 #define		AV_ER_IOTC_CHANNEL_IN_USED				-20027
 
+/** AV channel is waiting key frame */
+#define		AV_ER_WAIT_KEY_FRAME				    -20028
+
+/** The AV channel of specified AV channel ID is already in reset buffer process */
+#define		AV_ER_CLEANBUF_ALREADY_CALLED	   	    -20029
+
+/** IOTC UDP/TCP socket send queue is full. */
+#define 	AV_ER_SOCKET_QUEUE_FULL					-20030
+
+/** AV module is already initialized. It is not necessary to re-initialize. */
+#define     AV_ER_ALREADY_INITIALIZED               -20031
+
+/** Dynamic Adaptive Streaming over AVAPI notified program to clean buffer */
+#define		AV_ER_DASA_CLEAN_BUFFER                 -20032
 /* ============================================================================
  * Enumeration Declaration
  * ============================================================================
@@ -212,6 +231,11 @@ typedef enum
 	/// to handle frame data.
 	IOTYPE_INNER_SND_DATA_DELAY = 0xFF,
 
+    /// Used by AV servers to tell AV clients statistical data
+    IOTYPE_INNER_STATISTICAL_DATA = 0x01,
+
+    /// Used by AV clients to tell AV servers statistical data
+    IOTYPE_INNER_STATISTICAL_CLIENT_DATA = 0x02,
 
 	/// The starting enum value of user defined IO types. It is suggested
 	/// to assign this to the first one of user defined types, like <br>
@@ -229,6 +253,14 @@ typedef enum _AV_RESET_TARGET
 	RESET_ALL
 } AV_RESET_TARGET;
 
+typedef enum _AV_DASA_LEVEL_
+{
+    AV_DASA_LEVEL_QUALITY_HIGH          = 0,
+    AV_DASA_LEVEL_QUALITY_BTWHIGHNORMAL = 1,
+    AV_DASA_LEVEL_QUALITY_NORMAL        = 2,
+    AV_DASA_LEVEL_QUALITY_BTWNORMALLOW  = 3,
+    AV_DASA_LEVEL_QUALITY_LOW           = 4
+} AV_DASA_LEVEL;
 
 /* ============================================================================
  * Type Definition
@@ -347,6 +379,8 @@ AVAPI_API int avDeInitialize(void);
  *			- #AV_ER_TIMEOUT The timeout specified by nTimeout expires before
  *				AV start is performed completely
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_CHANNEL_IN_USED the IOTC channel has been used by another av channel,
+ *				please check if the IOTC channel is used correctly
  *
  * \see avServStart2(), avServExit(), avServStop()
  *
@@ -390,6 +424,8 @@ AVAPI_API int  avServStart(int nIOTCSessionID, const char *cszViewAccount, const
  *			- #AV_ER_TIMEOUT The timeout specified by nTimeout expires before
  *				AV start is performed completely
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_CHANNEL_IN_USED the IOTC channel has been used by another av channel,
+ *				please check if the IOTC channel is used correctly
  *
  * \see avServStart(), avServExit(), avServStop()
  *
@@ -436,6 +472,8 @@ AVAPI_API int  avServStart2(int nIOTCSessionID, authFn pfxAuthFn, unsigned int n
  *			- #AV_ER_TIMEOUT The timeout specified by nTimeout expires before
  *				AV start is performed completely
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_CHANNEL_IN_USED the IOTC channel has been used by another av channel,
+ *				please check if the IOTC channel is used correctly
  *
  * \see avServStart(), avServStart2(), avServExit(), avServStop()
  *
@@ -486,6 +524,38 @@ AVAPI_API void avServStop(int nAVChannelID);
  */
 AVAPI_API void avServSetResendSize(int nAVChannelID, unsigned int nSize);
 
+/**
+* \brief Get re-send buffer size.
+*
+* \details Use this API to get the re-send buffer size if re-send mechanism is enabled.
+*
+* \param nAVChannelID [in] The channel ID of the AV channel to be set.
+* \param pnSize [out] The size of re-send buffer, in unit of kilo-byte.
+*
+* \return #AV_ER_NoERROR if sending successfully
+* \return Error code if return value < 0
+*			- #AV_ER_NOT_INITIALIZED AV module is not initialized yet
+*			- #AV_ER_INVALID_ARG The AV channel ID is not valid or frame data is null
+*			- #AV_ER_INVALID_SID The IOTC session of this AV channel is not valid
+*/
+AVAPI_API int avServGetResendSize(int avIndex, unsigned int *pnSize);
+
+
+/**
+* \brief Get frame count of re-send buffer.
+*
+* \details Use this API to get the frame count of re-send buffer if re-send mechanism is enabled.
+*
+* \param nAVChannelID [in] The channel ID of the AV channel to be set.
+* \param pnCount [out] The frame count of re-send buffer.
+*
+* \return #AV_ER_NoERROR if sending successfully
+* \return Error code if return value < 0
+*			- #AV_ER_NOT_INITIALIZED AV module is not initialized yet
+*			- #AV_ER_INVALID_ARG The AV channel ID is not valid or frame data is null
+*			- #AV_ER_INVALID_SID The IOTC session of this AV channel is not valid
+*/
+AVAPI_API int avServGetResendFrmCount(int avIndex, unsigned int *pnCount);
 
 /**
  * \brief An AV server sends frame data to an AV client
@@ -510,9 +580,12 @@ AVAPI_API void avServSetResendSize(int nAVChannelID, unsigned int nSize);
  *			- #AV_ER_CLIENT_NO_AVLOGIN An AV client does not pass authentication yet
  *			- #AV_ER_EXCEED_MAX_SIZE The frame data and frame info to be sent exceeds
  *				currently remaining video frame buffer. The max size of video frame
- *				buffer is determined by avServSetMaxBufSize()
+ *				buffer is determined by avServSetResendSize()
  *			- #AV_ER_MEM_INSUFF Insufficient memory for allocation
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_SESSION_CLOSED the local IOTC session has been closed
+ *			- #AV_ER_IOTC_DEINITIALIZED IOTC has been deinitialized
+ *          - #AV_ER_DASA_CLEAN_BUFFER This error returned when DASA is enabled, means this AV channel need to do clean buffer
  *
  * \see avSendAudioData()
  *
@@ -545,7 +618,9 @@ AVAPI_API int  avSendFrameData(int nAVChannelID, const char *cabFrameData, int n
  *			- #AV_ER_MEM_INSUFF Insufficient memory for allocation
  *			- #AV_ER_EXCEED_MAX_SIZE The audio data and frame info to be sent exceeds
  *				#AV_MAX_AUDIO_DATA_SIZE
-*			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_SESSION_CLOSED the local IOTC session has been closed
+ *			- #AV_ER_IOTC_DEINITIALIZED IOTC has been deinitialized
  *
  * \see avSendFrameData()
  *
@@ -558,7 +633,9 @@ AVAPI_API int  avSendAudioData(int nAVChannelID, const char *cabAudioData, int n
  * \brief Set interval of sending video data in AV server
  *
  * \details An AV server how to send video data to AV client.
- *			It determined the delay time at regular interval between how many packets.
+ *			It determined the delay time at regular interval between how many 
+ *			packets. The default value of nPacketNum is 1 and nDelayMs is 0,
+ *			so the default behavior is to send frame packets without any delay.
  *
  * \param nAVChannelID [in] The channel ID of the AV channel to be sent
  * \param nPacketNum [in] How many number of packet as a regular interval
@@ -610,6 +687,8 @@ AVAPI_API int avServSetDelayInterval(int nAVChannelID, unsigned short nPacketNum
  *			- #AV_ER_WRONG_VIEWACCorPWD The client fails in authentication due
  *				to incorrect view account or password
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_CHANNEL_IN_USED the IOTC channel has been used by another av channel,
+ *				please check if the IOTC channel is used correctly
  *
  * \see avClientStop(), avClientExit()
  *
@@ -660,6 +739,8 @@ AVAPI_API int  avClientStart(int nIOTCSessionID, const char *cszViewAccount, con
  *			- #AV_ER_WRONG_VIEWACCorPWD The client fails in authentication due
  *				to incorrect view account or password
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_CHANNEL_IN_USED the IOTC channel has been used by another av channel,
+ *				please check if the IOTC channel is used correctly
  *
  * \see avClientStop(), avClientExit()
  *
@@ -728,6 +809,8 @@ AVAPI_API void avClientStop(int nAVChannelID);
  *			- #AV_ER_MEM_INSUFF Insufficient memory for allocation
  *			- #AV_ER_INCOMPLETE_FRAME Some parts of a frame are lost during receiving
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_SESSION_CLOSED the local IOTC session has been closed
+ *			- #AV_ER_IOTC_DEINITIALIZED IOTC has been deinitialized
  *
  * \see avRecvAudioData()
  *
@@ -765,6 +848,8 @@ AVAPI_API int avRecvFrameData(int nAVChannelID, char *abFrameData, int nFrameDat
  *			- #AV_ER_MEM_INSUFF Insufficient memory for allocation
  *			- #AV_ER_INCOMPLETE_FRAME Some parts of a frame are lost during receiving
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_SESSION_CLOSED the local IOTC session has been closed
+ *			- #AV_ER_IOTC_DEINITIALIZED IOTC has been deinitialized
  *
  * \see avRecvAudioData()
  *
@@ -798,6 +883,8 @@ AVAPI_API int avRecvFrameData2(int nAVChannelID, char *abFrameData, int nFrameDa
  *			- #AV_ER_BUFPARA_MAXSIZE_INSUFF The data and frame info to be received
  *				exceeds	the size of abAudioData and abFrameInfo, respectively.
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_SESSION_CLOSED the local IOTC session has been closed
+ *			- #AV_ER_IOTC_DEINITIALIZED IOTC has been deinitialized
  *
  * \see avRecvFrameData()
  *
@@ -929,6 +1016,8 @@ AVAPI_API int avClientCleanAudioBuf(int nAVChannelID);
  *			- #AV_ER_EXCEED_MAX_SIZE The IO control data and type to be sent exceeds
  *				#AV_MAX_IOCTRL_DATA_SIZE
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_SESSION_CLOSED the local IOTC session has been closed
+ *			- #AV_ER_IOTC_DEINITIALIZED IOTC has been deinitialized
  *
  * \see avRecvIOCtrl(), avSendIOCtrlExit()
  *
@@ -966,6 +1055,8 @@ AVAPI_API int avSendIOCtrl(int nAVChannelID, unsigned int nIOCtrlType, const cha
  *			- #AV_ER_BUFPARA_MAXSIZE_INSUFF The IO control data to be received exceeds
  *				the size of abIOCtrlData, i.e. nIOCtrlMaxDataSize
  *			- #AV_ER_NO_PERMISSION the AV module does not support Lite UID
+ *			- #AV_ER_IOTC_SESSION_CLOSED the local IOTC session has been closed
+ *			- #AV_ER_IOTC_DEINITIALIZED IOTC has been deinitialized
  *
  * \see avSendIOCtrl()
  *
@@ -1005,6 +1096,23 @@ AVAPI_API int avSendIOCtrlExit(int nAVChannelID);
  */
 AVAPI_API float avResendBufUsageRate (int nAVChannelID);
 
+
+/**
+* \brief Used by an AV server, in order to know the usage rate of receive buffer
+*
+* \details AV server calls this function to know the usage rate of receive buffer.
+*          It will return a float value between 0 and 1.
+*          0 means that receive buffer is empty, 1 means that receive buffer is full.
+*          The others mean usage rate.
+*
+* \param nAVChannelID [in] The channel ID of the AV channel
+*
+* \return Usage rate of receive buffer, if return value >= 0.
+* \return Error code if return value < 0
+*          - #AV_ER_INVALID_ARG The AV channel ID is not valid
+*/
+AVAPI_API float avClientRecvBufUsageRate(int nAVChannelID);
+
 /**
 * \brief Set path of log file
 *
@@ -1016,6 +1124,77 @@ AVAPI_API float avResendBufUsageRate (int nAVChannelID);
 *
 */
 AVAPI_API void AV_Set_Log_Path(char *path, int nMaxSize);
+
+/**
+* \brief Set Audio Lost Condition
+*
+* \param lostCondition [in] maximum audio frame number different using in check audio lost
+*
+* \return Error code if return value < 0
+*          - #AV_ER_INVALID_ARG The AV channel ID is not valid
+*
+*/
+AVAPI_API int avSetAudioLostCondition(int nAVChannelID, int lostCondition);
+
+/**
+* \brief Set Dynamic Adaptive Streaming over AVAPI (DASA) Parameter
+*
+* \param nAVChannelID [in] The channel ID of the AV channel to be enabled DASA
+*
+* \param nEnable [in] Set 1 to enable DASA, 0 to disable DASA
+*
+* \param nCleanBufferCondition [in] Set clean buffer condition in secs, must bigger than 3 secs and smaller than 9 secs
+*
+* \param nCleanBufferRatio [in] Set clean buffer ratio, must bigger than 50 percent and smaller than 100 percent
+*
+* \param nAdjustmentKeepTime [in] Set adjustment AV_DASA_LEVEL keep time, must bigger than 5 secs
+*
+* \param nIncreaseQualityCond [in] Set accumulation network stable time for increasing AV_DASA_LEVEL, must bigger than 3 secs
+*
+* \param nDecreaseRatio [in] Set decreasing AV_DASA_LEVEL ratio, set nDecreaseRatio smaller will trigger decreasing more offen (1~100).
+*
+* \param nInitLevel [in] Set initial quality level
+*
+* \return #AV_ER_NoERROR if setting successfully
+* \return Error code if return value < 0
+*          - #AV_ER_INVALID_ARG The AV channel ID is not valid or not support resend
+*          - #AV_ER_CLIENT_NOT_SUPPORT An AV client uses this function
+*          - #AV_ER_NOT_INITIALIZED AV module is not initialized yet
+*/
+AVAPI_API int avDASASetting(int nAVChannelID, int nEnable, int nCleanBufferCondition, int nCleanBufferRatio, int nAdjustmentKeepTime, int nIncreaseQualityCond, int nDecreaseRatio, AV_DASA_LEVEL nInitLevel);
+
+/**
+* \brief Dynamic Adaptive Streaming over AVAPI Status Check
+*
+* \param nAVChannelID [in] The channel ID of the AV channel to be checked
+*
+* \return Error code if return value < 0
+*          - #AV_ER_INVALID_ARG The AV channel ID is not valid or not support resend
+*          - #AV_ER_CLIENT_NOT_SUPPORT An AV client uses this function
+*          - #AV_ER_NOT_INITIALIZED AV module is not initialized yet
+*
+* \return #AV_DASA_LEVEL
+*   AV_DASA_LEVEL_DOCLEANBUFFER  : Do Clean Buffer
+*	AV_DASA_LEVEL_QUALITY_HIGH   : Set Video Quality High
+*	AV_DASA_LEVEL_QUALITY_NORMAL : Set Video Quality Normal
+*	AV_DASA_LEVEL_QUALITY_LOW    : Set Video Quality Low
+*/
+AVAPI_API int avDASACheck(int nAVChannelID);
+
+/**
+* \brief Dynamic Adaptive Streaming over AVAPI Status Reset
+*
+* \param nAVChannelID [in] The channel ID of the AV channel to be reset
+* \param nLevel [in] Set reset quality level
+*
+* \return Error code if return value < 0
+*          - #AV_ER_INVALID_ARG The AV channel ID is not valid or not support resend
+*          - #AV_ER_CLIENT_NOT_SUPPORT An AV client uses this function
+*          - #AV_ER_NOT_INITIALIZED AV module is not initialized yet
+*
+* \return #AV_ER_NoERROR if setting successfully
+*/
+AVAPI_API int avDASAReset(int nAVChannelID, AV_DASA_LEVEL nLevel);
 
 #ifdef __cplusplus
 }
