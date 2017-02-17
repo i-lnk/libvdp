@@ -933,9 +933,7 @@ static void * AudioRecvProcess(
 				case AV_ER_DATA_NOREADY:
 					usleep(10);
                     timeoutForAudioData += 10;
-                    if(timeoutForAudioData > 1000*1000
-                    && alreadyGetAudioData == 0
-                    ){
+                    if(timeoutForAudioData > 3000*1000){
                         Log3("no audio data,request audio data again.");
                         avSendIOCtrlEx(
                            avIdx,
@@ -995,6 +993,8 @@ static void * AudioRecvProcess(
 			hPC->hSoundBuffer->Write(&Codec[160*i],160); // for audio player callback
 		}
         
+        
+//      Log3("-------%d",ret);
         alreadyGetAudioData = 1;
         timeoutForAudioData = 0;
 
@@ -1247,16 +1247,21 @@ tryagain:
 		ret = avSendAudioData(spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
         
 //      Log3("avSendAudioData with lens:[%d].", frameInfo.reserve2);
-
 		if(ret == AV_ER_EXCEED_MAX_SIZE){
 			avServResetBuffer(spIdx,RESET_AUDIO,0);
 			Log3("tutk av server audio buffer is full.");
 		}
 		
 		if(ret != AV_ER_NoERROR){
-			Log2("tutk av server send audio data failed.err:[%d].", ret);
-			break;
-		}
+			Log3("tutk av server send audio data failed.err:[%d].", ret);
+            if(ret == AV_ER_IOTC_SESSION_CLOSED
+            || ret == AV_ER_IOTC_DEINITIALIZED
+            || ret == AV_ER_SESSION_CLOSE_BY_REMOTE
+            || ret == AV_ER_REMOTE_TIMEOUT_DISCONNECT){
+                Log3("tutk av server send audio loop break.");
+                break;
+            }
+        }
 
 		hAV->len = 0;
 		WritePtr = hAV->d;
