@@ -435,8 +435,7 @@ JNIEXPORT int JNICALL ClosePPPPLivestream(
 
     char *szDID;
     szDID = (char*)env->GetStringUTFChars(did,0);
-    if(szDID == NULL)
-    {
+    if(szDID == NULL){
         env->ReleaseStringUTFChars(did, szDID);
         return 0;
     }

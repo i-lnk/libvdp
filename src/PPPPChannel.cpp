@@ -1219,7 +1219,7 @@ tryagain:
 
 #ifdef ENABLE_VAD
 		if(nVadFrames > 300){
-			Log3("audio detect vad actived.\n");
+//			Log3("audio detect vad actived.\n");
             hAV->len = 0;
             WritePtr = hAV->d;
             continue;
@@ -1388,6 +1388,8 @@ static void * MediaExitProcess(
 	hPC->videoPlayThread = (pthread_t)-1;
 	hPC->audioRecvThread = (pthread_t)-1;
 	hPC->audioSendThread = (pthread_t)-1;
+    
+    avClientCleanBuf(hPC->avIdx);
 
 	GET_LOCK(&hPC->SessionStatusLock);
 	hPC->SessionStatus = STATUS_SESSION_IDLE;
@@ -1820,8 +1822,6 @@ int CPPPPChannel::StartMediaStreams(
 
 	// pppp://usr:pwd@livingstream:[channel id]
 	// pppp://usr:pwd@replay/mnt/sdcard/replay/file
-
-	avClientCleanBuf(avIdx);
 	memset(szURL,0,sizeof(szURL));
 
 	AudioRecvFormat = audio_recv_codec;
