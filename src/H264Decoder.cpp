@@ -1,5 +1,7 @@
 #ifdef PLATFORM_ANDROID
 #include <jni.h>
+#include <dlfcn.h>
+extern int g_sdkVersion;
 #endif
 
 #include "H264Decoder.h"
@@ -7,7 +9,34 @@
 
 CH264Decoder::CH264Decoder()
 {
-    //F_LOG ;    
+    //F_LOG ;   
+
+#if 0
+#ifdef PLATFORM_ANDROID
+	void * ndk_handle;
+
+	if(g_sdkVersion > 15){
+		if(g_sdkVersion >= 20){
+			ndk_handle = dlopen("libmediandk.so", RTLD_NOW);
+			Log3("initialize h264 decoder by hardware.android version is:%d",g_sdkVersion);
+		}else{
+			char libname[64];
+			sprintf(libname, "libnative_codec%d.so\0", g_sdkVersion);
+			ndk_handle = dlopen(libname, RTLD_LAZY);
+		}
+
+		for (int i = 0; members[i].name; i++){
+			void *sym = dlsym(ndk_handle, members[i].name);
+			if (!sym && members[i].critical)
+			{
+				Log3("con not find simbol %s", members[i].name);
+				dlclose(ndk_handle);
+			}
+			*(void **)((uint8_t*)&gdlsys + members[i].offset) = sym;
+		}
+	}
+#endif
+#endif
 
     //==========================================
     colortab = NULL;

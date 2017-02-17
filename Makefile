@@ -29,10 +29,12 @@ CC = g++ --sysroot=$(SYSROOT)
 
 ANDROID_CFLAGS = -O2 -msoft-float -fPIC -mthumb-interwork \
 	-DX264_VERSION -DANDROID -DPLATFORM_ANDROID -DHAVE_PTHREAD \
+	-DTUTK_PPPP \
 	-I$(CYGWIN_BASE)/$(ARM_PLATFORM)/usr/include \
 	-I$(INCPATH)/ffmpeg \
 	-I$(INCPATH)/opus \
 	-I$(INCPATH)/TUTK \
+	-I$(INCPATH)/i-lnk \
 	-I$(INCPATH)/webrtc_aec
 
 # Android link flags 

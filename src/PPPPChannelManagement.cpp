@@ -40,7 +40,6 @@ int CPPPPChannelManagement::Start(char * szDID, char *user, char *pwd,char *serv
 	GET_LOCK( &PPPPChannelLock );
 
 	int r = 1;
-	
     int i = 0;
 	
     for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)

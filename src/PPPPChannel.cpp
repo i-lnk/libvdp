@@ -13,11 +13,15 @@
 #include "utility.h"
 #include "PPPPChannel.h"  
 
+#ifdef TUTK_PPPP
 #include "IOTCAPIs.h"
 #include "IOTCWakeUp.h"
 #include "AVAPIs.h"
 #include "AVFRAMEINFO.h"
 #include "AVIOCTRLDEFs.h"
+#else
+#include "PPPP_API.h"
+#endif
 
 #include "object_jni.h"
 #include "appreq.h"
@@ -222,7 +226,8 @@ connect:
 	
 	Log3("[1:%s]=====>start get free session id for client connection.",
          hPC->szDID);
-	
+
+#ifdef TUTK_PPPP
 	hPC->sessionID = IOTC_Get_SessionID();
 	if(hPC->sessionID < 0){
 		Log3("[1:%s]=====>IOTC_Get_SessionID error code [%d]\n",
@@ -275,17 +280,32 @@ connect:
 				goto jumperr;
 		}
 	}
+#else
+	hPC->SID = PPPP_Connect(hPC->szDID,1,0,&hPC->szServer);
+	if(hPC->SID < 0){
+		switch(hPC->SID){
+			case ERROR_PPPP_INVALID_ID:
+				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_INVALID_ID);
+				goto jumperr;
+			case ERROR_PPPP_MAX_SESSION:
+				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_EXCEED_SESSION);
+				goto jumperr;
+			default:
+				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
+				goto jumperr;
+		}
+	}
+#endif
     
     hPC->deviceStandby = 0; // wakeup successful.
 
 	Log3("[3:%s]=====>start av client service with user:[%s] pass:[%s].\n", hPC->szDID, hPC->szUsr, hPC->szPwd);
 
 	if(strlen(hPC->szUsr) == 0 || strlen(hPC->szPwd) == 0){
-        
 		hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_NOT_LOGIN);
-		
+#ifdef PPPP_TUTK
 		IOTC_Connect_Stop_BySID(hPC->SID);
-		
+#endif
 		Log3("[3:%s]=====>Device can't login by valid user and pass.\n",
              hPC->szDID);
 		
