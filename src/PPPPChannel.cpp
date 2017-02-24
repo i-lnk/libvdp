@@ -102,11 +102,11 @@ static void recordCallback(
 	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
-    short *hFrame = p->recordBuffer+(p->iBufferIndex*AEC_CACHE_LEN/2);
+    short *hFrame = p->recordBuffer+(p->iBufferIndex * hPC->Audio10msLength / sizeof(short));
 	
 	hPC->hAudioGetList->Write(hFrame,GetAudioTime());
 
-	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
+	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,(char*)hFrame,hPC->Audio10msLength);
 
     p->iBufferIndex = (p->iBufferIndex+1)%CBC_CACHE_NUM;
 }
@@ -119,20 +119,20 @@ static void playerCallback(
 	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
-    short *hFrame = p->outputBuffer+(p->oBufferIndex*AEC_CACHE_LEN/2);
+    short *hFrame = p->outputBuffer+(p->oBufferIndex * hPC->Audio10msLength / sizeof(short));
 
 	hPC->hAudioPutList->Write((short*)hFrame,GetAudioTime());
 	
 	int stocksize = hPC->hSoundBuffer->GetStock();
 
-	if(stocksize >= AEC_CACHE_LEN){
+	if(stocksize >= hPC->Audio10msLength){
 //      Log3("read audio data from sound buffer with lens:[%d]",stocksize);
-		hPC->hSoundBuffer->Read((char*)hFrame,AEC_CACHE_LEN);
+		hPC->hSoundBuffer->Read((char*)hFrame,hPC->Audio10msLength);
 	}else{
-        memset((char*)hFrame,0,AEC_CACHE_LEN);
+        memset((char*)hFrame,0,hPC->Audio10msLength);
 	}
 
-	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,(char*)hFrame,AEC_CACHE_LEN);
+	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,(char*)hFrame,hPC->Audio10msLength);
 
     p->oBufferIndex = (p->oBufferIndex+1)%CBC_CACHE_NUM;
 }
@@ -140,33 +140,33 @@ static void playerCallback(
 #else
 
 static void recordCallback(char * data, int lens, void *context){
-    if(lens > AEC_CACHE_LEN){
+    OPENXL_STREAM * p = (OPENXL_STREAM *)context;
+    CPPPPChannel * hPC = (CPPPPChannel *)p->context;
+
+	if(lens > hPC->Audio10msLength){
         Log3("audio record sample is too large:[%d].",lens);
         return;
     }
-    
-    OPENXL_STREAM * p = (OPENXL_STREAM *)context;
-    CPPPPChannel * hPC = (CPPPPChannel *)p->context;
     
     char * pr = (char*)p->recordBuffer;
     memcpy(pr + p->recordSize,data,lens);
     p->recordSize += lens;
     
-    if(p->recordSize >= AEC_CACHE_LEN){
+    if(p->recordSize >= hPC->Audio10msLength){
         hPC->hAudioGetList->Write((short*)pr,GetAudioTime());
-        p->recordSize -= AEC_CACHE_LEN;
-        memcpy(pr,pr + AEC_CACHE_LEN,p->recordSize);
+        p->recordSize -= hPC->Audio10msLength;
+        memcpy(pr,pr + hPC->Audio10msLength,p->recordSize);
     }
 }
 
 static void playerCallback(char * data, int lens, void *context){
-    if(lens > AEC_CACHE_LEN){
+    OPENXL_STREAM * p = (OPENXL_STREAM *)context;
+    CPPPPChannel * hPC = (CPPPPChannel *)p->context;
+
+	 if(lens > hPC->Audio10msLength){
         Log3("audio output sample is too large:[%d].",lens);
         return;
     }
-    
-    OPENXL_STREAM * p = (OPENXL_STREAM *)context;
-    CPPPPChannel * hPC = (CPPPPChannel *)p->context;
     
     int stocksize = hPC->hSoundBuffer->GetStock();
     
@@ -180,11 +180,11 @@ static void playerCallback(char * data, int lens, void *context){
     memcpy(po + p->outputSize,data,lens);
     p->outputSize += lens;
     
-    if(p->outputSize >= AEC_CACHE_LEN){
+    if(p->outputSize >= hPC->Audio10msLength){
         hPC->hAudioPutList->Write((short*)po,GetAudioTime());
-        p->outputSize -= AEC_CACHE_LEN;
+        p->outputSize -= hPC->Audio10msLength;
         memcpy(po,
-               po + AEC_CACHE_LEN,
+               po + hPC->Audio10msLength,
                p->outputSize);
     }
 }
@@ -863,7 +863,12 @@ static void * AudioRecvProcess(
 
 	Log3("audio recv process sid:[%d].",hPC->SID);
 
-	void * hCodec = audio_dec_init(hPC->AudioRecvFormat,8000,1);
+	void * hCodec = audio_dec_init(
+		hPC->AudioRecvFormat,
+		hPC->AudioSampleRate,
+		hPC->AudioChannel
+		);
+	
 	if(hCodec == NULL){
 		Log3("initialize audio decodec handle failed.\n");
 		return NULL;
@@ -897,7 +902,7 @@ static void * AudioRecvProcess(
 		2,
 		0,
 		255,
-		8000);
+		hPC->AudioSampleRate);
 
 	if(hAgc == NULL){
 		Log3("initialize audio agc failed.\n");
@@ -906,7 +911,7 @@ static void * AudioRecvProcess(
 #endif
 
 #ifdef ENABLE_NSX_I
-	hNsx = audio_nsx_init(2,8000);
+	hNsx = audio_nsx_init(2,hPC->AudioSampleRate);
 
 	if(hNsx == NULL){
 		Log3("initialize audio nsx failed.\n");
@@ -959,8 +964,15 @@ static void * AudioRecvProcess(
 		if(frameInfo.codec_id != hPC->AudioRecvFormat){
 			Log3("invalid packet format for audio decoder:[%02X].",frameInfo.codec_id);
 			audio_dec_free(hCodec);
+			
 			Log3("initialize new audio decoder here.\n")
-			hCodec = audio_dec_init(frameInfo.codec_id,8000,1);
+				
+			hCodec = audio_dec_init(
+				frameInfo.codec_id,
+				hPC->AudioSampleRate,
+				hPC->AudioChannel
+				);
+			
 			if(hCodec == NULL){
 				Log3("initialize audio decodec handle for codec:[%02X] failed.",frameInfo.codec_id);
 				break;
@@ -981,16 +993,16 @@ static void * AudioRecvProcess(
 			continue;
 		}
 
-		int times = ret/160;
+		int times = ret/hPC->Audio10msLength;
 		for(int i = 0; i < times; i++){
 #ifdef ENABLE_NSX_I
-			audio_nsx_proc(hNsx,&Codec[160*i]);
+			audio_nsx_proc(hNsx,&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength);
 #endif
 #ifdef ENABLE_AGC
-			audio_agc_proc(hAgc,&Codec[160*i]);
+			audio_agc_proc(hAgc,&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength);
 #endif
-			hPC->hAudioBuffer->Write(&Codec[160*i],160); // for audio avi record
-			hPC->hSoundBuffer->Write(&Codec[160*i],160); // for audio player callback
+			hPC->hAudioBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio avi record
+			hPC->hSoundBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio player callback
 		}
         
         
@@ -1034,7 +1046,7 @@ static void * AudioSendProcess(
 
 	Log3("audio send process sid:[%d].", hPC->SID);
 
-	void * hCodec = audio_enc_init(hPC->AudioSendFormat,8000,1);
+	void * hCodec = audio_enc_init(hPC->AudioSendFormat,hPC->AudioSampleRate,hPC->AudioChannel);
 	if(hCodec == NULL){
 		Log3("initialize audio encodec handle failed.\n");
 		return NULL;
@@ -1101,11 +1113,11 @@ tryagain:
 #endif
 
 #ifdef ENABLE_AEC
-	void * hAEC = audio_echo_cancellation_init(3,8000);
+	void * hAEC = audio_echo_cancellation_init(3,hPC->AudioSampleRate);
 #endif
 
 #ifdef ENABLE_NSX_O
-	void * hNsx = audio_nsx_init(2,8000);
+	void * hNsx = audio_nsx_init(2,hPC->AudioSampleRate);
 
 	if(hNsx == NULL){
 		Log3("initialize audio nsx failed.\n");
@@ -1119,8 +1131,9 @@ tryagain:
 	}
 #endif
 
-	hPC->hAudioPutList = new CAudioDataList(100);
-	hPC->hAudioGetList = new CAudioDataList(100);
+	hPC->hAudioPutList = new CAudioDataList(100,hPC->Audio10msLength);
+	hPC->hAudioGetList = new CAudioDataList(100,hPC->Audio10msLength);
+	
 	if(hPC->hAudioPutList == NULL || hPC->hAudioGetList == NULL){
 		Log2("audio data list init failed.");
 		hPC->audioPlaying = 0;
@@ -1130,7 +1143,10 @@ tryagain:
 
 	OPENXL_STREAM * hOSL = NULL;
 	hOSL = InitOpenXLStream(
-		8000,1,1,hVoid,
+		hPC->AudioSampleRate,
+		hPC->AudioChannel,
+		hPC->AudioChannel,
+		hVoid,
 		recordCallback,
 		playerCallback
 		);
@@ -1140,13 +1156,13 @@ tryagain:
 		hPC->audioPlaying = 0;
 	}
 
-	char hFrame[12*AEC_CACHE_LEN] = {0};
-	char hCodecFrame[12*AEC_CACHE_LEN] = {0};
+	char hFrame[2*960] = {0};
+	char hCodecFrame[2*960] = {0};
 
 	AV_HEAD * hAV = (AV_HEAD*)hFrame;
 	char * WritePtr = hAV->d;
 
-	int nBytesNeed = 6*AEC_CACHE_LEN;
+	int nBytesNeed = 960;	// max is 960 for opus encoder process.
 	int nVadFrames = 0;
 
 	while(hPC->audioPlaying){
@@ -1179,23 +1195,23 @@ tryagain:
 	    short * hAecCapturePCM = hCapture->buf;
 		short * hAecSpeakerPCM = hSpeaker->buf;
 
-		if (audio_echo_cancellation_farend(hAEC,(char*)hAecSpeakerPCM,80) != 0){
+		if (audio_echo_cancellation_farend(hAEC,(char*)hAecSpeakerPCM,hPC->Audio10msLength/sizeof(short)) != 0){
 				Log3("WebRtcAecm_BufferFarend() failed.");
 		}
 		
-		if (audio_echo_cancellation_proc(hAEC,(char*)hAecCapturePCM,(char*)WritePtr,80) != 0){
+		if (audio_echo_cancellation_proc(hAEC,(char*)hAecCapturePCM,(char*)WritePtr,hPC->Audio10msLength/sizeof(short)) != 0){
 				Log3("WebRtcAecm_Process() failed.");
 		}
 #else
-		memcpy(WritePtr,hCapture->buf,80*sizeof(short));
+		memcpy(WritePtr,hCapture->buf,hPC->Audio10msLength);
 #endif
 
 #ifdef ENABLE_NSX_O
-		audio_nsx_proc(hNsx,WritePtr);
+		audio_nsx_proc(hNsx,WritePtr,hPC->Audio10msLength);
 #endif
 
 #ifdef ENABLE_VAD
-		int logration = audio_vad_proc(hVad,WritePtr,80);
+		int logration = audio_vad_proc(hVad,WritePtr,hPC->Audio10msLength);
 
         if(logration < 1024){
 //			Log3("audio detect vad actived:[%d].\n",logration);
@@ -1205,8 +1221,8 @@ tryagain:
 		}
 #endif
 
-		hAV->len += AEC_CACHE_LEN;
-		WritePtr += AEC_CACHE_LEN;
+		hAV->len += hPC->Audio10msLength;
+		WritePtr += hPC->Audio10msLength;
 
 		if(hAV->len < nBytesNeed){
 			continue;
@@ -1584,15 +1600,22 @@ void CPPPPChannel::Close()
 	PUT_LOCK(&SessionStatusLock);
 
 	mediaLinking = 0;
-    
-    PPPPClose();
 
 	Log3("stop media core thread.");
 
 	if(mediaCoreThread != (pthread_t)-1){
+		
 		pthread_join(mediaCoreThread,NULL);
 		mediaCoreThread = (pthread_t)-1;
+		
+		// must close core thread before close connection,
+		// by the reason of reconnect loop not exit, core thread will make a new connection.
+		
+		PPPPClose();
 	}else{
+	
+		PPPPClose();
+		
 		GET_LOCK(&SessionStatusLock);
 		SessionStatus = STATUS_SESSION_DIED;
 		PUT_LOCK(&SessionStatusLock);
@@ -1785,6 +1808,8 @@ int CPPPPChannel::CloseMediaStreams(
 	
 int CPPPPChannel::StartMediaStreams(
 	const char * url,
+	int audio_sample_rate,
+	int audio_channel,
 	int audio_recv_codec,
 	int audio_send_codec,
 	int video_recv_codec
@@ -1824,9 +1849,25 @@ int CPPPPChannel::StartMediaStreams(
 	// pppp://usr:pwd@replay/mnt/sdcard/replay/file
 	memset(szURL,0,sizeof(szURL));
 
+	AudioSampleRate = audio_sample_rate;
+	AudioChannel = audio_channel;
+
+	// only support channel mono, 16bit, 8KHz or 16KHz
+	//   2 is come from 16bits/8bits = 2bytes
+	// 100 is come from 10ms/1000ms
+	Audio10msLength = audio_sample_rate * audio_channel * 2  / 100;
+
 	AudioRecvFormat = audio_recv_codec;
 	AudioSendFormat = audio_send_codec;
 	VideoRecvFormat = video_recv_codec;
+
+	Log3(
+		"audio format info:[\n"
+		"samplerate = %d\n"
+		"channel = %d\n"
+		"length in 10 ms is %d\n"
+		"]\n",
+		AudioSampleRate,AudioChannel,Audio10msLength);
 
 	if(url != NULL){
 		memcpy(szURL,url,strlen(url));

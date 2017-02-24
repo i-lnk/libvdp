@@ -26,6 +26,8 @@ public:
     int StartPPPPLivestream(
 		char * szDID, 
 		char * szURL,
+		int audio_sample_rate,
+		int	audio_channel,
 		int audio_recv_codec,
 		int audio_send_codec,
 		int video_recv_codec

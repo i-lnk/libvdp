@@ -4,16 +4,19 @@
 #include <time.h>
 #include <math.h>
 	
-CAudioDataList::CAudioDataList( int count )
+CAudioDataList::CAudioDataList( int count, int Audio10msLength )
 {
 	Log2( "CEcrefList::CEcrefList" );
 	m_head	= NULL;
 	m_count = count;
 	AudioData	*data	= NULL;
 	AudioData	*front	= NULL;
-	short		* buf	= NULL;
-	int		size	= MIN_PCM_AUDIO_SIZE / 2;
-	m_buf	= (short *) malloc( count * size * sizeof(short) );
+	short		*buf	= NULL;
+	int		     size	= Audio10msLength;
+	
+	m_buf	= (short *) malloc( count * size );
+	m_frame_lens = size;
+	
 	buf	= m_buf;
 
 	INT_LOCK( &m_Lock );
@@ -86,12 +89,13 @@ CAudioDataList::~CAudioDataList()
 }
 
 
-void CAudioDataList::Write(short *data,unsigned long time)
+void CAudioDataList::Write(short * data,unsigned long time)
 {
     GET_LOCK(&m_Lock);
 	
 //    double mean;
-    int size = MIN_PCM_AUDIO_SIZE/2;
+    int size = m_frame_lens/sizeof(short);
+
     if(m_write!= NULL){
 		for(int i = 0;i<size;i++)
 		{
@@ -101,7 +105,7 @@ void CAudioDataList::Write(short *data,unsigned long time)
 			}
 			m_write->buf[i] = data[i];
 		}
-        //memcpy(m_write->buf,data,MIN_PCM_AUDIO_SIZE);
+      
 		m_write->time= time;
 		m_write->state = 1;
 		m_write = m_write->next;   

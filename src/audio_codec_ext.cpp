@@ -47,7 +47,8 @@ void * audio_nsx_init(
 
 int    audio_nsx_proc(
 	void * 	hNsx,
-	char *	AudioBuffer
+	char *	AudioBuffer,
+	int		Audio10msLength
 ){
 	if(!hNsx) return -1;
 
@@ -55,15 +56,14 @@ int    audio_nsx_proc(
 
 	short * I_FrmArray[1] = {0};
 	short * O_FrmArray[1] = {0};
-
-	short NsxData[80] = {0};
+	short NsxData[160] = {0};
 
 	I_FrmArray[0] = (short*)AudioBuffer;
 	O_FrmArray[0] = (short*)NsxData;
 
 	WebRtcNsx_Process((NsxHandle *)hNsx, I_FrmArray, 1, O_FrmArray);
 
-	memcpy(AudioBuffer,NsxData,80*sizeof(short));
+	memcpy(AudioBuffer,NsxData,Audio10msLength);
 
 	return 0;
 }
@@ -114,7 +114,8 @@ void * audio_agc_init(
 
 int audio_agc_proc(
 	void * 	hAgc,
-	char * 	AudioBuffer
+	char * 	AudioBuffer,
+	int		Audio10msLength
 ){
 	if(hAgc == NULL) return -1;
 
@@ -123,7 +124,7 @@ int audio_agc_proc(
 	short * I_FrmArray[1] = {0};
 	short * O_FrmArray[1] = {0};
 
-	short AgcData[80] = {0};
+	short AgcData[160] = {0};
 
 	I_FrmArray[0] = (short*)AudioBuffer;
 	O_FrmArray[0] = (short*)AgcData;
@@ -141,7 +142,7 @@ int audio_agc_proc(
 	status = WebRtcAgc_Process(Handle->hAgc,
 		I_FrmArray,
 		1,
-		80,
+		Audio10msLength / sizeof(short),
 		O_FrmArray,
 		IMicLv,&OMicLv,
 		0,

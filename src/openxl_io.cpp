@@ -261,7 +261,9 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
     result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay, SL_PLAYSTATE_PLAYING);
 
 	// send 20ms data when start
-    if((p->outputBuffer = (short *) calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL) {
+	int length_20ms = (sr * channels * 2 / 1000) * 20;
+	
+    if((p->outputBuffer = (short *) calloc(CBC_CACHE_NUM * length_20ms, sizeof(char))) == NULL) {
       return -1;
     }
     pBuffer =  (char*)p->outputBuffer;
@@ -269,8 +271,8 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
     for(int i = 0;i< CBC_CACHE_NUM;i++)
     {
     (*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
-				       pBuffer,AEC_CACHE_LEN*sizeof(char));
-     pBuffer+=AEC_CACHE_LEN;
+				       pBuffer,length_20ms);
+     pBuffer += length_20ms;
     }
 
     return result;
@@ -329,8 +331,7 @@ static SLresult openSLRecordOpen(OPENXL_STREAM *p){
       return -1;
     }
 
-	// recv 20ms data when start
-	char pcm20ms[320] = {0};
+	int  length_20ms = (sr * channels * 2 / 1000) * 20;
     
     // configure audio source
     SLDataLocator_IODevice loc_dev = {SL_DATALOCATOR_IODEVICE, SL_IODEVICE_AUDIOINPUT,
@@ -380,7 +381,7 @@ static SLresult openSLRecordOpen(OPENXL_STREAM *p){
 	
     result = (*p->recorderRecord)->SetRecordState(p->recorderRecord, SL_RECORDSTATE_RECORDING);
 
-    if((p->recordBuffer = (short *) calloc(CBC_CACHE_NUM*AEC_CACHE_LEN, sizeof(char))) == NULL) {
+    if((p->recordBuffer = (short *) calloc(CBC_CACHE_NUM * length_20ms, sizeof(char))) == NULL) {
       return -1;
     }
     pBuffer =  (char*)p->recordBuffer;
@@ -388,8 +389,8 @@ static SLresult openSLRecordOpen(OPENXL_STREAM *p){
     for(int i = 0;i< CBC_CACHE_NUM;i++)
     {
     (*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
-				       pBuffer, AEC_CACHE_LEN*sizeof(char));
-     pBuffer+=AEC_CACHE_LEN;
+				       pBuffer, length_20ms);
+     pBuffer+=length_20ms;
     }
      
   end_recopen: 
@@ -617,7 +618,7 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     }
     
     done = [sesInstance setPreferredIOBufferDuration:0.008 error:&error];
-    done = [sesInstance setPreferredSampleRate:8000.0 error:&error];
+    done = [sesInstance setPreferredSampleRate:p->sr error:&error];
     
     [sesInstance setActive:YES error:&error];
     if(error){
@@ -665,14 +666,16 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     desc.componentManufacturer  = kAudioUnitManufacturer_Apple;
     
     AudioComponent inputComponent = AudioComponentFindNext(NULL, &desc);
+
+	int lentgh_10ms = (format.mBytesPerFrame * format.mSampleRate / 1000) * 10;
     
-    p->outputBuffer = (short*)malloc(AEC_CACHE_LEN*3);
+    p->outputBuffer = (short*)malloc(lentgh_10ms*3);
     if(p->outputBuffer == NULL){
         Log3("audio unit initialize output buffer failed.");
         goto jumperr;
     }
     
-    p->recordBuffer = (short*)malloc(AEC_CACHE_LEN*3);
+    p->recordBuffer = (short*)malloc(lentgh_10ms*3);
     if(p->recordBuffer == NULL){
         Log3("audio unit initialize output buffer failed.");
         goto jumperr;

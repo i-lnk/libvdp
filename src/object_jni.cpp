@@ -285,7 +285,6 @@ JNIEXPORT int JNICALL PPPPSetCallbackContext(JNIEnv *env, jobject obj, jobject c
     return 0;
 }
 
-//ø™ ºÀ—À˜
 JNIEXPORT void JNICALL StartSearch(JNIEnv *env ,jobject obj,jstring ssid,jstring psd)
 {
     
@@ -306,7 +305,6 @@ JNIEXPORT void JNICALL StartSearch(JNIEnv *env ,jobject obj,jstring ssid,jstring
 	PUT_LOCK(&g_FindDevsProcessLock);
 }
 
-//Õ£÷πÀ—À˜
 JNIEXPORT void JNICALL CloseSearch(JNIEnv *env ,jobject obj)
 {
 	GET_LOCK(&g_FindDevsProcessLock);
@@ -377,6 +375,8 @@ JNIEXPORT int JNICALL StartPPPPLivestream(
 	jobject 	obj ,
 	jstring 	did , 				// p2p uuid
 	jstring 	url ,				// url for record replay
+	jint		audio_sample_date,
+	jint		audio_channel,
 	jint		audio_recv_codec,	// audio recv codec
 	jint		audio_send_codec,	// audio send codec
 	jint		video_recv_codec	// video recv codec
@@ -405,6 +405,8 @@ JNIEXPORT int JNICALL StartPPPPLivestream(
     r = g_pPPPPChannelMgt->StartPPPPLivestream(
 		szDID, 
 		szURL, 
+		audio_sample_date,
+		audio_channel,
 		audio_recv_codec,
 		audio_send_codec,
 		video_recv_codec
@@ -577,7 +579,7 @@ static JNINativeMethod Calls[] = {
 	{"PPPPSetCallbackContext", "(Landroid/content/Context;)I", (void*)PPPPSetCallbackContext},
 	{"StartPPPP", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)StartPPPP},
 	{"ClosePPPP", "(Ljava/lang/String;)I", (void*)ClosePPPP},
-	{"StartPPPPLivestream", "(Ljava/lang/String;Ljava/lang/String;III)I", (void*)StartPPPPLivestream},
+	{"StartPPPPLivestream", "(Ljava/lang/String;Ljava/lang/String;IIIII)I", (void*)StartPPPPLivestream},
 	{"ClosePPPPLivestream", "(Ljava/lang/String;)I", (void*)ClosePPPPLivestream},
 	{"StartRecorder", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)StartRecorder},
 	{"CloseRecorder", "(Ljava/lang/String;)I", (void*)CloseRecorder},

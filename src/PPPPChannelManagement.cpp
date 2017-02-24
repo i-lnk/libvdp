@@ -123,6 +123,8 @@ void CPPPPChannelManagement::StopAll(){
 int CPPPPChannelManagement::StartPPPPLivestream(
 	char * szDID, 
 	char * szURL,
+	int audio_sample_rate,
+	int	audio_channel,
 	int audio_recv_codec,
 	int audio_send_codec,
 	int video_recv_codec
@@ -139,7 +141,15 @@ int CPPPPChannelManagement::StartPPPPLivestream(
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
         	Log3("start connection with did:[%s].",szDID);
-            ret = m_PPPPChannel[i].pPPPPChannel->StartMediaStreams(szURL,audio_recv_codec,audio_send_codec,video_recv_codec);
+            ret = m_PPPPChannel[i].pPPPPChannel->StartMediaStreams(
+					szURL,
+					audio_sample_rate,
+					audio_channel,
+					audio_recv_codec,
+					audio_send_codec,
+					video_recv_codec
+					);
+			
 			break;
         }
     }

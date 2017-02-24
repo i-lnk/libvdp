@@ -75,7 +75,7 @@ JNIEXPORT int  JNICALL StartPPPP(JNIEnv *, jobject, jstring, jstring, jstring, j
 
 JNIEXPORT int  JNICALL ClosePPPP(JNIEnv *, jobject, jstring);
 
-JNIEXPORT int  JNICALL StartPPPPLivestream(JNIEnv *, jobject, jstring, jstring, jint, jint, jint);
+JNIEXPORT int  JNICALL StartPPPPLivestream(JNIEnv *, jobject, jstring, jstring, jint, jint, jint, jint, jint);
 
 JNIEXPORT int  JNICALL ClosePPPPLivestream(JNIEnv *, jobject, jstring);
 

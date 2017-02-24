@@ -70,7 +70,8 @@ void * audio_nsx_init(
 
 int    audio_nsx_proc(
 	void * 	hNsx,
-	char *	AudioBuffer
+	char *	AudioBuffer,
+	int		Audio10msLength
 );
 
 void   audio_nsx_free(
@@ -87,7 +88,8 @@ void * audio_agc_init(
 
 int audio_agc_proc(
 	void * 	hAgc,
-	char * 	AudioBuffer
+	char * 	AudioBuffer,
+	int		Audio10msLength
 );
 
 void audio_agc_free(

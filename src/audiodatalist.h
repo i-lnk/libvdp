@@ -1,9 +1,6 @@
 #ifndef _AUDIO_DATALIST_H_
 #define _AUDIO_DATALIST_H_
 
-#define DEFAULT_AUDIO_SIZE 256	
-#define MIN_PCM_AUDIO_SIZE 160
-
 typedef struct AudioData_ {
     short *buf;
 	unsigned long time;
@@ -16,7 +13,7 @@ typedef struct AudioData_ {
 class CAudioDataList
 {
 public:
-	CAudioDataList(int count);
+	CAudioDataList(int count,int Audio10msLength);
 	~CAudioDataList();  
     void Write(short *data,unsigned long time);
 	int  CheckData();
@@ -29,7 +26,7 @@ protected:
 	AudioData *	m_read;
 	AudioData *	m_write;
 private:
-	
+	int 		m_frame_lens;
 };
 
 

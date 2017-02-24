@@ -48,24 +48,24 @@
 #define MAX_PATHNAME_LEN 	256
 
 //msgtype
-#define MSG_NOTIFY_TYPE_PPPP_STATUS 0   	/* ¡¨Ω”◊¥Ã¨ */
-#define MSG_NOTIFY_TYPE_PPPP_MODE 1   		/* ¡¨Ω”ƒ£ Ω */
+#define MSG_NOTIFY_TYPE_PPPP_STATUS 0   	//
+#define MSG_NOTIFY_TYPE_PPPP_MODE 1   		//
 #define MSG_NOTIFY_TYPE_STREAM_TYPE 2
 
 //pppp status
-#define PPPP_STATUS_CONNECTING 0 			/* ’˝‘⁄¡¨Ω” */
-#define PPPP_STATUS_INITIALING 1 			/* ’˝‘⁄≥ı ºªØ */
-#define PPPP_STATUS_ON_LINE 2 				/* …Ë±∏‘⁄œﬂ */
-#define PPPP_STATUS_CONNECT_FAILED 3		/* ¡¨Ω” ß∞‹ */
-#define PPPP_STATUS_DISCONNECT 4 			/* ¡¨Ω”∂œø™ */
-#define PPPP_STATUS_INVALID_ID 5 			/* Œﬁ–ß…Ë±∏ */
-#define PPPP_STATUS_DEVICE_NOT_ON_LINE 6	/* …Ë±∏¿Îœﬂ */
-#define PPPP_STATUS_CONNECT_TIMEOUT 7 		/* ¡¨Ω”≥¨ ± */
-#define PPPP_STATUS_INVALID_USER_PWD 8 		/* Œﬁ–ß’Àªß√‹¬Î */
+#define PPPP_STATUS_CONNECTING 0 			//
+#define PPPP_STATUS_INITIALING 1 			///
+#define PPPP_STATUS_ON_LINE 2 				//
+#define PPPP_STATUS_CONNECT_FAILED 3		//
+#define PPPP_STATUS_DISCONNECT 4 			//
+#define PPPP_STATUS_INVALID_ID 5 			//
+#define PPPP_STATUS_DEVICE_NOT_ON_LINE 6	//
+#define PPPP_STATUS_CONNECT_TIMEOUT 7 		//
+#define PPPP_STATUS_INVALID_USER_PWD 8 		//
 #define PPPP_STATUS_DEVICE_SLEEP 9
 
-#define PPPP_STATUS_NOT_LOGIN 11			/* Œ¥µ«¬º */
-#define PPPP_STATUS_EXCEED_SESSION 13		/* √ª”–ø…”√µƒª·ª∞ */
+#define PPPP_STATUS_NOT_LOGIN 11			//
+#define PPPP_STATUS_EXCEED_SESSION 13		//
 
 #define COMMAND_BUFFER_SIZE 32*1024
 
@@ -125,6 +125,8 @@ public:
 	
 	int StartMediaStreams(
 		const char * url,
+		int audio_sample_rate,
+		int audio_channel,
 		int audio_recv_codec,
 		int audio_send_codec,
 		int video_recv_codec
@@ -182,10 +184,13 @@ public:
 	int 				iocmdRecving;	
 	int					iocmdSending;
 
-	int					AudioRecvFormat;
-	int					VideoRecvFormat;
-	int					AudioSendFormat;
-	int					AudioEchoCancellationEnable;
+	int					AudioSampleRate;	// audio samplerate
+	int					AudioChannel;		// audio channel mode
+	int					AudioRecvFormat;	// audio codec from device
+	int					AudioSendFormat;	// audio codec to device
+	int					VideoRecvFormat;	// video codec from device
+
+	int					Audio10msLength;	// audio data 10ms length
 
 	pthread_t			mediaCoreThread;
 
@@ -220,36 +225,36 @@ public:
 	int					aLen;			// 
 
 
-	long long		  	vCTS;			// µ±«∞ ±º‰¥¡
-	long long		  	vLTS;			// …œ¥Œ ±º‰¥¡
-	long long		 	vPTS;			// ø™ º ±º‰¥¡ - µ±«∞÷° ±º‰¥¡
+	long long		  	vCTS;			// 
+	long long		  	vLTS;			// 
+	long long		 	vPTS;			//
 
-	long long			aCTS;			// µ±«∞ ±º‰¥¡
-	long long			aLTS;			// …œ¥Œ ±º‰¥¡
-	long long		 	aPTS;			// ø™ º ±º‰¥¡ - µ±«∞÷° ±º‰¥¡
+	long long			aCTS;			// 
+	long long			aLTS;			// 
+	long long		 	aPTS;			// 
 	
-	long long		  	sSTS;			// ø™ º ±º‰¥¡
+	long long		  	sSTS;			// 
 
-	long long			vIdx;			//  ”∆µÀ˜“˝
-	long long			aIdx;			// “Ù∆µÀ˜“˝
+	long long			vIdx;			// 
+	long long			aIdx;			// 
 
 	char			*	hRecordFile;
 
 	COMMO_LOCK			AviDataLock;
-	PROCESS_HANDLE		avProc;			// ¬ºœÒœﬂ≥Ãæ‰±˙
-	char 				avExit;			// ¬ºœÒœﬂ≥ÃÕÀ≥ˆ±Í÷æ
+	PROCESS_HANDLE		avProc;			// 
+	char 				avExit;			// 
 
 	// for avi proc
-	CCircleBuf *		hVideoBuffer;	//  ”∆µª∫≥Â«¯
-	CCircleBuf *		hAudioBuffer;	// “Ù∆µ≤•∑≈ª∫≥Â«¯
-	CCircleBuf *		hSoundBuffer;	// “Ù∆µ¬º÷∆ª∫≥Â«¯
+	CCircleBuf *		hVideoBuffer;	// 
+	CCircleBuf *		hAudioBuffer;	// 
+	CCircleBuf *		hSoundBuffer;	// 
 	
-	CCircleBuf *		hIOCmdBuffer;	// ÷∏¡Ó∑¢ÀÕª∫≥Â«¯
+	CCircleBuf *		hIOCmdBuffer;	// 
 	
 	int StartRecorder(
-		int 			W,				// øÌ∂»
-		int 			H,				// ∏ﬂ∂»
-		int 			FPS,			// ÷°¬ 
+		int 			W,				//
+		int 			H,				// 
+		int 			FPS,			// 
 		char *			SavePath	
 	);
 
