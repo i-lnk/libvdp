@@ -9,43 +9,39 @@ CAudioDataList::CAudioDataList( int count, int Audio10msLength )
 	Log2( "CEcrefList::CEcrefList" );
 	m_head	= NULL;
 	m_count = count;
-	AudioData	*data	= NULL;
-	AudioData	*front	= NULL;
-	short		*buf	= NULL;
-	int		     size	= Audio10msLength;
+	AudioData * data	= NULL;
+	AudioData * front	= NULL;
+	char * buf = NULL;
+	int size = Audio10msLength;
 	
-	m_buf	= (short *) malloc( count * size );
+	m_buf = (short *) malloc( count * size );
 	m_frame_lens = size;
 	
-	buf	= m_buf;
+	buf	= (char*)m_buf;
 
 	INT_LOCK( &m_Lock );
 
 	for ( int i = 0; i < count; i++ )
 	{
 		data = (AudioData *) malloc( sizeof(AudioData) );
-		if ( data )
-		{
+		if ( data ){
 			/* memset(data,0,sizeof(AudioData)); */
 			data->next	= NULL;
 			data->front	= NULL;
-			data->buf	= buf;
-			buf		+= size;
+			data->buf = (short *)buf;
+			buf	+= size;
 			data->time	=  0;
             data->state	= -1;
 			data->front	= front;
 
-			if ( front != NULL )
-			{
+			if ( front != NULL ){
 				front->next = data;
 			}
 		}
 
-		if ( i == 0 )
-		{
+		if ( i == 0 ){
 			m_head = data;
-		}else if ( i == count - 1 )
-		{
+		}else if ( i == count - 1 ){
 			data->next	= m_head;
 			m_head->front	= data;
 		}
@@ -97,16 +93,11 @@ void CAudioDataList::Write(short * data,unsigned long time)
     int size = m_frame_lens/sizeof(short);
 
     if(m_write!= NULL){
-		for(int i = 0;i<size;i++)
-		{
-			if(data[i]>32767)
-			{
-				data[i] =32767;
-			}
-			m_write->buf[i] = data[i];
+		for(int i = 0;i<size;i++){
+            m_write->buf[i] = data[i] > 32767 ? 32767 : data[i];
 		}
       
-		m_write->time= time;
+		m_write->time = time;
 		m_write->state = 1;
 		m_write = m_write->next;   
     }
@@ -127,7 +118,7 @@ int  CAudioDataList::CheckData()
 AudioData* CAudioDataList::Read()
 {
 	GET_LOCK(&m_Lock);
-	AudioData *data = NULL;
+	AudioData * data = NULL;
 	if(m_read!= NULL &&  m_read->state == 1){
         data = m_read;
 	    m_read->state = 0;

@@ -595,7 +595,6 @@ static int audioUnitRecordOpen(OPENXL_STREAM * p, AudioStreamBasicDescription fo
 static int audioUnitSessionInit(OPENXL_STREAM * p){
     AVAudioSession * sesInstance = [AVAudioSession sharedInstance];
     p->hAVAudioSession = (__bridge void*)sesInstance;
-    p->hAUInst = (void *)malloc(sizeof(AudioComponentInstance));
     
     NSError * error = nil;
     bool done = false;
@@ -641,9 +640,7 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
         return -1;
     }
     
-    memset(p->hAUInst,0,sizeof(AudioComponentInstance));
-    
-    AudioComponentInstance * hInst = (AudioComponentInstance *)p->hAUInst;
+    static AudioComponentInstance acInst;
     
     AudioStreamBasicDescription format;
     memset(&format,0,sizeof(format));
@@ -667,6 +664,7 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     
     AudioComponent inputComponent = AudioComponentFindNext(NULL, &desc);
 
+    /*
 	int lentgh_10ms = (format.mBytesPerFrame * format.mSampleRate / 1000) * 10;
     
     p->outputBuffer = (short*)malloc(lentgh_10ms*3);
@@ -680,15 +678,23 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
         Log3("audio unit initialize output buffer failed.");
         goto jumperr;
     }
+    */
+    
+    static char buffers[2][960] = {0};
+    
+    p->outputBuffer = (short*)buffers[0];
+    p->recordBuffer = (short*)buffers[1];
     
     p->outputSize = 0;
     p->recordSize = 0;
 
-    err = AudioComponentInstanceNew(inputComponent,hInst);
+    err = AudioComponentInstanceNew(inputComponent,&acInst);
     if(err != 0){
         Log3("audio unit instance create failed:[%d].",err);
         goto jumperr;
     }
+    
+    p->hAUInst = (void*)&acInst;
     
     if(audioUnitRecordOpen(p, format) != 0){
         Log3("audio unit initialize record and player failed.");
@@ -700,13 +706,16 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
         goto jumperr;
     }
     
-    err = AudioUnitInitialize(*hInst);
+    Log3("audio unit initialize start.");
+    
+    err = AudioUnitInitialize(acInst);
     if(err != 0){
         Log3("audio unit initialize failed:[%d].",err);
         goto jumperr;
     }
     
-    err = AudioOutputUnitStart(*hInst);
+    Log3("audio unit output start.");
+    err = AudioOutputUnitStart(acInst);
     if(err != 0){
         Log3("audio unit start failed:[%d].",err);
         goto jumperr;
@@ -715,9 +724,8 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     return 0;
 
 jumperr:
-    if(p->outputBuffer) free(p->outputBuffer);
-    if(p->recordBuffer) free(p->recordBuffer);
-    free(p->hAUInst);
+//  if(p->outputBuffer) free(p->outputBuffer);
+//  if(p->recordBuffer) free(p->recordBuffer);
     
     p->outputBuffer = NULL;
     p->recordBuffer = NULL;
@@ -735,9 +743,8 @@ static int audioUnitDestroyEngine(OPENXL_STREAM * p){
     AudioOutputUnitStop(*hInst);
     AudioComponentInstanceDispose(*hInst);
     
-    free(p->hAUInst);
-    if(p->outputBuffer) free(p->outputBuffer);
-    if(p->recordBuffer) free(p->recordBuffer);
+//  if(p->outputBuffer) free(p->outputBuffer);
+//  if(p->recordBuffer) free(p->recordBuffer);
     
     p->outputBuffer = NULL;
     p->recordBuffer = NULL;

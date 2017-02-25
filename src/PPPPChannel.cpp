@@ -187,6 +187,7 @@ static void playerCallback(char * data, int lens, void *context){
                po + hPC->Audio10msLength,
                p->outputSize);
     }
+
 }
 
 #endif
@@ -216,7 +217,7 @@ void * MeidaCoreProcess(
 #endif
 
 	int resend = 0;
-	int wakeup_times = 20;
+	int wakeup_times = 7;
 
 connect:
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
@@ -878,7 +879,11 @@ static void * AudioRecvProcess(
 	hPC->hSoundBuffer->Reset();
 	
 	char Cache[2048] = {0};
-	char Codec[8192] = {0};	
+	char Codec[4096] = {0};
+    
+    int  CodecLength = 0;
+    int  CodecLengthNeed = 960;
+    
 	AV_HEAD * hAV = (AV_HEAD*)Cache;
 	
 	ret = avSendIOCtrlEx(
@@ -982,7 +987,12 @@ static void * AudioRecvProcess(
 			continue;
 		}
 		
-		if((ret = audio_dec_process(hCodec,hAV->d,hAV->len,Codec,sizeof(Codec))) < 0){
+		if((ret = audio_dec_process(
+                hCodec,
+                hAV->d,
+                hAV->len,
+                &Codec[CodecLength],
+                sizeof(Codec) - CodecLength)) < 0){
 			
 			Log3("audio decodec process run error:%d with codec:[%02X] lens:[%d].\n",
 				ret,
@@ -992,9 +1002,17 @@ static void * AudioRecvProcess(
 			
 			continue;
 		}
+        
+        CodecLength += ret;
+        
+        if(CodecLength < CodecLengthNeed){
+            continue;
+        }
 
-		int times = ret/hPC->Audio10msLength;
-		for(int i = 0; i < times; i++){
+		int Round = ret/hPC->Audio10msLength;
+        int UsedLength = 0;
+        
+		for(int i = 0; i < Round; i++){
 #ifdef ENABLE_NSX_I
 			audio_nsx_proc(hNsx,&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength);
 #endif
@@ -1003,8 +1021,12 @@ static void * AudioRecvProcess(
 #endif
 			hPC->hAudioBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio avi record
 			hPC->hSoundBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio player callback
+            
+            UsedLength += hPC->Audio10msLength;
 		}
         
+        CodecLength -= UsedLength;
+        memcpy(Codec,&Codec[UsedLength],CodecLength);
         
 //      Log3("-------%d",ret);
         alreadyGetAudioData = 1;
@@ -1058,7 +1080,6 @@ static void * AudioSendProcess(
 	int speakerChannel = IOTC_Session_Get_Free_Channel(hPC->SID);
 
 	ioMsg.channel = speakerChannel;
-	int resend = 1;
 	int spIdx = -1;
 
 	Log3("5:sid:[%d].",hPC->SID);
@@ -1131,8 +1152,8 @@ tryagain:
 	}
 #endif
 
-	hPC->hAudioPutList = new CAudioDataList(100,hPC->Audio10msLength);
-	hPC->hAudioGetList = new CAudioDataList(100,hPC->Audio10msLength);
+	hPC->hAudioPutList = new CAudioDataList(32,hPC->Audio10msLength);
+	hPC->hAudioGetList = new CAudioDataList(32,hPC->Audio10msLength);
 	
 	if(hPC->hAudioPutList == NULL || hPC->hAudioGetList == NULL){
 		Log2("audio data list init failed.");

@@ -2,7 +2,7 @@
 #define _AUDIO_DATALIST_H_
 
 typedef struct AudioData_ {
-    short *buf;
+    short * buf;
 	unsigned long time;
 	int    state;
 	struct AudioData_ *next;
