@@ -1262,8 +1262,13 @@ tryagain:
             continue;
 		}
 #endif
-
-		ret = audio_enc_process(hCodec,hAV->d,hAV->len,hCodecFrame,sizeof(hCodecFrame));
+		ret = audio_enc_process(
+            hCodec,
+            hAV->d,
+            hAV->len,
+            hCodecFrame,
+            sizeof(hCodecFrame));
+        
 		if(ret < 2){
 			Log3("audio encode failed with error:%d.\n",ret);
 			hAV->len = 0;
