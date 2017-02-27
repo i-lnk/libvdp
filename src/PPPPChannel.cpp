@@ -102,7 +102,7 @@ static void recordCallback(
 	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
-    short *hFrame = p->recordBuffer+(p->iBufferIndex * hPC->Audio10msLength / sizeof(short));
+    short *hFrame = p->recordBuffer+(p->iBufferIndex * hPC->Audio10msLength  / sizeof(short));
 	
 	hPC->hAudioGetList->Write(hFrame,GetAudioTime());
 
@@ -126,7 +126,6 @@ static void playerCallback(
 	int stocksize = hPC->hSoundBuffer->GetStock();
 
 	if(stocksize >= hPC->Audio10msLength){
-//      Log3("read audio data from sound buffer with lens:[%d]",stocksize);
 		hPC->hSoundBuffer->Read((char*)hFrame,hPC->Audio10msLength);
 	}else{
         memset((char*)hFrame,0,hPC->Audio10msLength);
@@ -754,6 +753,12 @@ static void * VideoRecvProcess(
 
 	while(hPC->videoPlaying)
 	{
+		if(hPC->spIdx < 0){
+			Log3("waiting for device connect to our audio server.\n");
+			sleep(1); 
+			continue;
+		}
+	
 		ret = avRecvFrameData2(
 			avIdx, 
 			hFrm->d,
@@ -1027,8 +1032,7 @@ static void * AudioRecvProcess(
         
         CodecLength -= UsedLength;
         memcpy(Codec,&Codec[UsedLength],CodecLength);
-        
-//      Log3("-------%d",ret);
+		
         alreadyGetAudioData = 1;
         timeoutForAudioData = 0;
 
@@ -1162,7 +1166,10 @@ tryagain:
 
 	GET_LOCK(&OpenSLLock);
 
+	Log3("=====> opensl init start.\n");
+
 	OPENXL_STREAM * hOSL = NULL;
+	
 	hOSL = InitOpenXLStream(
 		hPC->AudioSampleRate,
 		hPC->AudioChannel,
@@ -1171,6 +1178,8 @@ tryagain:
 		recordCallback,
 		playerCallback
 		);
+
+	Log3("=====> opensl init close.\n");
 	
 	if(!hOSL){
 		Log3("opensl init failed.");
@@ -1253,7 +1262,6 @@ tryagain:
 		fwrite(hAV->d,hAV->len,1,hOut);
 #endif
 
-
 #ifdef ENABLE_VAD
 		if(nVadFrames > 300){
 //			Log3("audio detect vad actived.\n");
@@ -1331,8 +1339,9 @@ tryagain:
 	if(hOut) fclose(hOut); hOut = NULL;
 #endif
 
-
 	PUT_LOCK(&OpenSLLock);
+
+	
 	
 	if(hPC->hAudioPutList) delete hPC->hAudioPutList;
 	if(hPC->hAudioGetList) delete hPC->hAudioGetList;

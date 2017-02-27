@@ -96,11 +96,11 @@ void CAudioDataList::Write(short * data,unsigned long time)
 		for(int i = 0;i<size;i++){
             m_write->buf[i] = data[i] > 32767 ? 32767 : data[i];
 		}
-      
 		m_write->time = time;
 		m_write->state = 1;
 		m_write = m_write->next;   
     }
+	
 	PUT_LOCK(&m_Lock);
 }
 

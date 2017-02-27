@@ -181,6 +181,8 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
     default:
       return -1;
     }
+
+	int length_10ms = (p->sr * channels * 2 / 1000) * 10;
    
     const SLInterfaceID ids[] = {SL_IID_VOLUME};
     const SLboolean req[] = {SL_BOOLEAN_FALSE};
@@ -257,23 +259,20 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
     result = (*p->bqPlayerBufferQueue)->RegisterCallback(p->bqPlayerBufferQueue, p->cbp, p);
     if(result != SL_RESULT_SUCCESS) return result;
 
-    // set the player's state to playing
-    result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay, SL_PLAYSTATE_PLAYING);
-
-	// send 20ms data when start
-	int length_20ms = (sr * channels * 2 / 1000) * 20;
-	
-    if((p->outputBuffer = (short *) calloc(CBC_CACHE_NUM * length_20ms, sizeof(char))) == NULL) {
+	// send 10ms data when start
+    if((p->outputBuffer = (short *) calloc(CBC_CACHE_NUM * length_10ms, sizeof(char))) == NULL) {
       return -1;
     }
+	
     pBuffer =  (char*)p->outputBuffer;
     p->oBufferIndex= 0;
-    for(int i = 0;i< CBC_CACHE_NUM;i++)
-    {
-    (*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue, 
-				       pBuffer,length_20ms);
-     pBuffer += length_20ms;
+    for(int i = 0;i< CBC_CACHE_NUM;i++){
+    	(*p->bqPlayerBufferQueue)->Enqueue(p->bqPlayerBufferQueue,pBuffer,length_10ms);
+     	pBuffer += length_10ms;
     }
+
+    // set the player's state to playing
+    result = (*p->bqPlayerPlay)->SetPlayState(p->bqPlayerPlay, SL_PLAYSTATE_PLAYING);
 
     return result;
   }
@@ -331,7 +330,7 @@ static SLresult openSLRecordOpen(OPENXL_STREAM *p){
       return -1;
     }
 
-	int  length_20ms = (sr * channels * 2 / 1000) * 20;
+	int  length_10ms = (p->sr * channels * 2 / 1000) * 10;
     
     // configure audio source
     SLDataLocator_IODevice loc_dev = {SL_DATALOCATOR_IODEVICE, SL_IODEVICE_AUDIOINPUT,
@@ -375,22 +374,20 @@ static SLresult openSLRecordOpen(OPENXL_STREAM *p){
     result = (*p->recorderBufferQueue)->RegisterCallback(p->recorderBufferQueue, p->cbr, p);
     if (SL_RESULT_SUCCESS != result) goto end_recopen;
 
-	/* Set the duration of the recording - 20 milliseconds) */
-	result = (*p->recorderRecord)->SetDurationLimit(p->recorderRecord, 20);
+	/* Set the duration of the recording - 10 milliseconds) */
+	result = (*p->recorderRecord)->SetDurationLimit(p->recorderRecord, 10);
 	if (SL_RESULT_SUCCESS != result) goto end_recopen;
 	
     result = (*p->recorderRecord)->SetRecordState(p->recorderRecord, SL_RECORDSTATE_RECORDING);
 
-    if((p->recordBuffer = (short *) calloc(CBC_CACHE_NUM * length_20ms, sizeof(char))) == NULL) {
+    if((p->recordBuffer = (short *) calloc(CBC_CACHE_NUM * length_10ms, sizeof(char))) == NULL) {
       return -1;
     }
     pBuffer =  (char*)p->recordBuffer;
     p->iBufferIndex= 0;
-    for(int i = 0;i< CBC_CACHE_NUM;i++)
-    {
-    (*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue, 
-				       pBuffer, length_20ms);
-     pBuffer+=length_20ms;
+    for(int i = 0;i< CBC_CACHE_NUM;i++){
+    	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,pBuffer, length_10ms);
+     	pBuffer += length_10ms;
     }
      
   end_recopen: 
@@ -781,7 +778,7 @@ OPENXL_STREAM * InitOpenXLStream(
     bqPlayerCallback cbp
 ){
     OPENXL_STREAM * p;
-    p = (OPENXL_STREAM *) malloc(sizeof(OPENXL_STREAM));
+    p = (OPENXL_STREAM *)malloc(sizeof(OPENXL_STREAM));
     memset(p, 0, sizeof(OPENXL_STREAM));
     p->ichannels = ichannels;
     p->ochannels = ochannels;
