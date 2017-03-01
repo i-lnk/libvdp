@@ -6,8 +6,8 @@
 
 #include <jni.h>
 
-#define ANDROID_CLASS_PATH  "com/edwintech/vdp/jni/Avapi" 	// for vdp
-//#define ANDROID_CLASS_PATH  "com/rccar/jni/Avapi"			// for remote control toys
+//#define ANDROID_CLASS_PATH  "com/edwintech/vdp/jni/Avapi" 	// for vdp
+#define ANDROID_CLASS_PATH  "com/rccar/jni/Avapi"			// for remote control toys
 
 #else
 
@@ -52,8 +52,8 @@ extern "C"
 {
 #endif
 /*
-* Class:     com_magc_jni_HelloWorld12  
-* Method:    DisplayHello13  
+* Class:     
+* Method:    
 * Signature: ()V14  
 */
 

@@ -1547,20 +1547,20 @@ CPPPPChannel::~CPPPPChannel()
     
     Log3("start free class pppp channel:[2] free buffer.");
 
-	hAudioBuffer->Release();
-	hVideoBuffer->Release();
-	hSoundBuffer->Release();
-	hIOCmdBuffer->Release();
+//	hAudioBuffer->Release();
+//	hVideoBuffer->Release();
+//	hSoundBuffer->Release();
+//	hIOCmdBuffer->Release();
 
 	delete(hAudioBuffer);
 	delete(hVideoBuffer);
 	delete(hSoundBuffer);
 	delete(hIOCmdBuffer);
 
-	hIOCmdBuffer = 
-	hAudioBuffer = 
-	hSoundBuffer = 
-	hVideoBuffer = NULL;
+//	hIOCmdBuffer = 
+//	hAudioBuffer = 
+//	hSoundBuffer = 
+//	hVideoBuffer = NULL;
     
     Log3("start free class pppp channel:[3] free lock.");
 
