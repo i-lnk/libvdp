@@ -1014,8 +1014,7 @@ static void * AudioRecvProcess(
             continue;
         }
 
-		int Round = ret/hPC->Audio10msLength;
-        int UsedLength = 0;
+		int Round = CodecLengthNeed/hPC->Audio10msLength;
         
 		for(int i = 0; i < Round; i++){
 #ifdef ENABLE_NSX_I
@@ -1026,12 +1025,10 @@ static void * AudioRecvProcess(
 #endif
 			hPC->hAudioBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio avi record
 			hPC->hSoundBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio player callback
-            
-            UsedLength += hPC->Audio10msLength;
 		}
         
-        CodecLength -= UsedLength;
-        memcpy(Codec,&Codec[UsedLength],CodecLength);
+        CodecLength -= CodecLengthNeed;
+        memcpy(Codec,&Codec[CodecLengthNeed],CodecLength);
 		
         alreadyGetAudioData = 1;
         timeoutForAudioData = 0;

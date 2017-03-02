@@ -160,7 +160,7 @@ int audio_agc_proc(
 	
 	Handle->MicLvO = OMicLv;
 
-	memcpy(AudioBuffer,AgcData,80*sizeof(short));
+	memcpy(AudioBuffer,AgcData,Audio10msLength);
 
 	return 0;
 }

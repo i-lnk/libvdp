@@ -6,8 +6,8 @@
 
 #include <jni.h>
 
-//#define ANDROID_CLASS_PATH  "com/edwintech/vdp/jni/Avapi" 	// for vdp
-#define ANDROID_CLASS_PATH  "com/rccar/jni/Avapi"			// for remote control toys
+#define ANDROID_CLASS_PATH  "com/edwintech/vdp/jni/Avapi" 	// for vdp
+//#define ANDROID_CLASS_PATH  "com/rccar/jni/Avapi"			// for remote control toys
 
 #else
 
