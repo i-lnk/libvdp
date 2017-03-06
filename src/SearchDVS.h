@@ -8,7 +8,7 @@
 #include <linux/in.h>
 #endif
 
-#include "object_jni.h"
+#include "libvdp.h"
 
 #include <sys/socket.h>
 #include <arpa/inet.h>

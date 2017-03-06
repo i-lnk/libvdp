@@ -32,7 +32,7 @@
 #include "audio_codec.h"
 #include "audiodatalist.h"
 
-#include "object_jni.h"
+#include "libvdp.h"
 
 #ifdef PLATFORM_ANDROID
 #define SET_THREAD_NAME(name) \

@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <dlfcn.h>
 
-#include "object_jni.h"
+#include "libvdp.h"
 #include "SearchDVS.h"
 #include "PPPPChannelManagement.h"
 #include "global_h264decoder.h"

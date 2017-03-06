@@ -23,7 +23,7 @@
 #include "PPPP_API.h"
 #endif
 
-#include "object_jni.h"
+#include "libvdp.h"
 #include "appreq.h"
 #include "apprsp.h"
 
