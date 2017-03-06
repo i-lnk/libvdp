@@ -177,15 +177,18 @@ typedef enum
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_REQ      = 0x502,
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_RESP     = 0x503,
 
-	IOTYPE_USER_IPCAM_DOOROPEN_REQ              = 0x800,	// ø™√≈
-	IOTYPE_USER_IPCAM_DOOROPEN_RESP             = 0x801,	// ø™√≈”¶¥
+	IOTYPE_USER_IPCAM_DEVICESLEEP_REQ			= 0x720, 	// ����
+	IOTYPE_USER_IPCAM_DEVICESLEEP_RESP			= 0x721, 	// ����Ӧ��
+
+	IOTYPE_USER_IPCAM_DOOROPEN_REQ				= 0x800, 	// ����
+	IOTYPE_USER_IPCAM_DOOROPEN_RESP 			= 0x801, 	// ����Ӧ��
 
 	// for IP02/IPC product
-	IOTYPE_USER_IPCAM_SET_PUSH_REQ              = 0x802,	// œ˚œ¢Õ∆ÀÕ◊¢≤·
-	IOTYPE_USER_IPCAM_SET_PUSH_RESP             = 0x803,	// œ˚œ¢Õ∆ÀÕ◊¢≤·”¶¥
+	IOTYPE_USER_IPCAM_SET_PUSH_REQ              = 0x802,	// ����ע��
+	IOTYPE_USER_IPCAM_SET_PUSH_RESP             = 0x803,	// ����ע��
 
-	IOTYPE_USER_IPCAM_DEL_PUSH_REQ              = 0x804,	// œ˚œ¢Õ∆ÀÕ◊¢œ˙
-	IOTYPE_USER_IPCAM_DEL_PUSH_RESP             = 0x805,	// œ˚œ¢Õ∆ÀÕ◊¢œ˙”¶¥
+	IOTYPE_USER_IPCAM_DEL_PUSH_REQ              = 0x804,	// ɾ������
+	IOTYPE_USER_IPCAM_DEL_PUSH_RESP             = 0x805,	// ɾ������
 
 	IOTYPE_USER_IPCAM_SET_MDP_REQ				= 0x806,	// …Ë÷√“∆∂Ø’Ï≤‚≤Œ ˝«Î«Ûœ˚œ¢
 	IOTYPE_USER_IPCAM_SET_MDP_RESP				= 0x807,	// …Ë÷√“∆∂Ø’Ï≤‚≤Œ ˝”¶¥œ˚œ¢
@@ -505,8 +508,8 @@ SMsgAVIoctrlSetPushResp,SMsgAVIoctrlDelPushResp,
 SMsgAVIoctrlAlarmingResp,
 SMsgAVIoctrlDoorOpenResp,SMsgAVIoctrlDoorPassResp,
 SMsgAVIoctrlSerialOpenResp,SMsgAVIoctrlSerialShutResp,SMsgAVIoctrlSerialSendResp,
-SMsgAVIoctrlSetOSDResp;
-
+SMsgAVIoctrlSetOSDResp,
+SMsgAVIoctrlSetDeviceSleepResp;
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////// Type ENUM Define ////////////////////////////////////////////

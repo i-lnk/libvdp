@@ -378,7 +378,10 @@ connect:
 		sleep(1);
 	}
 
-	hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
+	// 休眠是否成功
+	if(hPC->deviceStandby != 1){
+		hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
+	}
 
 jumperr:
 
@@ -529,6 +532,17 @@ void * IOCmdRecvProcess(
 		hCCH->len = ret;
         
         switch(IOCtrlType){
+			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	// 设备休眠
+					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
+					if(hRQ->result == 0){
+						hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
+						hPC->deviceStandby = 1; // 设备进入休眠
+						Log3("[X:%s]=====>device sleeping now.\n",hPC->szDID);
+					}else{
+						Log3("[X:%s]=====>device sleeping failed,still keep online.\n",hPC->szDID);
+					}
+				}
+				break;
             case IOTYPE_USER_IPCAM_ALARMING_REQ:{
                 SMsgAVIoctrlAlarmingReq * hRQ = (SMsgAVIoctrlAlarmingReq *)hCCH->d;
                 
@@ -1761,6 +1775,19 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 	ret = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_SPEAKERSTOP, 
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+
+	if(ret < 0){
+		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
+		return ret;
+	}
+
+	// add support for ov788 standby mode
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_DEVICESLEEP_REQ, 
 		(char *)&ioMsg, 
 		sizeof(SMsgAVIoctrlAVStream)
 		);

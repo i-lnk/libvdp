@@ -35,14 +35,48 @@ typedef char   jbyte;
 
 extern JNIEnv iOSEnv;
 
+// callback for search device
+// parameters:
+// 1. unused, alaways be 1
+// 2. device mac address
+// 3. device name
+// 4. device id, this is important attribute for p2p connection
+// 5. device ip
+// 6. device port
+// 7. device type
 void CBSearchResults(int nTrue,const char * szMac,const char * szName,const char * szDID,const char * szIP,int nPort,int nType);
 
+// callback for device response
+// parameters:
+// 1. device id,
+// 2. cmd response for
+// 3. response data in json format
 void CBUILayerNotify(const char * szDID,int nCmd,const char * szJson);
 
+// callback for video YUV data
+// parameters:
+// 1. device id
+// 2. yuv data
+// 3. type
+// 4. yuv data lens
+// 5. width
+// 6. height
+// 7. timestamp for this frame
 void CBVideoDataProcess(const char * szDID,char * lpImage,int nType,int nLens,int nW,int nH,int nTimestamp);
 
+// callback when p2p connection status changed
+// parameters:
+// 1. device id
+// 2. message type
+// 3. message value
 void CBConnectionNotify(const char * szDID,int nType,int nParam);
 
+// callback when alarm message arrived
+// parameters:
+// 1. device id
+// 2. device id 
+// 3. message type,
+// 4. message timestamp
 void CBAlarmNotifyByDevice(const char * szDID,const char * szSID,const char * szType,const char * szTime);
 
 #endif
