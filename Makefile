@@ -38,7 +38,7 @@ ANDROID_CFLAGS = -O2 -msoft-float -fPIC -mthumb-interwork \
 	-I$(INCPATH)/webrtc_aec
 
 # Android link flags 
-ANDROID_LDFLAGS +=  -shared -nostdlib -Bsymbolic -lGLESv2 -lEGL -llog -lOpenSLES -landroid -fPIC -lAVAPIs -lIOTCAPIs
+ANDROID_LDFLAGS +=  -shared -nostdlib -Bsymbolic -lGLESv2 -lEGL -llog -lOpenSLES -landroid -fPIC # -lAVAPIs -lIOTCAPIs
 FFMPEG_STATIC_LIB += $(LIBPATH)\libavformat.a \
 	$(LIBPATH)\libavcodec.a \
 	$(LIBPATH)\libavutil.a \
@@ -46,7 +46,9 @@ FFMPEG_STATIC_LIB += $(LIBPATH)\libavformat.a \
 	$(LIBPATH)\libswscale.a	\
 	$(LIBPATH)\libx264.a \
 	$(LIBPATH)\libopus.a \
-	$(LIBPATH)\libaec.a 
+	$(LIBPATH)\libaec.a \
+	$(LIBPATH)\libIOTCAPIs.a \
+	$(LIBPATH)\libAVAPIs.a
 
 ANDROID_LIBS = -L$(SYSROOT)\usr\lib -L$(LIBPATH) \
 	-lm -llog -g -lc -lstdc++ -landroid \
@@ -55,7 +57,6 @@ ANDROID_LIBS = -L$(SYSROOT)\usr\lib -L$(LIBPATH) \
 	$(SOURCES)\cxx-stl\gnu-libstdc++\4.8\libs\armeabi-v7a\libsupc++.a \
 	$(SOURCES)\cxx-stl\gnu-libstdc++\4.8\libs\armeabi-v7a\libgnustl_static.a \
 	$(TOOLCHAIN)\lib\gcc\arm-linux-androideabi\4.8\armv7-a\libgcc.a  
-	
 
 OBJECT_FILE = src/CircleBuf.o \
 src/ffmpeg_mp4.o \
@@ -73,7 +74,7 @@ src/audio_codec_ext.o \
 src/appreq.o \
 src/apprsp.o \
 src/audiodatalist.o \
-src/object_jni.o
+src/libvdp.o
 
 %.o:%.cpp
 	$(CROSS)$(CC) $(ANDROID_CFLAGS) -c $< -o $@
