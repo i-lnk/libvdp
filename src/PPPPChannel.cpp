@@ -1880,6 +1880,7 @@ int CPPPPChannel::StartMediaStreams(
 
 	struct st_SInfo sInfo;
 
+/*
 	ret = IOTC_Session_Check(SID,&sInfo);
 	if(ret < 0){
 		MsgNotify(m_JNIMainEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
@@ -1889,6 +1890,7 @@ int CPPPPChannel::StartMediaStreams(
 		Log3("[7:%s]=====>stop old media process close.\n",szDID);
 		return -1;
 	}
+*/
 
 	GET_LOCK(&SessionStatusLock);
 	if(SessionStatus != STATUS_SESSION_IDLE){
@@ -1976,7 +1978,7 @@ void CPPPPChannel::AlarmNotifyDoorBell(JNIEnv* hEnv,char *did, char *type, char 
 		hEnv->CallVoidMethod( g_CallBack_Handle, g_CallBack_AlarmNotifyDoorBell, jdid, resultDid, resultType, resultTime );
 
 		hEnv->DeleteLocalRef( jdid );
-		hEnv->DeleteLocalRef( resultDid );
+		hEnv->DeleteLocalRef( resultDid  );
 		hEnv->DeleteLocalRef( resultType );
 		hEnv->DeleteLocalRef( resultTime );
 	}
