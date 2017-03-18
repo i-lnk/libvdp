@@ -729,12 +729,16 @@ static void * VideoRecvProcess(
 		hPC->szURL
 		);
 
-	ret = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_START, 
-		(char *)&ioMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
+	if(hPC->szURL[0]){
+		hPC->SetSystemParams(IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,hPC->szURL,strlen(hPC->szURL));
+	}else{
+		ret = avSendIOCtrlEx(
+			avIdx, 
+			IOTYPE_USER_IPCAM_START, 
+			(char *)&ioMsg, 
+			sizeof(SMsgAVIoctrlAVStream)
+			);
+	}
 	
 	if(ret != AV_ER_NoERROR){
 		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
@@ -1695,7 +1699,11 @@ int CPPPPChannel::StartAudioChannel()
 	voiceEnabled = 1;
 	
 	pthread_create(&audioRecvThread,NULL,AudioRecvProcess,(void*)this);
-	pthread_create(&audioSendThread,NULL,AudioSendProcess,(void*)this);
+
+	// playback no need audio send process.
+	if(szURL[0] == 0){
+		pthread_create(&audioSendThread,NULL,AudioSendProcess,(void*)this);
+	}
 	
     return 1;
 }

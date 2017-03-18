@@ -325,6 +325,18 @@ int SetRecordSchedule(
 	char szCloseHour[8] = {0};
 	char szCloseMins[8] = {0};
 
+	// AVIOCTRL Record Type
+	/*
+	typedef enum
+	{
+		AVIOTC_RECORDTYPE_OFF				= 0x00,
+		AVIOTC_RECORDTYPE_FULLTIME			= 0x01,
+		AVIOTC_RECORDTYPE_ALARM				= 0x02,
+		AVIOTC_RECORDTYPE_MANUAL			= 0x03,
+		AVIOTC_RECORDTYPE_SCHEDULE			= 0x04
+	}ENUM_RECORD_TYPE;
+	*/
+
 	GetCgiParam(szChannel,szCgi,sizeof(szChannel),"control=","&");
 	GetCgiParam(szType,szCgi,sizeof(szType),"type=","&");
 	GetCgiParam(szStartHour,szCgi,sizeof(szStartHour),"startHour=","&");
@@ -849,6 +861,200 @@ int GetCapacity(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+int SetPlayRecordControl(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlPlayRecord sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+
+	char sChannel[8] = {0};
+	char sCommand[8] = {0};
+	char sParam[8] = {0};
+
+	char sEventYear[8] = {0};
+	char sEventMonth[8] = {0};
+	char sEventDay[8] = {0};
+	char sEventHour[8] = {0};
+	char sEventMins[8] = {0};
+	char sEventSecond[8] = {0};
+
+
+/*
+	typedef enum 
+	{
+		AVIOCTRL_RECORD_PLAY_PAUSE			= 0x00,
+		AVIOCTRL_RECORD_PLAY_STOP			= 0x01,
+		AVIOCTRL_RECORD_PLAY_STEPFORWARD	= 0x02, //now, APP no use
+		AVIOCTRL_RECORD_PLAY_STEPBACKWARD	= 0x03, //now, APP no use
+		AVIOCTRL_RECORD_PLAY_FORWARD		= 0x04, //now, APP no use
+		AVIOCTRL_RECORD_PLAY_BACKWARD		= 0x05, //now, APP no use
+		AVIOCTRL_RECORD_PLAY_SEEKTIME		= 0x06, //now, APP no use
+		AVIOCTRL_RECORD_PLAY_END			= 0x07,
+		AVIOCTRL_RECORD_PLAY_START			= 0x10,
+	}ENUM_PLAYCONTROL;
+*/
+
+	GetCgiParam(sChannel,Cgi,sizeof(sChannel),"channel=","&");
+    GetCgiParam(sCommand,Cgi,sizeof(sCommand),"command=","&");
+    GetCgiParam(sParam,Cgi,sizeof(sParam),"param=","&");
+
+	GetCgiParam(sEventYear,Cgi,sizeof(sEventYear),"eventYear=","&");
+
+	GetCgiParam(sEventYear,Cgi,sizeof(sEventYear),"eventYear=","&");
+	GetCgiParam(sEventMonth,Cgi,sizeof(sEventMonth),"eventMonth=","&");
+	GetCgiParam(sEventDay,Cgi,sizeof(sEventDay),"eventDay=","&");
+
+	GetCgiParam(sEventHour,Cgi,sizeof(sEventHour),"eventHour=","&");
+	GetCgiParam(sEventMins,Cgi,sizeof(sEventMins),"eventMins=","&");
+	GetCgiParam(sEventSecond,Cgi,sizeof(sEventSecond),"eventSecond=","&");
+	
+
+	sMsg.channel = atoi(sChannel);
+	sMsg.command = atoi(sCommand);
+	sMsg.Param = atoi(sParam);
+
+	sMsg.stTimeDay.year = atoi(sEventYear);
+	sMsg.stTimeDay.month = atoi(sEventMonth);
+	sMsg.stTimeDay.day = atoi(sEventDay);
+	sMsg.stTimeDay.hour = atoi(sEventHour);
+	sMsg.stTimeDay.minute = atoi(sEventMins);
+	sMsg.stTimeDay.second = atoi(sEventSecond);
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+int GetEventList(
+	int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	SMsgAVIoctrlListEventReq sMsg;
+	memset(&sMsg,0,sizeof(sMsg));
+
+	char sEventStartYear[8] = {0};
+	char sEventStartMonth[8] = {0};
+	char sEventStartDay[8] = {0};
+
+	char sEventCloseYear[8] = {0};
+	char sEventCloseMonth[8] = {0};
+	char sEventCloseDay[8] = {0};
+
+	char sEventStartHour[8] = {0};
+	char sEventCloseHour[8] = {0};
+	char sEventStartMins[8] = {0};
+	char sEventCloseMins[8] = {0};
+	char sEventStartSecond[8] = {0};
+	char sEventCloseSecond[8] = {0};
+
+	char sEventType[8] = {0};
+	char sEventStatus[8] = {0};
+
+	/*
+	typedef enum 
+	{
+		AVIOCTRL_EVENT_ALL					= 0x00,	// all event type(general APP-->IPCamera)
+		AVIOCTRL_EVENT_MOTIONDECT			= 0x01,	// motion detect start//==s==
+		AVIOCTRL_EVENT_VIDEOLOST			= 0x02,	// video lost alarm
+		AVIOCTRL_EVENT_IOALARM				= 0x03, // io alarmin start //---s--
+
+		AVIOCTRL_EVENT_MOTIONPASS			= 0x04, // motion detect end  //==e==
+		AVIOCTRL_EVENT_VIDEORESUME			= 0x05,	// video resume
+		AVIOCTRL_EVENT_IOALARMPASS			= 0x06, // IO alarmin end   //---e--
+
+		AVIOCTRL_EVENT_EXPT_REBOOT			= 0x10, // system exception reboot
+		AVIOCTRL_EVENT_SDFAULT				= 0x11, // sd record exception
+	}ENUM_EVENTTYPE;
+	*/
+
+	GetCgiParam(sEventType,Cgi,sizeof(sEventType),"eventType=","&");
+	GetCgiParam(sEventStatus,Cgi,sizeof(sEventStatus),"eventStatus=","&");
+
+	GetCgiParam(sEventStartYear,Cgi,sizeof(sEventStartYear),"startYear=","&");
+	GetCgiParam(sEventStartMonth,Cgi,sizeof(sEventStartMonth),"startMonth=","&");
+	GetCgiParam(sEventStartDay,Cgi,sizeof(sEventStartDay),"startDay=","&");
+
+	GetCgiParam(sEventCloseYear,Cgi,sizeof(sEventCloseYear),"closeYear=","&");
+	GetCgiParam(sEventCloseMonth,Cgi,sizeof(sEventCloseMonth),"closeMonth=","&");
+	GetCgiParam(sEventCloseDay,Cgi,sizeof(sEventCloseDay),"closeDay=","&");
+
+	GetCgiParam(sEventStartHour,Cgi,sizeof(sEventStartHour),"startHour=","&");
+	GetCgiParam(sEventCloseHour,Cgi,sizeof(sEventCloseHour),"closeHour=","&");
+	GetCgiParam(sEventStartMins,Cgi,sizeof(sEventStartMins),"startMins=","&");
+	GetCgiParam(sEventCloseMins,Cgi,sizeof(sEventCloseMins),"closeMins=","&");
+	GetCgiParam(sEventStartSecond,Cgi,sizeof(sEventStartSecond),"startSecond=","&");
+	GetCgiParam(sEventCloseSecond,Cgi,sizeof(sEventCloseSecond),"closeSecond=","&");
+
+	sMsg.stStartTime.year = atoi(sEventStartYear);
+	sMsg.stStartTime.month = atoi(sEventStartMonth);
+	sMsg.stStartTime.day = atoi(sEventStartDay);
+
+	sMsg.stStartTime.hour = atoi(sEventStartYear);
+	sMsg.stStartTime.minute = atoi(sEventStartMins);
+	sMsg.stStartTime.second = atoi(sEventStartSecond);
+
+	sMsg.stEndTime.year = atoi(sEventCloseYear);
+	sMsg.stEndTime.month = atoi(sEventCloseMonth);
+	sMsg.stEndTime.day = atoi(sEventCloseDay);
+
+	sMsg.stEndTime.hour = atoi(sEventCloseYear);
+	sMsg.stEndTime.minute = atoi(sEventCloseMins);
+	sMsg.stEndTime.second = atoi(sEventCloseSecond);
+
+	sMsg.event = atoi(sEventType);
+	sMsg.status = atoi(sEventStatus);
+
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+	
+}
+
+int SetPresetPostion(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlSetPresetReq sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+
+	char sIdx[8] = {0};
+	GetCgiParam(sIdx,Cgi,sizeof(sIdx),"index=","&");
+
+	sMsg.nPresetIdx = atoi(sIdx);
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+int GetPresetPostion(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlGetPresetReq sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+
+	char sIdx[8] = {0};
+	GetCgiParam(sIdx,Cgi,sizeof(sIdx),"index=","&");
+
+	sMsg.nPresetIdx = atoi(sIdx);
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -891,6 +1097,10 @@ static APP_CMD_CALL hACC[] = {
     {IOTYPE_USER_IPCAM_UPDATE_REQ,SetUpdateUrl},
     {IOTYPE_USER_IPCAM_UPDATE_PROG_REQ,GetUpdateProgress},
     {IOTYPE_USER_IPCAM_GET_CAPACITY_REQ,GetCapacity},
+	{IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,SetPlayRecordControl},
+	{IOTYPE_USER_IPCAM_LISTEVENT_REQ,GetEventList},
+	{IOTYPE_USER_IPCAM_SETPRESET_REQ,SetPresetPostion},
+	{IOTYPE_USER_IPCAM_GETPRESET_REQ,GetPresetPostion},
 	{0,NULL}
 };
 

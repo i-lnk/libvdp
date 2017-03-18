@@ -532,6 +532,51 @@ int             JsonBufferSize
     return 0;
 }
 
+int GetEventListResp2JSON(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlListEventResp * hRQ = (SMsgAVIoctrlListEventResp *)Msg;
+
+	/*
+	typedef struct
+	{
+		STimeDay stTime;
+		unsigned char event;
+		unsigned char status;	// 0x00: Recording file exists, Event unreaded
+								// 0x01: Recording file exists, Event readed
+								// 0x02: No Recording file in the event
+		unsigned char reserved[2];
+	}SAvEvent;
+	*/
+
+	for(int i = 0;i < hRQ->count;i++){
+	    sprintf(JsonBuffer,"{\"%s\":\""
+				"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}\","
+				"\"%s\":\"%d\",\"%s\":\"%d\"}",
+	          	"time",
+	          	"year",hRQ->stEvent[i].stTime.year,
+	          	"month",hRQ->stEvent[i].stTime.month,
+	          	"day",hRQ->stEvent[i].stTime.day,
+	          	"week",0,
+	          	"hour",hRQ->stEvent[i].stTime.hour,
+	          	"minute",hRQ->stEvent[i].stTime.minute,
+	          	"second",hRQ->stEvent[i].stTime.second,
+	          	"event",hRQ->stEvent[i].event,
+	          	"status",hRQ->stEvent[i].status
+	            );
+	}
+    
+    return 0;
+}
+
+
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUIDResp2JSON},
 {IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPasswordResp2JSON},
@@ -566,6 +611,7 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_UPDATE_RESP,GetUpdateResp2JSON},
 {IOTYPE_USER_IPCAM_UPDATE_PROG_RESP,GetUpdateProgressResp2JSON},
 {IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacityResp2JSON},
+{IOTYPE_USER_IPCAM_LISTEVENT_RESP,GetEventListResp2JSON},
 {0,NULL}
 };
 

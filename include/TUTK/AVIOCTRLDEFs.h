@@ -166,10 +166,15 @@ typedef enum
 	IOTYPE_USER_IPCAM_GET_FLOWINFO_RESP			= 0x0391,
 	IOTYPE_USER_IPCAM_CURRENT_FLOWINFO			= 0x0392,
 	
-	IOTYPE_USER_IPCAM_GET_TIMEZONE_REQ          = 0x3A0,
+	IOTYPE_USER_IPCAM_GET_TIMEZONE_REQ          = 0x3A0,	
 	IOTYPE_USER_IPCAM_GET_TIMEZONE_RESP         = 0x3A1,
 	IOTYPE_USER_IPCAM_SET_TIMEZONE_REQ          = 0x3B0,
 	IOTYPE_USER_IPCAM_SET_TIMEZONE_RESP         = 0x3B1,
+
+	IOTYPE_USER_IPCAM_SETPRESET_REQ 			= 0x440,
+	IOTYPE_USER_IPCAM_SETPRESET_RESP			= 0x441,
+	IOTYPE_USER_IPCAM_GETPRESET_REQ 			= 0x442,
+	IOTYPE_USER_IPCAM_GETPRESET_RESP			= 0x443,
     
     // dropbox support
     IOTYPE_USER_IPCAM_GET_SAVE_DROPBOX_REQ      = 0x500,
@@ -495,6 +500,25 @@ typedef struct{
     char 			model[16];			// 浜у搧瑙勬牸鍨嬪彿
     char 			reserve2[48];		// 淇濈暀2
 }SMsgAVIoctrlGetCapacityResp;
+
+typedef struct
+{
+    unsigned int channel;  // camera index
+    unsigned int nPresetIdx;	// 設定至預置點index	數值範圍 0~3(表示預置點1~4)
+}SMsgAVIoctrlSetPresetReq;
+
+typedef struct
+{
+    int result;	// 回傳值	0: success; otherwise: failed
+    unsigned char reserved[4];
+}SMsgAVIoctrlSetPresetResp;
+
+typedef struct
+{
+    unsigned int channel;  // camera index
+    unsigned int nPresetIdx;  // 載入預置點index	數值範圍 0~3(表示預置點1~4)
+}SMsgAVIoctrlGetPresetReq,SMsgAVIoctrlGetPresetResp;
+
 
 //
 // 脮庐鈥濃垰鈥澛堵ワ？聽藵忙鈥何┞废�蟺
