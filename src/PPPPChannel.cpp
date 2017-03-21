@@ -719,9 +719,8 @@ static void * VideoRecvProcess(
 
 	int 			avIdx = hPC->avIdx;
 
-	SMsgAVIoctrlAVStream ioMsg;
+	char 			avMsg[1024] = {0};
 	
-	memset(&ioMsg,0,sizeof(ioMsg));
 	memset(&frameInfo,0,sizeof(frameInfo));
 
 	Log3("START LIVING STREAM WITH SID:[%d] URL:[%s].",
@@ -729,13 +728,34 @@ static void * VideoRecvProcess(
 		hPC->szURL
 		);
 
-	if(hPC->szURL[0]){
-		hPC->SetSystemParams(IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,hPC->szURL,strlen(hPC->szURL));
+	if(hPC->szURL[0]){	// for replay.
+		SMsgAVIoctrlPlayRecord * pMsg = (SMsgAVIoctrlPlayRecord *)avMsg;
+
+		pMsg->command = AVIOCTRL_RECORD_PLAY_START;
+
+		sscanf(hPC->szURL,"%d-%d-%d %d:%d:%d",
+			&pMsg->stTimeDay.year,
+			&pMsg->stTimeDay.month,
+			&pMsg->stTimeDay.day,
+			&pMsg->stTimeDay.hour,
+			&pMsg->stTimeDay.minute,
+			&pMsg->stTimeDay.second
+		);
+		pMsg->stTimeDay.wday = 0;
+
+		Log3("start replay by url:[%d].");
+		
+		ret = avSendIOCtrlEx(
+			avIdx, 
+			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL, 
+			(char *)&avMsg, 
+			sizeof(SMsgAVIoctrlPlayRecord)
+			);
 	}else{
 		ret = avSendIOCtrlEx(
 			avIdx, 
 			IOTYPE_USER_IPCAM_START, 
-			(char *)&ioMsg, 
+			(char *)&avMsg, 
 			sizeof(SMsgAVIoctrlAVStream)
 			);
 	}
@@ -860,6 +880,41 @@ static void * VideoRecvProcess(
     hPC->hVideoFrame = NULL;
     
 	PUT_LOCK(&hPC->DisplayLock);
+
+	if(hPC->szURL[0]){
+		SMsgAVIoctrlPlayRecord * pMsg = (SMsgAVIoctrlPlayRecord *)avMsg;
+		pMsg->command = AVIOCTRL_RECORD_PLAY_STOP;
+		
+		ret = avSendIOCtrlEx(
+			avIdx, 
+			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL, 
+			(char *)&avMsg, 
+			sizeof(SMsgAVIoctrlPlayRecord)
+			);
+	}else{
+		ret = avSendIOCtrlEx(
+			avIdx, 
+			IOTYPE_USER_IPCAM_STOP, 
+			(char *)&avMsg, 
+			sizeof(SMsgAVIoctrlAVStream)
+			);
+	}
+
+	if(ret < 0){
+		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
+	}
+
+	// add support for ov788 standby mode
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_DEVICESLEEP_REQ, 
+		(char *)&avMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+
+	if(ret < 0){
+		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
+	}
 	
 	Log3("video recv proc exit.");
 	
@@ -1053,6 +1108,17 @@ static void * AudioRecvProcess(
 
 //		hPC->hAudioBuffer->Write(Codec,ret); // for audio avi record
 //		hPC->hSoundBuffer->Write(Codec,ret); // for audio player callback
+	}
+
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_AUDIOSTOP, 
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+
+	if(ret < 0){
+		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
 	}
 
 #ifdef ENABLE_AGC
@@ -1336,6 +1402,17 @@ tryagain:
 	FreeOpenXLStream(hOSL);
 	hOSL = NULL;
 
+	ret = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_SPEAKERSTOP, 
+		(char *)&ioMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+
+	if(ret < 0){
+		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
+	}
+
 	audio_enc_free(hCodec);
 
 #ifdef ENABLE_AEC
@@ -1355,8 +1432,6 @@ tryagain:
 #endif
 
 	PUT_LOCK(&OpenSLLock);
-
-	
 	
 	if(hPC->hAudioPutList) delete hPC->hAudioPutList;
 	if(hPC->hAudioGetList) delete hPC->hAudioGetList;
@@ -1750,64 +1825,7 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 }
 
 int CPPPPChannel::SendAVAPICloseIOCtrl(){
-	SMsgAVIoctrlAVStream ioMsg;
-	memset(&ioMsg,0,sizeof(ioMsg));
-	int ret = 0;
-
-	ret = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_STOP, 
-		(char *)&ioMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-
-	if(ret < 0){
-		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
-		return ret;
-	}
-
-	ret = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_AUDIOSTOP, 
-		(char *)&ioMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-
-	if(ret < 0){
-		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
-		return ret;
-	}
-
-	ioMsg.channel = spIdx;
-
-	ret = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_SPEAKERSTOP, 
-		(char *)&ioMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-
-	if(ret < 0){
-		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
-		return ret;
-	}
-
-	// add support for ov788 standby mode
-	ret = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_DEVICESLEEP_REQ, 
-		(char *)&ioMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-
-	if(ret < 0){
-		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",ret,avIdx);
-		return ret;
-	}
-
-//	avClientCleanBuf(avIdx);
-
-	return ret;
+	return 0;
 }
 
 int CPPPPChannel::CloseWholeThreads()
@@ -1865,8 +1883,10 @@ int CPPPPChannel::CloseMediaStreams(
 	Log3("audio stop speaker service with sid:%d iotc-channel:%d sp-idx:%d.",SID,speakerChannel,spIdx);
 	if(speakerChannel >= 0) avServExit(SID,speakerChannel);
 	if(spIdx >= 0) avServStop(spIdx);
+	
 	speakerChannel = -1;
-	spIdx = -1;		
+	spIdx = -1;
+	
 	pthread_t tid;
 	pthread_create(&tid,NULL,MediaExitProcess,(void*)this);
 

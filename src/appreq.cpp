@@ -886,8 +886,7 @@ int SetPlayRecordControl(
 
 
 /*
-	typedef enum 
-	{
+	typedef enum{
 		AVIOCTRL_RECORD_PLAY_PAUSE			= 0x00,
 		AVIOCTRL_RECORD_PLAY_STOP			= 0x01,
 		AVIOCTRL_RECORD_PLAY_STEPFORWARD	= 0x02, //now, APP no use
@@ -903,8 +902,6 @@ int SetPlayRecordControl(
 	GetCgiParam(sChannel,Cgi,sizeof(sChannel),"channel=","&");
     GetCgiParam(sCommand,Cgi,sizeof(sCommand),"command=","&");
     GetCgiParam(sParam,Cgi,sizeof(sParam),"param=","&");
-
-	GetCgiParam(sEventYear,Cgi,sizeof(sEventYear),"eventYear=","&");
 
 	GetCgiParam(sEventYear,Cgi,sizeof(sEventYear),"eventYear=","&");
 	GetCgiParam(sEventMonth,Cgi,sizeof(sEventMonth),"eventMonth=","&");
