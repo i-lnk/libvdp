@@ -204,10 +204,10 @@ void * MeidaCoreProcess(
 #ifdef PLATFORM_ANDROID
     char isAttached = 0;
 
-	int status = g_JavaVM->GetEnv((void **) &(hEnv), JNI_VERSION_1_4); 
-	if(status < 0){ 
-		status = g_JavaVM->AttachCurrentThread(&(hEnv), NULL); 
-		if(status < 0){
+	int err = g_JavaVM->GetEnv((void **) &(hEnv), JNI_VERSION_1_4);
+	if(err < 0){
+		err = g_JavaVM->AttachCurrentThread(&(hEnv), NULL);
+		if(err < 0){
 			Log3("iocmd send process AttachCurrentThread Failed!!");
 			return NULL;
 		}
