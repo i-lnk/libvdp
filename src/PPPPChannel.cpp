@@ -216,6 +216,7 @@ void * MeidaCoreProcess(
 #endif
 
 	int resend = 0;
+    int status = 0;
 	int wakeup_times = 7;
 
 connect:
@@ -227,7 +228,6 @@ connect:
 	Log3("[1:%s]=====>start get free session id for client connection.",
          hPC->szDID);
 
-#ifdef TUTK_PPPP
 	hPC->sessionID = IOTC_Get_SessionID();
 	if(hPC->sessionID < 0){
 		Log3("[1:%s]=====>IOTC_Get_SessionID error code [%d]\n",
@@ -246,11 +246,11 @@ connect:
 		
 		switch(hPC->SID){
 			case IOTC_ER_UNLICENSE:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_INVALID_ID);
+                status = PPPP_STATUS_INVALID_ID;
 				goto jumperr;
 			case IOTC_ER_EXCEED_MAX_SESSION:
 			case IOTC_ER_DEVICE_EXCEED_MAX_SESSION:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_EXCEED_SESSION);
+				status = PPPP_STATUS_EXCEED_SESSION;
 				goto jumperr;
             case IOTC_ER_DEVICE_IS_SLEEP:
 				
@@ -265,47 +265,30 @@ connect:
                 }
 
 				Log3("[2:%s]=====>device standby is:%d.",hPC->szDID,hPC->deviceStandby);
-                hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
+                status = PPPP_STATUS_DEVICE_SLEEP;
                 hPC->deviceStandby = 1;
 				
                 goto jumperr;
 			case IOTC_ER_DEVICE_OFFLINE:
                 Log3("[2:%s]=====>device not online,ask again.\n",hPC->szDID);
 			case IOTC_ER_DEVICE_NOT_LISTENING:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_NOT_ON_LINE);
+				status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
                 IOTC_Session_Close(hPC->sessionID);
 				goto jumperr;
 			default:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
+				status = PPPP_STATUS_CONNECT_FAILED;
 				goto jumperr;
 		}
 	}
-#else
-	hPC->SID = PPPP_Connect(hPC->szDID,1,0,&hPC->szServer);
-	if(hPC->SID < 0){
-		switch(hPC->SID){
-			case ERROR_PPPP_INVALID_ID:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_INVALID_ID);
-				goto jumperr;
-			case ERROR_PPPP_MAX_SESSION:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_EXCEED_SESSION);
-				goto jumperr;
-			default:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
-				goto jumperr;
-		}
-	}
-#endif
     
     hPC->deviceStandby = 0; // wakeup successful.
 
 	Log3("[3:%s]=====>start av client service with user:[%s] pass:[%s].\n", hPC->szDID, hPC->szUsr, hPC->szPwd);
 
 	if(strlen(hPC->szUsr) == 0 || strlen(hPC->szPwd) == 0){
-		hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_NOT_LOGIN);
-#ifdef PPPP_TUTK
+		status = PPPP_STATUS_NOT_LOGIN;
 		IOTC_Connect_Stop_BySID(hPC->SID);
-#endif
+
 		Log3("[3:%s]=====>Device can't login by valid user and pass.\n",
              hPC->szDID);
 		
@@ -330,14 +313,14 @@ connect:
 			case AV_ER_INVALID_SID:
 			case AV_ER_TIMEOUT:
 			case AV_ER_REMOTE_TIMEOUT_DISCONNECT:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_TIMEOUT);
+//				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_TIMEOUT);
 				break;
 			case AV_ER_WRONG_VIEWACCorPWD:
 			case AV_ER_NO_PERMISSION:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_INVALID_USER_PWD);
+				status = PPPP_STATUS_INVALID_USER_PWD;
 				goto jumperr;
 			default:
-				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
+				status = PPPP_STATUS_CONNECT_FAILED;
 				goto jumperr;
 		}
 	
@@ -357,12 +340,13 @@ connect:
 	hPC->StartIOCmdChannel();
 	Log3("[6:%s]=====>channel init command proc done.",hPC->szDID);
 
-	hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,PPPP_STATUS_ON_LINE);
+    status = PPPP_STATUS_ON_LINE;
+	hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status);
 
 	GET_LOCK(&hPC->SessionStatusLock);
 	hPC->SessionStatus = STATUS_SESSION_IDLE;
 	PUT_LOCK(&hPC->SessionStatusLock);
-
+    
 	while(hPC->mediaLinking){
 		struct st_SInfo sInfo;
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
@@ -374,13 +358,7 @@ connect:
 			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
 			goto connect;
 		}
-        
-		sleep(1);
-	}
-
-	// ÐÝÃßÊÇ·ñ³É¹¦
-	if(hPC->deviceStandby != 1){
-		hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
+		sleep(5);
 	}
 
 jumperr:
@@ -389,13 +367,19 @@ jumperr:
 	if(isAttached) g_JavaVM->DetachCurrentThread();
 #endif
     
+    hPC->PPPPClose();
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
-	
-	Log3("MediaCoreProcess Exit.");
 
 	GET_LOCK(&hPC->SessionStatusLock);
 	hPC->SessionStatus = STATUS_SESSION_DIED;
 	PUT_LOCK(&hPC->SessionStatusLock);
+    
+    if(status == PPPP_STATUS_ON_LINE){
+        status = PPPP_STATUS_DISCONNECT;
+    }
+    hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status);
+    
+    Log3("MediaCoreProcess Exit By Status:[%d].",status);
 
 	return NULL;	
 }
@@ -532,11 +516,11 @@ void * IOCmdRecvProcess(
 		hCCH->len = ret;
         
         switch(IOCtrlType){
-			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	// Éè±¸ÐÝÃß
+			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	// â€¦Ã‹Â±âˆâ€“â€ºâˆšï¬‚
 					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
 					if(hRQ->result == 0){
 						hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
-						hPC->deviceStandby = 1; // Éè±¸½øÈëÐÝÃß
+						hPC->deviceStandby = 1; // â€¦Ã‹Â±âˆÎ©Â¯Â»ÃŽâ€“â€ºâˆšï¬‚
 						Log3("[X:%s]=====>device sleeping now.\n",hPC->szDID);
 					}else{
 						Log3("[X:%s]=====>device sleeping failed,still keep online.\n",hPC->szDID);
@@ -784,8 +768,6 @@ static void * VideoRecvProcess(
 	memset(hFrm,0,FrmSize);
 	memset(hYUV,0,hPC->YUVSize);
 
-	CH264Decoder * hDec = new CH264Decoder();	
-
 	int firstKeyFrameComming = 0;
 	int	isKeyFrame = 0;
 
@@ -840,7 +822,7 @@ static void * VideoRecvProcess(
 		}
 
 		if(firstKeyFrameComming != 1){
-//			Log3("waiting for first video key frame coming.\n");
+			Log3("waiting for first video key frame coming.\n");
 			continue;
 		}
 
@@ -848,7 +830,7 @@ static void * VideoRecvProcess(
 		hFrm->len = ret;
 
 		// decode h264 frame
-		if(hDec->DecoderFrame((uint8_t *)hFrm->d,hFrm->len,hPC->MW,hPC->MH,isKeyFrame) <= 0){
+		if(hPC->hDec->DecoderFrame((uint8_t *)hFrm->d,hFrm->len,hPC->MW,hPC->MH,isKeyFrame) <= 0){
 			Log3("decode h.264 frame failed.");
 			firstKeyFrameComming = 0;
 			continue;
@@ -865,7 +847,7 @@ static void * VideoRecvProcess(
 		}
 		
 		// get h264 yuv data
-		hDec->GetYUVBuffer((uint8_t*)hYUV,hPC->YUVSize);
+		hPC->hDec->GetYUVBuffer((uint8_t*)hYUV,hPC->YUVSize);
 		hPC->hVideoFrame = hYUV;
 
 		PUT_LOCK(&hPC->DisplayLock);
@@ -875,7 +857,6 @@ static void * VideoRecvProcess(
     
 	if(hFrm)   free(hFrm); hFrm = NULL;
 	if(hYUV)   free(hYUV); hYUV = NULL;
-	if(hDec) delete(hDec); hDec = NULL;
     
     hPC->hVideoFrame = NULL;
     
@@ -1616,6 +1597,8 @@ CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){
 			Log2("create video recording buffer failed.\n");
 		}
 	}
+    
+    hDec = new CH264Decoder();
 
 	INT_LOCK(&AviDataLock);
 	INT_LOCK(&DisplayLock);
@@ -1659,6 +1642,8 @@ CPPPPChannel::~CPPPPChannel()
 	DEL_LOCK(&SndplayLock);
 
 	DEL_LOCK(&SessionStatusLock);
+    
+    if(hDec) delete(hDec); hDec = NULL;
     
     Log3("start free class pppp channel:[4] close done.");
 }
@@ -1729,14 +1714,8 @@ void CPPPPChannel::Close()
 	Log3("stop media core thread.");
 
 	if(mediaCoreThread != (pthread_t)-1){
-		
 		pthread_join(mediaCoreThread,NULL);
 		mediaCoreThread = (pthread_t)-1;
-		
-		// must close core thread before close connection,
-		// by the reason of reconnect loop not exit, core thread will make a new connection.
-		
-		PPPPClose();
 	}else{
 	
 		PPPPClose();
@@ -1962,14 +1941,12 @@ int CPPPPChannel::StartMediaStreams(
 		memcpy(szURL,url,strlen(url));
 	}
 
-	Log3("channel init audio proc.");
-	StartAudioChannel();
 	Log3("channel init video proc.");
     StartVideoChannel();
+    Log3("channel init audio proc.");
+    StartAudioChannel();
 
 	ret = 0;
-
-	return 0;
 	
 jumperr:
 
@@ -2023,8 +2000,8 @@ char * hRecordFile;
 
 int CPPPPChannel::StartRecorder(
 	int 		W,			// \BF\ED\B6\C8
-	int 		H,			// \B8ÃŸÂ¶\C8
-	int 		FPS,		// Ã–Â¡\C2\CA
+	int 		H,			// \B8âˆšÃ¼Â¬âˆ‚\C8
+	int 		FPS,		// âˆšÃ±Â¬Â°\C2\CA
 	char *		SavePath	// 
 ){
 	int Err = 0;

@@ -207,6 +207,7 @@ public:
 	int					MH;				// 
 	int					YUVSize;		//
 
+    CH264Decoder    *   hDec;
 	char 			* 	hVideoFrame;	//
 	
 	COMMO_LOCK			DisplayLock;	//
