@@ -269,6 +269,7 @@ connect:
                 hPC->deviceStandby = 1;
 				
                 goto jumperr;
+            case IOTC_ER_CAN_NOT_FIND_DEVICE:
 			case IOTC_ER_DEVICE_OFFLINE:
                 Log3("[2:%s]=====>device not online,ask again.\n",hPC->szDID);
 			case IOTC_ER_DEVICE_NOT_LISTENING:

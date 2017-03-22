@@ -6,7 +6,6 @@
 #include "libvdp.h"
 #include "SearchDVS.h"
 #include "PPPPChannelManagement.h"
-#include "global_h264decoder.h"
 
 #include "appreq.h"
 #include "apprsp.h"
@@ -231,15 +230,11 @@ JNIEXPORT void JNICALL PPPPInitialize(JNIEnv *env ,jobject obj, jstring svr)
 JNIEXPORT void JNICALL PPPPManagementInit(JNIEnv *env ,jobject obj)
 {   
     g_pPPPPChannelMgt = new CPPPPChannelManagement();
-
-    global_init_decode();
 }
 
 JNIEXPORT void JNICALL PPPPManagementFree(JNIEnv *env ,jobject obj)
 {
-    SAFE_DELETE(g_pPPPPChannelMgt); 
-
-    global_free_decoder();
+    SAFE_DELETE(g_pPPPPChannelMgt);
 }
 
 JNIEXPORT int JNICALL PPPPSetCallbackContext(JNIEnv *env, jobject obj, jobject context)
