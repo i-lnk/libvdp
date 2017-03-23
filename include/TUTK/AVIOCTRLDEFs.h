@@ -1053,7 +1053,9 @@ typedef struct
 
 typedef struct
 {
-	STimeDay stTime;
+	STimeDay startTime;
+    STimeDay closeTime;
+    
 	unsigned char event;
 	unsigned char status;	// 0x00: Recording file exists, Event unreaded
 							// 0x01: Recording file exists, Event readed

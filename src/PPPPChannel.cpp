@@ -13,15 +13,11 @@
 #include "utility.h"
 #include "PPPPChannel.h"  
 
-#ifdef TUTK_PPPP
 #include "IOTCAPIs.h"
 #include "IOTCWakeUp.h"
 #include "AVAPIs.h"
 #include "AVFRAMEINFO.h"
 #include "AVIOCTRLDEFs.h"
-#else
-#include "PPPP_API.h"
-#endif
 
 #include "libvdp.h"
 #include "appreq.h"
