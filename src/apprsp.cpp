@@ -557,17 +557,13 @@ int             JsonBufferSize
 	*/
 
 	for(int i = 0;i < hRQ->count;i++){
-	    sprintf(JsonBuffer,"{\"%s\":\""
-				"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}\","
-				"\"%s\":\"%d\",\"%s\":\"%d\"}",
-	          	"time",
-	          	"year",hRQ->stEvent[i].stTime.year,
-	          	"month",hRQ->stEvent[i].stTime.month,
-	          	"day",hRQ->stEvent[i].stTime.day,
-	          	"week",0,
-	          	"hour",hRQ->stEvent[i].stTime.hour,
-	          	"minute",hRQ->stEvent[i].stTime.minute,
-	          	"second",hRQ->stEvent[i].stTime.second,
+	    sprintf(JsonBuffer,"{\"%s\":\"%d-%d-%d %d:%d:%d\",\"%s\":\"%d-%d-%d %d:%d:%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+	          	"start",
+	          	hRQ->stEvent[i].startTime.year,hRQ->stEvent[i].startTime.month,hRQ->stEvent[i].startTime.day,
+	          	hRQ->stEvent[i].startTime.hour,hRQ->stEvent[i].startTime.minute,hRQ->stEvent[i].startTime.second,
+                "close",
+                hRQ->stEvent[i].closeTime.year,hRQ->stEvent[i].closeTime.month,hRQ->stEvent[i].closeTime.day,
+                hRQ->stEvent[i].closeTime.hour,hRQ->stEvent[i].closeTime.minute,hRQ->stEvent[i].closeTime.second,
 	          	"event",hRQ->stEvent[i].event,
 	          	"status",hRQ->stEvent[i].status
 	            );

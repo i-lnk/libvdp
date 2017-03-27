@@ -6,7 +6,6 @@
 #include "libvdp.h"
 #include "SearchDVS.h"
 #include "PPPPChannelManagement.h"
-#include "global_h264decoder.h"
 
 #include "appreq.h"
 #include "apprsp.h"
@@ -195,8 +194,6 @@ JNIEXPORT void JNICALL PPPPInitialize(JNIEnv *env ,jobject obj, jstring svr)
 	Log3("start pppp init with version:[%s.%s].",__DATE__,__TIME__);
 	Log3("start pppp init with version:[%s.%s].",__DATE__,__TIME__);
 
-
-#ifdef TUTK_PPPP
     Log3("init pppp lib.");
     IOTC_Set_Max_Session_Number(128);
     //	IOTC_Setup_Session_Alive_Timeout(6);
@@ -222,24 +219,16 @@ JNIEXPORT void JNICALL PPPPInitialize(JNIEnv *env ,jobject obj, jstring svr)
     sprintf(szIOVer, "%d.%d.%d.%d", p1[3], p1[2], p1[1], p1[0]);
     sprintf(szAVVer, "%d.%d.%d.%d", p2[3], p2[2], p2[1], p2[0]);
     Log3("IOTCAPI version[%s] AVAPI version[%s]\n", szIOVer, szAVVer);
-#else
-	Log3("init pppp lib with server string:[%s]\n", svr);
-	PPPP_Initialize(svr);
-#endif
 }
 
 JNIEXPORT void JNICALL PPPPManagementInit(JNIEnv *env ,jobject obj)
 {   
     g_pPPPPChannelMgt = new CPPPPChannelManagement();
-
-    global_init_decode();
 }
 
 JNIEXPORT void JNICALL PPPPManagementFree(JNIEnv *env ,jobject obj)
 {
-    SAFE_DELETE(g_pPPPPChannelMgt); 
-
-    global_free_decoder();
+    SAFE_DELETE(g_pPPPPChannelMgt);
 }
 
 JNIEXPORT int JNICALL PPPPSetCallbackContext(JNIEnv *env, jobject obj, jobject context)

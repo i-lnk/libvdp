@@ -2,6 +2,8 @@
 #include <jni.h>
 #include <dlfcn.h>
 extern int g_sdkVersion;
+#else
+#include <CoreMedia/CoreMedia.h>
 #endif
 
 #include "H264Decoder.h"
@@ -11,31 +13,15 @@ CH264Decoder::CH264Decoder()
 {
     //F_LOG ;   
 
-#if 0
 #ifdef PLATFORM_ANDROID
-	void * ndk_handle;
-
-	if(g_sdkVersion > 15){
-		if(g_sdkVersion >= 20){
-			ndk_handle = dlopen("libmediandk.so", RTLD_NOW);
-			Log3("initialize h264 decoder by hardware.android version is:%d",g_sdkVersion);
-		}else{
-			char libname[64];
-			sprintf(libname, "libnative_codec%d.so\0", g_sdkVersion);
-			ndk_handle = dlopen(libname, RTLD_LAZY);
-		}
-
-		for (int i = 0; members[i].name; i++){
-			void *sym = dlsym(ndk_handle, members[i].name);
-			if (!sym && members[i].critical)
-			{
-				Log3("con not find simbol %s", members[i].name);
-				dlclose(ndk_handle);
-			}
-			*(void **)((uint8_t*)&gdlsys + members[i].offset) = sym;
-		}
-	}
-#endif
+#else
+    /*
+    const unsigned char * parameterSetPointers[2] = {sps,pps};
+    const size_t parameterSetSizes[2] = {spsSize,ppsSize};
+    
+    CMFormatDescriptionRef fmt;
+    CMVideoFormatDescriptionCreateFromH264ParameterSets(kCFAllocatorDefault,2,parameterSetPointers,parameterSetSizes,4,&fmt);
+    */
 #endif
 
     //==========================================
@@ -70,7 +56,7 @@ CH264Decoder::CH264Decoder()
         return ;
     }  
   
-    //´ò¿ªcodec¡£Èç¹û´ò¿ª³É¹¦µÄ»°£¬·ÖÅäAVFrame£     
+    //Â¥ÃšÃ¸â„¢codecÂ°Â£Â»ÃÏ€ËšÂ¥ÃšÃ¸â„¢â‰¥â€¦Ï€Â¶ÂµÆ’ÂªâˆžÂ£Â¨âˆ‘Ã·â‰ˆâ€°AVFrameÂ£     
     if(avcodec_open2(m_pCodecCtx, m_pCodec, NULL) >= 0)     
     {     
 //        m_pFrame = avcodec_alloc_frame();   /* Allocate video frame   */
@@ -179,7 +165,7 @@ void CH264Decoder::DisplayYUV_16(unsigned int *pdst1,
 
     #endif
 
-	for(j=0; j<height2; j++) // Ò»´Î2x2¹²ËÄ¸öÏñËØ
+	for(j=0; j<height2; j++) // â€œÂªÂ¥Å’2x2Ï€â‰¤Ã€Æ’âˆË†Å“Ã’Ã€Ã¿
 	{
 		yoff = y + j * 2 * src_ystride;
 		uoff = u + j * src_uvstride;
@@ -304,7 +290,7 @@ void CH264Decoder::YUV4202RGB565(uint8_t *yuv420, uint8_t *rgb565, int width, in
 }
 
 
-//ÌØÊâ×÷ÓÃµÄ·½·¨
+//ÃƒÃ¿Â â€šâ—ŠËœâ€âˆšÂµÆ’âˆ‘Î©âˆ‘Â®
 void CH264Decoder::YUV4202RGB565(uint8_t *out)
 {
     DisplayYUV_16((unsigned int*)out, m_pFrame->data[0], m_pFrame->data[1], m_pFrame->data[2], 
