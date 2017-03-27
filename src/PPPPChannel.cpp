@@ -622,6 +622,8 @@ static void * VideoPlayProcess(
 	jstring    jstring_did = hEnv->NewStringUTF(hPC->szDID);
 	jbyteArray jbyteArray_yuv = hEnv->NewByteArray(hPC->YUVSize);
 	jbyte *	   jbyte_yuv = (jbyte *)(hEnv->GetByteArrayElements(jbyteArray_yuv,0));
+	
+	unsigned int frameTimestamp = 0;
 
 	GET_LOCK(&hPC->DisplayLock);
 	hPC->hVideoFrame = NULL;
@@ -646,6 +648,7 @@ static void * VideoPlayProcess(
 		}
 		
 		memcpy(jbyte_yuv,hPC->hVideoFrame,hPC->YUVSize);
+		frameTimestamp = hPC->FrameTimestamp;
 
 		hPC->hVideoFrame = NULL;
 
@@ -664,7 +667,7 @@ static void * VideoPlayProcess(
 			hPC->YUVSize,
 			hPC->MW,
 			hPC->MH,
-			time(NULL));
+			frameTimestamp);
 
 		PUT_LOCK( &g_CallbackContextLock );
 	}
@@ -846,6 +849,7 @@ static void * VideoRecvProcess(
 		// get h264 yuv data
 		hPC->hDec->GetYUVBuffer((uint8_t*)hYUV,hPC->YUVSize);
 		hPC->hVideoFrame = hYUV;
+		hPC->FrameTimestamp = frameInfo.timestamp;
 
 		PUT_LOCK(&hPC->DisplayLock);
     }

@@ -925,7 +925,7 @@ int GetEventList(
 	memset(&sMsg,0,sizeof(sMsg));
 
 	char sStartTime[128] = {0};
-	char sCloseTime[128] = {0}
+	char sCloseTime[128] = {0};
 	
 	char sEventType[8] = {0};
 	char sEventStatus[8] = {0};

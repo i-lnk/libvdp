@@ -209,6 +209,7 @@ public:
 
     CH264Decoder    *   hDec;
 	char 			* 	hVideoFrame;	//
+	unsigned int		FrameTimestamp; //				;
 	
 	COMMO_LOCK			DisplayLock;	//
 	COMMO_LOCK			SndplayLock;	//
