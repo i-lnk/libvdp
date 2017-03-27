@@ -877,13 +877,7 @@ int SetPlayRecordControl(
 	char sCommand[8] = {0};
 	char sParam[8] = {0};
 
-	char sEventYear[8] = {0};
-	char sEventMonth[8] = {0};
-	char sEventDay[8] = {0};
-	char sEventHour[8] = {0};
-	char sEventMins[8] = {0};
-	char sEventSecond[8] = {0};
-
+	char sEventTime[128] = {0};
 
 /*
 	typedef enum{
@@ -902,26 +896,20 @@ int SetPlayRecordControl(
 	GetCgiParam(sChannel,Cgi,sizeof(sChannel),"channel=","&");
     GetCgiParam(sCommand,Cgi,sizeof(sCommand),"command=","&");
     GetCgiParam(sParam,Cgi,sizeof(sParam),"param=","&");
-
-	GetCgiParam(sEventYear,Cgi,sizeof(sEventYear),"eventYear=","&");
-	GetCgiParam(sEventMonth,Cgi,sizeof(sEventMonth),"eventMonth=","&");
-	GetCgiParam(sEventDay,Cgi,sizeof(sEventDay),"eventDay=","&");
-
-	GetCgiParam(sEventHour,Cgi,sizeof(sEventHour),"eventHour=","&");
-	GetCgiParam(sEventMins,Cgi,sizeof(sEventMins),"eventMins=","&");
-	GetCgiParam(sEventSecond,Cgi,sizeof(sEventSecond),"eventSecond=","&");
+	GetCgiParam(sEventTime,Cgi,sizeof(sEventTime),"eventtime=","&");
 	
-
 	sMsg.channel = atoi(sChannel);
 	sMsg.command = atoi(sCommand);
 	sMsg.Param = atoi(sParam);
 
-	sMsg.stTimeDay.year = atoi(sEventYear);
-	sMsg.stTimeDay.month = atoi(sEventMonth);
-	sMsg.stTimeDay.day = atoi(sEventDay);
-	sMsg.stTimeDay.hour = atoi(sEventHour);
-	sMsg.stTimeDay.minute = atoi(sEventMins);
-	sMsg.stTimeDay.second = atoi(sEventSecond);
+	sscanf(sEventTime,"%d-%d-%d %d:%d:%d",
+		&sMsg.stTimeDay.year,
+		&sMsg.stTimeDay.month,
+		&sMsg.stTimeDay.day,
+		&sMsg.stTimeDay.hour,
+		&sMsg.stTimeDay.minute,
+		&sMsg.stTimeDay.second
+		);
     
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
@@ -936,21 +924,9 @@ int GetEventList(
 	SMsgAVIoctrlListEventReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
 
-	char sEventStartYear[8] = {0};
-	char sEventStartMonth[8] = {0};
-	char sEventStartDay[8] = {0};
-
-	char sEventCloseYear[8] = {0};
-	char sEventCloseMonth[8] = {0};
-	char sEventCloseDay[8] = {0};
-
-	char sEventStartHour[8] = {0};
-	char sEventCloseHour[8] = {0};
-	char sEventStartMins[8] = {0};
-	char sEventCloseMins[8] = {0};
-	char sEventStartSecond[8] = {0};
-	char sEventCloseSecond[8] = {0};
-
+	char sStartTime[128] = {0};
+	char sCloseTime[128] = {0}
+	
 	char sEventType[8] = {0};
 	char sEventStatus[8] = {0};
 
@@ -974,37 +950,27 @@ int GetEventList(
 	GetCgiParam(sEventType,Cgi,sizeof(sEventType),"eventType=","&");
 	GetCgiParam(sEventStatus,Cgi,sizeof(sEventStatus),"eventStatus=","&");
 
-	GetCgiParam(sEventStartYear,Cgi,sizeof(sEventStartYear),"startYear=","&");
-	GetCgiParam(sEventStartMonth,Cgi,sizeof(sEventStartMonth),"startMonth=","&");
-	GetCgiParam(sEventStartDay,Cgi,sizeof(sEventStartDay),"startDay=","&");
+	GetCgiParam(sStartTime,Cgi,sizeof(sStartTime),"starttime=","&");
+	GetCgiParam(sCloseTime,Cgi,sizeof(sCloseTime),"closetime=","&");
 
-	GetCgiParam(sEventCloseYear,Cgi,sizeof(sEventCloseYear),"closeYear=","&");
-	GetCgiParam(sEventCloseMonth,Cgi,sizeof(sEventCloseMonth),"closeMonth=","&");
-	GetCgiParam(sEventCloseDay,Cgi,sizeof(sEventCloseDay),"closeDay=","&");
+	sscanf(sStartTime,"%d-%d-%d %d:%d:%d",
+		&sMsg.stStartTime.year,
+		&sMsg.stStartTime.month,
+		&sMsg.stStartTime.day,
+		&sMsg.stStartTime.hour,
+		&sMsg.stStartTime.minute,
+		&sMsg.stStartTime.second
+		);
 
-	GetCgiParam(sEventStartHour,Cgi,sizeof(sEventStartHour),"startHour=","&");
-	GetCgiParam(sEventCloseHour,Cgi,sizeof(sEventCloseHour),"closeHour=","&");
-	GetCgiParam(sEventStartMins,Cgi,sizeof(sEventStartMins),"startMins=","&");
-	GetCgiParam(sEventCloseMins,Cgi,sizeof(sEventCloseMins),"closeMins=","&");
-	GetCgiParam(sEventStartSecond,Cgi,sizeof(sEventStartSecond),"startSecond=","&");
-	GetCgiParam(sEventCloseSecond,Cgi,sizeof(sEventCloseSecond),"closeSecond=","&");
-
-	sMsg.stStartTime.year = atoi(sEventStartYear);
-	sMsg.stStartTime.month = atoi(sEventStartMonth);
-	sMsg.stStartTime.day = atoi(sEventStartDay);
-
-	sMsg.stStartTime.hour = atoi(sEventStartYear);
-	sMsg.stStartTime.minute = atoi(sEventStartMins);
-	sMsg.stStartTime.second = atoi(sEventStartSecond);
-
-	sMsg.stEndTime.year = atoi(sEventCloseYear);
-	sMsg.stEndTime.month = atoi(sEventCloseMonth);
-	sMsg.stEndTime.day = atoi(sEventCloseDay);
-
-	sMsg.stEndTime.hour = atoi(sEventCloseYear);
-	sMsg.stEndTime.minute = atoi(sEventCloseMins);
-	sMsg.stEndTime.second = atoi(sEventCloseSecond);
-
+	sscanf(sCloseTime,"%d-%d-%d %d:%d:%d",
+		&sMsg.stEndTime.year,
+		&sMsg.stEndTime.month,
+		&sMsg.stEndTime.day,
+		&sMsg.stEndTime.hour,
+		&sMsg.stEndTime.minute,
+		&sMsg.stEndTime.second
+		);
+	
 	sMsg.event = atoi(sEventType);
 	sMsg.status = atoi(sEventStatus);
 
