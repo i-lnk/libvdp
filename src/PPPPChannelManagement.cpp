@@ -14,7 +14,7 @@
 
 CPPPPChannelManagement::CPPPPChannelManagement()
 {
-    memset(&m_PPPPChannel, 0 ,sizeof(m_PPPPChannel));
+    memset(&m_PPPPChannel,0,sizeof(m_PPPPChannel));
 
 	INT_LOCK( &PPPPChannelLock );
 	INT_LOCK( &PPPPCommandLock );
@@ -46,11 +46,7 @@ int CPPPPChannelManagement::Start(char * szDID, char *user, char *pwd,char *serv
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            SAFE_DELETE(m_PPPPChannel[i].pPPPPChannel);
-            memset(m_PPPPChannel[i].szDID, 0, sizeof(m_PPPPChannel[i].szDID));
-            strcpy(m_PPPPChannel[i].szDID, szDID);
-			m_PPPPChannel[i].pPPPPChannel = new CPPPPChannel(szDID, user, pwd, server);
-            m_PPPPChannel[i].pPPPPChannel->Start();
+            r = m_PPPPChannel[i].pPPPPChannel->Start();
             goto jumpout;
         }
     }
@@ -62,7 +58,7 @@ int CPPPPChannelManagement::Start(char * szDID, char *user, char *pwd,char *serv
             m_PPPPChannel[i].bValid = 1;            
             strcpy(m_PPPPChannel[i].szDID, szDID);      
             m_PPPPChannel[i].pPPPPChannel = new CPPPPChannel(szDID, user, pwd, server);
-            m_PPPPChannel[i].pPPPPChannel->Start();
+            r = m_PPPPChannel[i].pPPPPChannel->Start();
 			goto jumpout;
         }
     }
@@ -297,7 +293,7 @@ int CPPPPChannelManagement::PPPPSetSystemParams(char * szDID,int type,char * msg
 		Log3("Invalid uuid for application layer caller");
 		return 0;
 	}
-
+  
 	GET_LOCK( &PPPPChannelLock );
 	GET_LOCK( &PPPPCommandLock );
 
@@ -320,9 +316,9 @@ int CPPPPChannelManagement::PPPPSetSystemParams(char * szDID,int type,char * msg
     }
 
 jumpout:
-
-	PUT_LOCK( &PPPPCommandLock );
-	PUT_LOCK( &PPPPChannelLock );
+    
+  	PUT_LOCK( &PPPPCommandLock );
+    PUT_LOCK( &PPPPChannelLock );
     
     return r;
 }
