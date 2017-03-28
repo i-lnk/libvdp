@@ -954,6 +954,9 @@ int GetEventList(
 	GetCgiParam(sStartTime,Cgi,sizeof(sStartTime),"starttime=","&");
 	GetCgiParam(sCloseTime,Cgi,sizeof(sCloseTime),"closetime=","&");
 
+	Log3("event get start time:%s.\n",sStartTime);
+	Log3("event get close time:%s.\n",sCloseTime);
+
 	sscanf(sStartTime,"%d-%d-%d %d:%d:%d",
 		&sMsg.stStartTime.year,
 		&sMsg.stStartTime.month,

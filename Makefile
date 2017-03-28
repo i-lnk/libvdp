@@ -61,7 +61,6 @@ ANDROID_LIBS = -L$(SYSROOT)\usr\lib -L$(LIBPATH) \
 OBJECT_FILE = src/CircleBuf.o \
 src/ffmpeg_mp4.o \
 src/H264Decoder.o \
-src/global_h264decoder.o \
 src/PPPPChannel.o \
 src/PPPPChannelManagement.o \
 src/SearchDVS.o \
