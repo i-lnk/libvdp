@@ -573,7 +573,8 @@ int XetSDCard(
 	const char *	szCgi,
 	void *			lpParams
 ){
-	SMsgAVIoctrlTimeZone sMsg;
+	SMsgAVIoctrlFormatExtStorageReq sMsg;
+	sMsg.storage = 0;
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
