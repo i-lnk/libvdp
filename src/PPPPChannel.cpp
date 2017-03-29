@@ -1758,11 +1758,7 @@ int CPPPPChannel::StartAudioChannel()
 	voiceEnabled = 1;
 	
 	pthread_create(&audioRecvThread,NULL,AudioRecvProcess,(void*)this);
-
-	// playback no need audio send process.
-	if(szURL[0] == 0){
-		pthread_create(&audioSendThread,NULL,AudioSendProcess,(void*)this);
-	}
+	pthread_create(&audioSendThread,NULL,AudioSendProcess,(void*)this);
 	
     return 1;
 }
@@ -1949,7 +1945,9 @@ int CPPPPChannel::StartMediaStreams(
 	Log3("channel init video proc.");
     StartVideoChannel();
     Log3("channel init audio proc.");
-    StartAudioChannel();
+	if(szURL[0] == 0){	// audio disable when replay
+    	StartAudioChannel();
+	}
 
 	ret = 0;
 	
