@@ -710,7 +710,7 @@ static void * VideoRecvProcess(
 	int 			outFrmSize = 0;
 	int 			outFrmInfoSize = 0;
 
-	int				server = 0;
+	unsigned int	server = 0;
 	int 			resend = 0;
 	int 			avIdx = hPC->avIdx;
 	int				ioIdx = hPC->avIdx;
