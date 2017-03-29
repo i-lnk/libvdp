@@ -165,6 +165,7 @@ public:
 
 	int					avstremChannel; // 
 	int					speakerChannel;	//
+	int					playrecChannel; //
 	int					sessionID;		//
 	int					avIdx;			//
 	int					spIdx;			//

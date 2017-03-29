@@ -514,6 +514,14 @@ void * IOCmdRecvProcess(
 		hCCH->len = ret;
         
         switch(IOCtrlType){
+			case IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP:{
+					SMsgAVIoctrlPlayRecordResp * hRQ = (SMsgAVIoctrlPlayRecordResp *)hCCH->d;
+					if(hRQ->command == AVIOCTRL_RECORD_PLAY_START){
+						hPC->playrecChannel = hRQ->result;
+						continue;
+					}
+				}
+				break;
 			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	// …Ë±∏–›√ﬂ
 					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
 					if(hRQ->result == 0){
@@ -702,9 +710,15 @@ static void * VideoRecvProcess(
 	int 			outFrmSize = 0;
 	int 			outFrmInfoSize = 0;
 
+	int 			resend = 0;
 	int 			avIdx = hPC->avIdx;
+	int				ioIdx = hPC->avIdx;
 
 	char 			avMsg[1024] = {0};
+
+	hPC->playrecChannel = -1; 	// reset replay channel. 
+								// value set by response msg 
+								// IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP
 	
 	memset(&frameInfo,0,sizeof(frameInfo));
 
@@ -737,6 +751,36 @@ static void * VideoRecvProcess(
 			(char *)&avMsg, 
 			sizeof(SMsgAVIoctrlPlayRecord)
 			);
+
+		if(ret != AV_ER_NoERROR){
+			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+			return NULL;
+		}
+
+		int times = 7;
+		while(times-- && hPC->playrecChannel < 0){
+			Log3("waiting for replay channel.");
+			sleep(1);
+		}
+
+		if(hPC->playrecChannel < 0){
+			return NULL;
+		}
+
+		ioIdx = avClientStart2(hPC->SID,
+			hPC->szUsr,
+			hPC->szPwd, 
+			7, 
+			NULL, 
+			hPC->playrecChannel, 
+			NULL
+		);
+
+		if(ioIdx < 0){
+			Log3("avClientStart2 for replay failed:[%d].",ioIdx);
+			return NULL;
+		}
+		
 	}else{
 		ret = avSendIOCtrlEx(
 			avIdx, 
@@ -744,11 +788,11 @@ static void * VideoRecvProcess(
 			(char *)&avMsg, 
 			sizeof(SMsgAVIoctrlAVStream)
 			);
-	}
-	
-	if(ret != AV_ER_NoERROR){
-		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
-		return NULL;
+
+		if(ret != AV_ER_NoERROR){
+			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,avIdx);
+			return NULL;
+		}
 	}
 
 	Log3("START LIVING STREAM CMD POST DONE.");
@@ -784,7 +828,7 @@ static void * VideoRecvProcess(
 #endif
 	
 		ret = avRecvFrameData2(
-			avIdx, 
+			ioIdx, 
 			hFrm->d,
 			FrmSize - sizeof(AV_HEAD),
 			&outBufSize, 
