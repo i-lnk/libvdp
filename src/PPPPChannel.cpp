@@ -764,6 +764,7 @@ static void * VideoRecvProcess(
 		}
 
 		if(hPC->playrecChannel < 0){
+			Log3("get replay channel failed with error:[%d].",hPC->playrecChannel);
 			return NULL;
 		}
 
