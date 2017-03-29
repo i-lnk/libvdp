@@ -775,11 +775,13 @@ static void * VideoRecvProcess(
 
 	while(hPC->videoPlaying)
 	{
+#if 0
 		if(hPC->spIdx < 0){
 			Log3("waiting for device connect to our audio server.\n");
 			sleep(1); 
 			continue;
 		}
+#endif
 	
 		ret = avRecvFrameData2(
 			avIdx, 
