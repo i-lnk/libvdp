@@ -561,7 +561,7 @@ int             JsonBufferSize
 	Log3("%s}",lps);
 
 	for(int i = 0;i < count;i++){
-		len += sprintf(lps + len,"\"%03d\":",i);
+		len += sprintf(lps + len,"\"%d\":",i);
 	    len += sprintf(lps + len,"{\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%d\",\"%s\":\"%d\"},",
 	          	"start",
 	          	hRQ->stEvent[i].startTime.year,hRQ->stEvent[i].startTime.month,hRQ->stEvent[i].startTime.day,
