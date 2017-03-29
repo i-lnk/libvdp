@@ -436,7 +436,8 @@ void * IOCmdSendProcess(
 //					Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
 
 					if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-						usleep(1000); continue;
+						usleep(1000); 
+						continue;
 					}else if(ret == -1){
 						Log3("[X:%s]=====>unsupport cmd type:[%d].\n",hPC->szDID,hCmds->AppType);
 						break;

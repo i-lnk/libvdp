@@ -522,9 +522,10 @@ int             JsonBufferSize
     
     SMsgAVIoctrlGetCapacityResp * hRQ = (SMsgAVIoctrlGetCapacityResp *)Msg;
     
-    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%d\"}",
+    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%d\"}",
             "devType",hRQ->devType,
             "version",hRQ->version,
+            "odm",hRQ->odmID,
             "model",hRQ->model,
             "language",hRQ->language
             );
