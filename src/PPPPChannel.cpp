@@ -710,6 +710,7 @@ static void * VideoRecvProcess(
 	int 			outFrmSize = 0;
 	int 			outFrmInfoSize = 0;
 
+	int				server = 0;
 	int 			resend = 0;
 	int 			avIdx = hPC->avIdx;
 	int				ioIdx = hPC->avIdx;
@@ -772,9 +773,9 @@ static void * VideoRecvProcess(
 			hPC->szUsr,
 			hPC->szPwd, 
 			7, 
-			NULL, 
+			&server, 
 			hPC->playrecChannel, 
-			NULL
+			&resend
 		);
 
 		if(ioIdx < 0){
