@@ -481,8 +481,8 @@ void * IOCmdRecvProcess(
 
 	hPC->m_JNIMainEnv = hEnv;
 
-	char Params[8192] = {0};
-    char MsgStr[8192] = {0};
+	char Params[2048] = {0};
+    char MsgStr[4096] = {0};
 
 	unsigned int IOCtrlType = 0;
 	CMD_CHANNEL_HEAD * hCCH = (CMD_CHANNEL_HEAD*)Params;

@@ -548,6 +548,8 @@ int             JsonBufferSize
 	char * lps = JsonBuffer;
 	int    len = 0;
 
+	int count = hRQ->count;
+
 	len += sprintf(lps + len,"{");
 	len += sprintf(lps + len,"\"total\":\"%d\",\"count\":\"%d\",\"index\":\"%d\",\"end\":\"%d\"",
 		hRQ->total,
@@ -556,7 +558,9 @@ int             JsonBufferSize
 		hRQ->endflag
 		);
 
-	for(int i = 0;i < hRQ->count;i++){
+	Log3("%s}",lps);
+
+	for(int i = 0;i < count;i++){
 		len += sprintf(lps + len,"\"record\":");
 	    len += sprintf(lps + len,"{\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%d\",\"%s\":\"%d\"},",
 	          	"start",
