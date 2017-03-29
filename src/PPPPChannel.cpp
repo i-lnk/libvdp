@@ -921,6 +921,8 @@ static void * VideoRecvProcess(
 			(char *)&avMsg, 
 			sizeof(SMsgAVIoctrlPlayRecord)
 			);
+
+		avClientStop(ioIdx);
 	}else{
 		ret = avSendIOCtrlEx(
 			avIdx, 
@@ -1905,7 +1907,10 @@ int CPPPPChannel::CloseMediaStreams(
 	audioPlaying = 0;
 
 	Log3("audio stop speaker service with sid:%d iotc-channel:%d sp-idx:%d.",SID,speakerChannel,spIdx);
+
+	if(playrecChannel >= 0) avClientExit(SID,playrecChannel);
 	if(speakerChannel >= 0) avServExit(SID,speakerChannel);
+	
 	if(spIdx >= 0) avServStop(spIdx);
 	
 	speakerChannel = -1;
