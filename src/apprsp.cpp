@@ -551,7 +551,7 @@ int             JsonBufferSize
 	int count = hRQ->count;
 
 	len += sprintf(lps + len,"{");
-	len += sprintf(lps + len,"\"total\":\"%d\",\"count\":\"%d\",\"index\":\"%d\",\"end\":\"%d\",\"record\":{",
+	len += sprintf(lps + len,"\"total\":\"%d\",\"count\":\"%d\",\"index\":\"%d\",\"end\":\"%d\",\"record\":[",
 		hRQ->total,
 		hRQ->count,
 		hRQ->index,
@@ -574,7 +574,7 @@ int             JsonBufferSize
 	}
 
 	len -= 1; // replace last charecter ","
-	len += sprintf(lps + len,"}}");
+	len += sprintf(lps + len,"]}");
     
     return 0;
 }
