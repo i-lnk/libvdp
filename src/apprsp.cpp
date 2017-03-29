@@ -545,20 +545,20 @@ int             JsonBufferSize
     
     SMsgAVIoctrlListEventResp * hRQ = (SMsgAVIoctrlListEventResp *)Msg;
 
-	/*
-	typedef struct
-	{
-		STimeDay stTime;
-		unsigned char event;
-		unsigned char status;	// 0x00: Recording file exists, Event unreaded
-								// 0x01: Recording file exists, Event readed
-								// 0x02: No Recording file in the event
-		unsigned char reserved[2];
-	}SAvEvent;
-	*/
+	char * lps = JsonBuffer;
+	int    len = 0;
+
+	len += sprintf(lps + len,"{");
+	len += sprintf(lps + len,"\"total\":\"%d\",\"count\":\"%d\",\"index\":\"%d\",\"end\":\"%d\"",
+		hRQ->total,
+		hRQ->count,
+		hRQ->index,
+		hRQ->endflag
+		);
 
 	for(int i = 0;i < hRQ->count;i++){
-	    sprintf(JsonBuffer,"{\"%s\":\"%d-%d-%d %d:%d:%d\",\"%s\":\"%d-%d-%d %d:%d:%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+		len += sprintf(lps + len,"\"record\":");
+	    len += sprintf(lps + len,"{\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%d\",\"%s\":\"%d\"},",
 	          	"start",
 	          	hRQ->stEvent[i].startTime.year,hRQ->stEvent[i].startTime.month,hRQ->stEvent[i].startTime.day,
 	          	hRQ->stEvent[i].startTime.hour,hRQ->stEvent[i].startTime.minute,hRQ->stEvent[i].startTime.second,
@@ -569,6 +569,9 @@ int             JsonBufferSize
 	          	"status",hRQ->stEvent[i].status
 	            );
 	}
+
+	len -= 1; // replace last charecter ","
+	len += sprintf(lps + len,"}");
     
     return 0;
 }
