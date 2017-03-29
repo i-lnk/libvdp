@@ -726,9 +726,10 @@ static void * VideoRecvProcess(
 			&pMsg->stTimeDay.minute,
 			&pMsg->stTimeDay.second
 		);
+		
 		pMsg->stTimeDay.wday = 0;
 
-		Log3("start replay by url:[%d].");
+		Log3("start replay by url:[%s]."hPC->szURL);
 		
 		ret = avSendIOCtrlEx(
 			avIdx, 
