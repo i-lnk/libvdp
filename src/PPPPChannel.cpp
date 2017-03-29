@@ -1944,8 +1944,8 @@ int CPPPPChannel::StartMediaStreams(
 
 	Log3("channel init video proc.");
     StartVideoChannel();
-    Log3("channel init audio proc.");
 	if(szURL[0] == 0){	// audio disable when replay
+		Log3("channel init audio proc.");
     	StartAudioChannel();
 	}
 
