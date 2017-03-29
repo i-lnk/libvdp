@@ -551,7 +551,7 @@ int             JsonBufferSize
 	int count = hRQ->count;
 
 	len += sprintf(lps + len,"{");
-	len += sprintf(lps + len,"\"total\":\"%d\",\"count\":\"%d\",\"index\":\"%d\",\"end\":\"%d\"",
+	len += sprintf(lps + len,"\"total\":\"%d\",\"count\":\"%d\",\"index\":\"%d\",\"end\":\"%d\",",
 		hRQ->total,
 		hRQ->count,
 		hRQ->index,
@@ -561,7 +561,7 @@ int             JsonBufferSize
 	Log3("%s}",lps);
 
 	for(int i = 0;i < count;i++){
-		len += sprintf(lps + len,"\"record\":");
+		len += sprintf(lps + len,"\"%03d\":",i);
 	    len += sprintf(lps + len,"{\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%d\",\"%s\":\"%d\"},",
 	          	"start",
 	          	hRQ->stEvent[i].startTime.year,hRQ->stEvent[i].startTime.month,hRQ->stEvent[i].startTime.day,
