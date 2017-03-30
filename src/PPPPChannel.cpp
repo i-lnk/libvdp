@@ -493,7 +493,7 @@ void * IOCmdRecvProcess(
 			&IOCtrlType,
 			 hCCH->d,
 			 sizeof(Params) - sizeof(CMD_CHANNEL_HEAD),
-			 100
+			 15 * 1000
 			 );
 
 		if(ret < 0){
