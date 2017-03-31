@@ -233,11 +233,20 @@ typedef enum
     
     IOTYPE_USER_IPCAM_GET_CAPACITY_REQ          = 0x880,
     IOTYPE_USER_IPCAM_GET_CAPACITY_RESP         = 0x881,
+
+	// for 433 ipc alarm and record
+    IOTYPE_USER_IPCAM_GET_MD_ALAM_REQ           = 0x882,
+    IOTYPE_USER_IPCAM_GET_MD_ALAM_RESP          = 0x883,
+    IOTYPE_USER_IPCAM_SET_MD_ALAM_REQ           = 0x884,
+    IOTYPE_USER_IPCAM_SET_MD_ALAM_RESP          = 0x885,
     
     IOTYPE_USER_IPCAM_UPDATE_REQ                = 0x88a,
     IOTYPE_USER_IPCAM_UPDATE_RESP               = 0x88b,
     IOTYPE_USER_IPCAM_UPDATE_PROG_REQ           = 0x88c,
     IOTYPE_USER_IPCAM_UPDATE_PROG_RESP          = 0x88d,
+
+	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ		= 0x901,	// 
+	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_RESP		= 0x902,	//
 	
 	IOTYPE_USER_IPCAM_SERIAL_OPEN_REQ			= 0x1001,	// Â¥ÃšÃ¸â„¢Â¥Ã†Ã¸â„Â«ÃÂ«Ã›
 	IOTYPE_USER_IPCAM_SERIAL_OPEN_RESP			= 0x1002,	// Â¥ÃšÃ¸â„¢Â¥Ã†Ã¸â„â€Â¶Â¥ï£¿
@@ -368,20 +377,42 @@ typedef struct{
 	int		Type;
 }SMsgAVIoctrlSetPushReq,SMsgAVIoctrlDelPushReq;
 
+//NEW ADD ¶«Ë´¿ª·¢µÄÒÆ¶¯Õì²â±¨¾¯Áª¶¯½á¹¹Ìå
+/**
+ * IOTYPE_USER_IPCAM_GET_MD_ALAM_REQ
+ * IOTYPE_USER_IPCAM_GET_MD_ALAM_RESP
+ * IOTYPE_USER_IPCAM_SET_MD_ALAM_REQ
+ * IOTYPE_USER_IPCAM_SET_MD_ALAM_RESP
+ */
+typedef struct{
+	unsigned char	MotionEnable;			
+	unsigned char	MotionLevel;
+	unsigned char	MotionAudioOutput;	// Áª¶¯ÉùÒôÊä³ö: 1Îª¿ªÆô,0¹Ø±Õ
+	unsigned char	MotionRecord;	// Áª¶¯Â¼Ïñ
+	unsigned char	MotionNotify;	// Áª¶¯ÏûÏ¢ÍÆËÍ
+	unsigned char	Resrver[12];	// ±£Áô
+	unsigned char	MotionAlarmFrequency;;		// ÒÆ¶¯Õì²âÆµÂÊ£¬µ¥Î»Ãë:0Îª¹Ì¶¨Ä¬ÈÏ,·ñÔòÖ¸¶¨µÄÃëÊı
+
+	unsigned char	MotionStartHour;		
+	unsigned char 	MotionStartMins;		
+	unsigned char 	MotionCloseHour;		
+	unsigned char 	MotionCloseMins;
+}SMsgAVIoctrlMDAlarmReq,SMsgAVIoctrlMDAlarmResp;
+
 //
-// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâ€¦Ã‹Ã·âˆšÂ Ï€â€âˆšÂµÆ’Â ËÃ¦â€ºÎ©Â·Ï€Ï€
+//
 //
 typedef struct{
-	int	MotionEnable;			// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šÂ Ï€Æ’â€¹
-	int	MotionLevel;			// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šÂºâˆ‚Â±ï£¿
-	int	MotionAlarmFrequency;	// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šâˆ†ÂµÂ¬Â Â£Â¨Âµâ€¢Å’ÂªâˆšÃ
-	int	MotionAlarmType;		// â€œâˆ†âˆ‚Ã˜â€™Ãâ‰¤â€šÂ¿â€¡â€“Ã•
+	int	MotionEnable;			
+	int	MotionLevel;			
+	int	MotionAlarmFrequency;	
+	int	MotionAlarmType;		
 
 	// schedule for every day
-	int	MotionStartHour;		// âˆšÃ¸ÃƒÃâˆ†ï£¿Â ÂºÂ Â±
-	int MotionStartMins;		// âˆšÃ¸ÃƒÃâˆ†ï£¿Â Âºâˆ‘Ã·
-	int MotionCloseHour;		// âˆšÃ¸ÃƒÃÎ©Â·Â Â¯Â Â±
-	int MotionCloseMins;		// âˆšÃ¸ÃƒÃÎ©Â·Â Â¯âˆ‘Ã·
+	int	MotionStartHour;		
+	int MotionStartMins;		
+	int MotionCloseHour;		
+	int MotionCloseMins;		
 }SMsgAVIoctrlSetMDPReq,SMsgAVIoctrlGetMDPResp;
 
 //
@@ -432,7 +463,6 @@ typedef struct
 	unsigned char reserved[4];
 }SMsgAVIoctrlGetRecordReq, SMsgAVIoctrlGetRecordResp,
 SMsgAVIoctrlSetRecordReq, SMsgAVIoctrlSetRecordResp;
-
 
 typedef enum{
 	AVIOCTRL_LANG_EN,
@@ -519,6 +549,11 @@ typedef struct
     unsigned int nPresetIdx;  // İdÈëîAÖÃücindex	”µÖµ¹ ‡ú 0~3(±íÊ¾îAÖÃüc1~4)
 }SMsgAVIoctrlGetPresetReq,SMsgAVIoctrlGetPresetResp;
 
+typedef struct
+{
+	unsigned int index;
+	char reserved[8];	
+}SMsgAVIoctrlGetCameraViewReq,SMsgAVIoctrlGetCameraViewResp;
 
 //
 // Ã•Â®â€âˆšâ€Â¶Â¥ï£¿Â ËÃ¦â€ºÎ©Â·Ï€Ï€
@@ -1138,8 +1173,6 @@ typedef struct
 	unsigned int  event; 	// Event Type
 	unsigned char reserved[4];
 } SMsgAVIoctrlEvent;
-
-
 
 #if 0
 

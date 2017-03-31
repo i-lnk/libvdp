@@ -526,6 +526,54 @@ int SetMotionSchedule(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+int SetMotionScheduleEx(
+	int				avIdx,
+	int				avMsgType,
+	const char *	szCgi,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+
+	char sMotionEnable[8] = {0};
+	char sMotionSensitivity[8] = {0};
+	char sMotionNotifyDelay[8] = {0};
+	char sMotionAudioOutput[8] = {0};
+	char sMotionNotify[8] = {0};
+	char sMotionRecord[8] = {0};
+
+	char sMotionStartHour[8] = {0};
+	char sMotionCloseHour[8] = {0};
+	char sMotionStartMins[8] = {0};
+	char sMotionCloseMins[8] = {0};
+
+	GetCgiParam(sMotionEnable,Cgi,sizeof(sMotionEnable),"enable=","&");
+	GetCgiParam(sMotionSensitivity,Cgi,sizeof(sMotionSensitivity),"level=","&");
+	GetCgiParam(sMotionNotifyDelay,Cgi,sizeof(sMotionNotifyDelay),"delay=","&");
+	GetCgiParam(sMotionNotify,Cgi,sizeof(sMotionNotify),"notify=","&");
+	GetCgiParam(sMotionRecord,Cgi,sizeof(sMotionRecord),"record=","&");
+	GetCgiParam(sMotionAudioOutput,Cgi,sizeof(sMotionAudioOutput),"audio=","&");
+	GetCgiParam(sMotionStartHour,Cgi,sizeof(sMotionStartHour),"startHour=","&");
+	GetCgiParam(sMotionCloseHour,Cgi,sizeof(sMotionCloseHour),"closeHour=","&");
+	GetCgiParam(sMotionStartMins,Cgi,sizeof(sMotionStartMins),"startMins=","&");
+	GetCgiParam(sMotionCloseMins,Cgi,sizeof(sMotionCloseMins),"closeMins=","&");
+
+	SMsgAVIoctrlMDAlarmReq sMsg;
+	memset(&sMsg,0,sizeof(sMsg));
+
+	sMsg.MotionAlarmFrequency = atoi(sMotionNotifyDelay) < 5 ? 5 : atoi(sMotionNotifyDelay);
+	sMsg.MotionEnable = atoi(sMotionEnable);
+	sMsg.MotionLevel = atoi(sMotionSensitivity) * 20;
+	sMsg.MotionNotify = atoi(sMotionNotify);
+	sMsg.MotionRecord = atoi(sMotionRecord);
+	sMsg.MotionAudioOutput = atoi(sMotionAudioOutput);
+	sMsg.MotionStartHour = atoi(sMotionStartHour);
+	sMsg.MotionStartMins = atoi(sMotionStartMins);
+	sMsg.MotionCloseHour = atoi(sMotionCloseHour);
+	sMsg.MotionCloseMins = atoi(sMotionCloseMins);
+
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
 int GetMotionSchedule(
 	int				avIdx,
 	int				avMsgType,
@@ -537,6 +585,17 @@ int GetMotionSchedule(
 	avSendIOCtrl(avIdx,IOTYPE_USER_IPCAM_GETMOTIONDETECT_REQ,(const char *)&sMsg,sizeof(sMsg));
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
+
+int GetMotionScheduleEx(
+	int				avIdx,
+	int				avMsgType,
+	const char *	szCgi,
+	void *			lpParams
+){
+	SMsgAVIoctrlMDAlarmReq sMsg;
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
 
 int GetTimeZone(
 	int				avIdx,
@@ -1022,6 +1081,26 @@ int GetPresetPostion(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+int GetCameraView(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlGetCameraViewReq sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+
+	char sIdx[8] = {0};
+	GetCgiParam(sIdx,Cgi,sizeof(sIdx),"index=","&");
+
+	sMsg.index = atoi(sIdx);
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -1040,6 +1119,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_GETRECORD_REQ,GetRecordSchedule},
 	{IOTYPE_USER_IPCAM_SET_MDP_REQ,SetMotionSchedule},
 	{IOTYPE_USER_IPCAM_GET_MDP_REQ,GetMotionSchedule},
+	{IOTYPE_USER_IPCAM_SET_MD_ALAM_REQ,SetMotionScheduleEx},
+	{IOTYPE_USER_IPCAM_GET_MD_ALAM_REQ,GetMotionScheduleEx},
 	{IOTYPE_USER_IPCAM_DOOROPEN_REQ,SetLock},
 	{IOTYPE_USER_IPCAM_DOORPASS_REQ,SetLockPass},
 	{IOTYPE_USER_IPCAM_SET_VIDEOMODE_REQ,SetVideo},
@@ -1056,11 +1137,11 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SETPASSWORD_REQ,SetPassword},
 	{IOTYPE_USER_IPCAM_GET_OSD_REQ,GetOSD},
 	{IOTYPE_USER_IPCAM_SET_OSD_REQ,SetOSD},
-	{IOTYPE_USER_IPCAM_SET_433_REQ,Set433Dev},	// …Ë÷√ 433 …Ë±∏
-	{IOTYPE_USER_IPCAM_GET_433_REQ,Get433Dev},	// ªÒ»° 433 …Ë±∏¡–±Ì
-	{IOTYPE_USER_IPCAM_CFG_433_REQ,Cfg433Dev},	// ø™ º 433 ≈‰∂‘
-	{IOTYPE_USER_IPCAM_DEL_433_REQ,Del433Dev},  // …æ≥˝ 433 …Ë±∏
-	{IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ,Cfg433DevExit},	// ÕÀ≥ˆ 433 …Ë±∏≈‰∂‘
+	{IOTYPE_USER_IPCAM_SET_433_REQ,Set433Dev},	
+	{IOTYPE_USER_IPCAM_GET_433_REQ,Get433Dev},	
+	{IOTYPE_USER_IPCAM_CFG_433_REQ,Cfg433Dev},
+	{IOTYPE_USER_IPCAM_DEL_433_REQ,Del433Dev},
+	{IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ,Cfg433DevExit},
     {IOTYPE_USER_IPCAM_UPDATE_REQ,SetUpdateUrl},
     {IOTYPE_USER_IPCAM_UPDATE_PROG_REQ,GetUpdateProgress},
     {IOTYPE_USER_IPCAM_GET_CAPACITY_REQ,GetCapacity},
@@ -1068,6 +1149,7 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_LISTEVENT_REQ,GetEventList},
 	{IOTYPE_USER_IPCAM_SETPRESET_REQ,SetPresetPostion},
 	{IOTYPE_USER_IPCAM_GETPRESET_REQ,GetPresetPostion},
+	{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ,GetCameraView},
 	{0,NULL}
 };
 

@@ -359,10 +359,6 @@ connect:
 	}
 
 jumperr:
-
-#ifdef PLATFORM_ANDROID
-	if(isAttached) g_JavaVM->DetachCurrentThread();
-#endif
     
     hPC->PPPPClose();
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
@@ -375,6 +371,10 @@ jumperr:
         status = PPPP_STATUS_DISCONNECT;
     }
     hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status);
+
+#ifdef PLATFORM_ANDROID
+	if(isAttached) g_JavaVM->DetachCurrentThread();
+#endif
     
     Log3("MediaCoreProcess Exit By Status:[%d].",status);
 
@@ -493,8 +493,7 @@ void * IOCmdRecvProcess(
 			&IOCtrlType,
 			 hCCH->d,
 			 sizeof(Params) - sizeof(CMD_CHANNEL_HEAD),
-			 15 * 1000
-			 );
+			 100);
 
 		if(ret < 0){
 			switch(ret){
@@ -522,11 +521,11 @@ void * IOCmdRecvProcess(
 					}
 				}
 				break;
-			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	// …Ë±∏–›√ﬂ
+			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	
 					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
 					if(hRQ->result == 0){
 						hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
-						hPC->deviceStandby = 1; // …Ë±∏Ω¯»Î–›√ﬂ
+						hPC->deviceStandby = 1;
 						Log3("[X:%s]=====>device sleeping now.\n",hPC->szDID);
 					}else{
 						Log3("[X:%s]=====>device sleeping failed,still keep online.\n",hPC->szDID);

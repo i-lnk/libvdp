@@ -204,6 +204,34 @@ int             JsonBufferSize
     return 0;
 }
 
+int GetMotionScheduleExResp2JSON(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlMDAlarmResp * hRQ = (SMsgAVIoctrlMDAlarmResp *)Msg;
+    
+    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+            "enable",hRQ->MotionEnable,
+            "level",hRQ->MotionLevel,
+            "frequency",hRQ->MotionAlarmFrequency,
+            "notify",hRQ->MotionNotify,
+            "record",hRQ->MotionRecord,
+            "audio",hRQ->MotionAudioOutput,
+            "start_hour",hRQ->MotionStartHour,
+            "start_mins",hRQ->MotionStartMins,
+            "close_hour",hRQ->MotionCloseHour,
+            "close_mins",hRQ->MotionCloseMins
+            );
+    
+    return 0;
+}
+
 int GetDeviceAlarmingResp2JSON(
 int             Cmd,
 void *          Msg,
@@ -592,6 +620,8 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_GETRECORD_RESP,GetRecordScheduleResp2JSON},
 {IOTYPE_USER_IPCAM_SETMOTIONDETECT_RESP,GetMotionScheduleResp2JSON},
 {IOTYPE_USER_IPCAM_GETMOTIONDETECT_RESP,GetMotionScheduleResp2JSON},
+{IOTYPE_USER_IPCAM_GET_MD_ALAM_RESP,GetMotionScheduleExResp2JSON},
+{IOTYPE_USER_IPCAM_SET_MD_ALAM_RESP,GetMotionScheduleExResp2JSON},
 {IOTYPE_USER_IPCAM_SET_MDP_RESP,GetMotionScheduleResp2JSON},
 {IOTYPE_USER_IPCAM_GET_MDP_RESP,GetMotionScheduleResp2JSON},
 {IOTYPE_USER_IPCAM_ALARMING_REQ,GetDeviceAlarmingResp2JSON},
