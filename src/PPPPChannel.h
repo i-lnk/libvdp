@@ -147,7 +147,7 @@ public:
 	int  PPPPClose();
 
 public:
-	JNIEnv *            m_JNIMainEnv;	// Java env
+	JNIEnv *            hCoreEnv;	// Java env
 	
 	// 
 	CAudioDataList *	hAudioGetList;

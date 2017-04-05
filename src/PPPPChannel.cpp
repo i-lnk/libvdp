@@ -211,6 +211,8 @@ void * MeidaCoreProcess(
 	}
 #endif
 
+	hPC->hCoreEnv = hEnv;
+
 	int resend = 0;
     int status = 0;
 	int wakeup_times = 7;
@@ -478,8 +480,6 @@ void * IOCmdRecvProcess(
 		isAttached = 1; 
 	}
 #endif
-
-	hPC->m_JNIMainEnv = hEnv;
 
 	char Params[2048] = {0};
     char MsgStr[8192] = {0};
@@ -1742,11 +1742,13 @@ int CPPPPChannel::Start()
     Log3("start pppp connection to device with uuid:[%s].\n",szDID);
 
 	GET_LOCK(&SessionStatusLock);
+	
 	if(SessionStatus != STATUS_SESSION_DIED){
 		Log3("session status is:[%d],can't start pppp connection.\n",SessionStatus);
 		PUT_LOCK(&SessionStatusLock);
-		return -1;
+		return 1;
 	}
+	
 	SessionStatus = STATUS_SESSION_START;
 	PUT_LOCK(&SessionStatusLock);
 
@@ -1941,7 +1943,7 @@ int CPPPPChannel::StartMediaStreams(
 /*
 	ret = IOTC_Session_Check(SID,&sInfo);
 	if(ret < 0){
-		MsgNotify(m_JNIMainEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
+		MsgNotify(hCoreEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
 		Log3("[7:%s]=====>stop old media process start.\n",szDID);
 		PPPPClose();
 	    CloseWholeThreads();

@@ -601,7 +601,9 @@ int             JsonBufferSize
 	            );
 	}
 
-	len -= 1; // replace last charecter ","
+	if(count != 0){
+		len -= 1; // replace last charecter ","
+	}
 	len += sprintf(lps + len,"]}");
     
     return 0;

@@ -63,13 +63,15 @@ int CPPPPChannelManagement::Start(char * szDID, char *user, char *pwd,char *serv
         }
     }
 
-	r = 0;
+	PUT_LOCK( &PPPPChannelLock );
+
+	return -1;
 
 jumpout:
 
 	PUT_LOCK( &PPPPChannelLock );
     
-    return r;
+    return  r;
 }
 
 int CPPPPChannelManagement::Stop(char * szDID)
