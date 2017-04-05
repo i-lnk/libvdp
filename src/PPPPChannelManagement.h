@@ -47,8 +47,6 @@ private:
     PPPP_CHANNEL m_PPPPChannel[MAX_PPPP_CHANNEL_NUM];
 
 	COMMO_LOCK PPPPChannelLock;
-	COMMO_LOCK PPPPCommandLock;
-	
 	COMMO_LOCK AudioLock;
 };
 

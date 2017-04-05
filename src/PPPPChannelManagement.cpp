@@ -17,7 +17,6 @@ CPPPPChannelManagement::CPPPPChannelManagement()
     memset(&m_PPPPChannel,0,sizeof(m_PPPPChannel));
 
 	INT_LOCK( &PPPPChannelLock );
-	INT_LOCK( &PPPPCommandLock );
 	INT_LOCK( &AudioLock );
     
     InitOpenXL();
@@ -28,7 +27,6 @@ CPPPPChannelManagement::~CPPPPChannelManagement()
     StopAll();
 
 	DEL_LOCK( &PPPPChannelLock );
-	DEL_LOCK( &PPPPCommandLock );
 	DEL_LOCK( &AudioLock );
 }
 
@@ -297,17 +295,11 @@ int CPPPPChannelManagement::PPPPSetSystemParams(char * szDID,int type,char * msg
 	}
   
 	GET_LOCK( &PPPPChannelLock );
-	GET_LOCK( &PPPPCommandLock );
 
 	int r = 0;
     int i;
 	
     for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
-		if(NULL == m_PPPPChannel[i].pPPPPChannel){
-			Log3("Invalid PPPP Channel Object");
-			continue;
-		}
-		
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0){
             if(1 == m_PPPPChannel[i].pPPPPChannel->SetSystemParams(type, msg, len)){
             	r = 1; goto jumpout;
@@ -319,7 +311,6 @@ int CPPPPChannelManagement::PPPPSetSystemParams(char * szDID,int type,char * msg
 
 jumpout:
     
-  	PUT_LOCK( &PPPPCommandLock );
     PUT_LOCK( &PPPPChannelLock );
     
     return r;
