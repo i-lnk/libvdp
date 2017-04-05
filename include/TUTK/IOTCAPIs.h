@@ -1948,6 +1948,25 @@ P2PAPI_API void IOTC_Setup_LANConnection_Timeout(unsigned int nTimeout);
 */
 P2PAPI_API void IOTC_Setup_P2PConnection_Timeout(unsigned int nTimeout);
 
+/**
+ * \brief ReInitialize IOTC module socket
+ *
+ * \details This function will reopen P2P UDP socket of IOTC module.
+ *			It is useful for iOS APP from backgroud to foreground will cause socket failed.
+ *
+ * \param nUDPPort [in] Specify a UDP port. Random UDP port is used if it is specified as 0.
+ *
+ * \return #IOTC_ER_NoERROR if initializing successfully
+ * \return Error code if return value < 0
+ *			- #IOTC_ER_FAIL_CREATE_SOCKET Fails to create sockets
+ *			- #IOTC_ER_FAIL_SOCKET_OPT Fails to set up socket options
+ *			- #IOTC_ER_FAIL_SOCKET_BIND Fails to bind sockets
+ *
+ *
+ * \attention   Must call it before any connection process.
+ *
+ */
+P2PAPI_API int IOTC_ReInitSocket(unsigned short nUDPPort);
 
 /**
  * \brief Setup detect network reachable timeout

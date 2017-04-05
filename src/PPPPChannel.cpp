@@ -1073,7 +1073,7 @@ static void * AudioRecvProcess(
 		}
 
 		if(hPC->audioEnabled != 1){
-            Log3("audio pause...");
+ //         Log3("audio pause...");
 			continue;
 		}
 

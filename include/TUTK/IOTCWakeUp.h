@@ -66,7 +66,7 @@ P2PAPI_API void IOTC_WakeUp_Init();
  * \return #IOTC_ER_NoERROR if device gets keep alive packets successfully
  * \return Error code if return value < 0
  *         - #IOTC_ER_TCP_NOT_SUPPORT  Device can't get keep alive data on TCP mode
- *         - #IOTC_ER_WAKEUP_NOT_INITIALIZED IOTC_WakeUp_Init isn't called before using IOTC_WakeUp_Get_KeepAlivePacket()
+ *         - #IOTC_ER_WAKEUP_NOT_INITIALIZED IOTC_WakeUp_Init() isn't called before using IOTC_WakeUp_Get_KeepAlivePacket()
  *
  * \attention "Only" Device needs to use this API.
  */
