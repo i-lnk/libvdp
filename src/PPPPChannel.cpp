@@ -2090,6 +2090,11 @@ int CPPPPChannel::StartRecorder(
 
 	strncpy(hAVFmtContext->filename,hRecordFile,sizeof(hAVFmtContext->filename));
 
+	if(W == 0 || H == 0){
+		W = this->MW;
+		H = this->MH;
+	}
+
 	if(hAVFmtOutput->video_codec != AV_CODEC_ID_NONE){
 		if(add_video_stream(&sVOs,hAVFmtContext,&hVCodec,hAVFmtOutput->video_codec,W,H,30) < 0){
 			Log2("add_video_stream error");
