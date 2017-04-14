@@ -137,7 +137,7 @@ JNIEXPORT void JNICALL PPPPManagementFree(JNIEnv *, jobject);
 
 // return
 // 0: success
-JNIEXPORT int  JNICALL StartPPPP(JNIEnv *, jobject, jstring, jstring, jstring, jstring);
+JNIEXPORT int  JNICALL StartPPPP(JNIEnv *, jobject, jstring, jstring, jstring, jstring, jstring);
 
 // close p2p connetcion by device id
 // parameters:

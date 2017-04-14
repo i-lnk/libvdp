@@ -24,13 +24,13 @@ CPPPPChannelManagement::CPPPPChannelManagement()
 
 CPPPPChannelManagement::~CPPPPChannelManagement()
 {    
-    StopAll();
+    CloseAll();
 
 	DEL_LOCK( &PPPPChannelLock );
 	DEL_LOCK( &AudioLock );
 }
 
-int CPPPPChannelManagement::Start(char * szDID, char *user, char *pwd,char *server)
+int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * server,char * connectionType)
 {
 	if(szDID == NULL) return 0;
 
@@ -55,7 +55,7 @@ int CPPPPChannelManagement::Start(char * szDID, char *user, char *pwd,char *serv
         {
             m_PPPPChannel[i].bValid = 1;            
             strcpy(m_PPPPChannel[i].szDID, szDID);      
-            m_PPPPChannel[i].pPPPPChannel = new CPPPPChannel(szDID, user, pwd, server);
+            m_PPPPChannel[i].pPPPPChannel = new CPPPPChannel(szDID, user, pwd, server, connectionType);
             r = m_PPPPChannel[i].pPPPPChannel->Start();
 			goto jumpout;
         }
@@ -72,7 +72,7 @@ jumpout:
     return  r;
 }
 
-int CPPPPChannelManagement::Stop(char * szDID)
+int CPPPPChannelManagement::Close(char * szDID)
 {
 	if(szDID == NULL) return 0;
 
@@ -97,7 +97,7 @@ int CPPPPChannelManagement::Stop(char * szDID)
     return 0;
 }
 
-void CPPPPChannelManagement::StopAll(){
+void CPPPPChannelManagement::CloseAll(){
 	
     GET_LOCK( &PPPPChannelLock );
 

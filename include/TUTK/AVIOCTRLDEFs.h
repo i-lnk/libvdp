@@ -134,6 +134,9 @@ typedef enum
 	
 	IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL 		= 0x031A,
 	IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP 	= 0x031B,
+
+	IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_REQ 	= 0x031C,
+	IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_RESP   = 0x031D,
 	
 	IOTYPE_USER_IPCAM_GETAUDIOOUTFORMAT_REQ		= 0x032A,
 	IOTYPE_USER_IPCAM_GETAUDIOOUTFORMAT_RESP	= 0x032B,
@@ -245,8 +248,8 @@ typedef enum
     IOTYPE_USER_IPCAM_UPDATE_PROG_REQ           = 0x88c,
     IOTYPE_USER_IPCAM_UPDATE_PROG_RESP          = 0x88d,
 
-	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ		= 0x901,	// 
-	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_RESP		= 0x902,	//
+	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ		= 0x901,	 
+	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_RESP		= 0x902,	
 	
 	IOTYPE_USER_IPCAM_SERIAL_OPEN_REQ			= 0x1001,	// 楼脷酶鈩⒙ッ喢糕亜芦脦芦脹
 	IOTYPE_USER_IPCAM_SERIAL_OPEN_RESP			= 0x1002,	// 楼脷酶鈩⒙ッ喢糕亜鈥澛堵ワ？
@@ -365,7 +368,6 @@ typedef struct{
 	int value;		// GPIO 梅碌
 }SMsgAVIoctrlGetGPIOReq,SMsgAVIoctrlGetGPIOResp,
  SMsgAVIoctrlSetGPIOReq,SMsgAVIoctrlSetGPIOResp;
-
 
 //
 // 潞麓蟺鈥毰撍毰撀⒚曗垎脌脮鈼娐⑩墹路聽蟺鈥濃垰碌茠聽藵忙鈥何┞废�蟺
@@ -1057,6 +1059,12 @@ typedef struct
 	unsigned char reserved[4];
 }SMsgAVIoctrlSetRcdDurationResp;
 
+typedef struct 
+{
+	unsigned char	year;			// 查询年，0~255取值范围，代表2000~2255年,如2017年，则year为17
+	unsigned char	month;			// 查询月，1~12为取值范围
+	long 			map;			// bit1~bit31代表1号到31号,有录像则改bit位=1
+}SMsgAVIoctrlEventByMonthReq,SMsgAVIoctrlEventByMonthResp;
 
 typedef struct
 {
@@ -1116,7 +1124,7 @@ typedef struct
 
 	
 /*
-IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL 	= 0x031A,
+IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL = 0x031A,
 ** @struct SMsgAVIoctrlPlayRecord
 */
 typedef struct
@@ -1260,11 +1268,10 @@ IOTYPE_USER_IPCAM_GET_ENVIRONMENT_RESP		= 0x0363,
 */
 typedef struct
 {
-	unsigned int channel; 		// Camera Index
+	unsigned int  channel; 		// Camera Index
 	unsigned char mode;			// refer to ENUM_ENVIRONMENT_MODE
 	unsigned char reserved[3];
 }SMsgAVIoctrlGetEnvironmentResp;
-
 
 /*
 IOTYPE_USER_IPCAM_SET_VIDEOMODE_REQ			= 0x0370,
@@ -1467,7 +1474,6 @@ typedef struct
     unsigned short nLinked;             // 0:no link/ 1:linked
     char szLinkUDID[64];                // Link UDID for App
 }SMsgAVIoctrlGetDropbox;
-
 
 /*
  // dropbox support

@@ -303,7 +303,7 @@ JNIEXPORT void JNICALL CloseSearch(JNIEnv *env ,jobject obj)
 	PUT_LOCK(&g_FindDevsProcessLock);
 }
 
-JNIEXPORT int JNICALL StartPPPP(JNIEnv * env, jobject obj, jstring did, jstring user, jstring pwd, jstring server)
+JNIEXPORT int JNICALL StartPPPP(JNIEnv * env, jobject obj, jstring did, jstring usr, jstring pwd, jstring server, jstring connectionType)
 {
     //F_LOG;
 
@@ -314,20 +314,22 @@ JNIEXPORT int JNICALL StartPPPP(JNIEnv * env, jobject obj, jstring did, jstring 
         return 0;    
     }
     
-    char *szDID,*szUsr,*szPwd,*szServer; 
-    szDID    =   (char*)env->GetStringUTFChars(did,0);
-    szUsr    =   (char*)env->GetStringUTFChars(user,0);
-    szPwd    =   (char*)env->GetStringUTFChars(pwd,0);
-    szServer =   (char*)env->GetStringUTFChars(server,0);
+    char *szDID,*szUsr,*szPwd,*szServer,*szConnectionType; 
+    szDID = (char*)env->GetStringUTFChars(did,0);
+    szUsr = (char*)env->GetStringUTFChars(usr,0);
+    szPwd = (char*)env->GetStringUTFChars(pwd,0);
+    szServer = (char*)env->GetStringUTFChars(server,0);
+	szConnectionType = (char*)env->GetStringUTFChars(connectionType,0);
 
 	Log3("user:%s pass:%s uuid:%s.\n",szUsr,szPwd,szDID);
 	
-    int nRet = g_pPPPPChannelMgt->Start(szDID, szUsr, szPwd, szServer);
+    int nRet = g_pPPPPChannelMgt->Start(szDID, szUsr, szPwd, szServer, szConnectionType);
 
     env->ReleaseStringUTFChars(pwd, szPwd);
-    env->ReleaseStringUTFChars(user, szUsr);
+    env->ReleaseStringUTFChars(usr, szUsr);
     env->ReleaseStringUTFChars(did, szDID);
     env->ReleaseStringUTFChars(server, szServer);
+	env->ReleaseStringUTFChars(connectionType, szConnectionType);
 	
     return nRet;
 
@@ -350,7 +352,7 @@ JNIEXPORT int JNICALL ClosePPPP(JNIEnv *env, jobject obj, jstring did)
 
 	Log3("close pppp connection by native caller with uuid:[%s].",szDID);
     
-    int nRet = g_pPPPPChannelMgt->Stop(szDID);
+    int nRet = g_pPPPPChannelMgt->Close(szDID);
 
     env->ReleaseStringUTFChars(did, szDID);
 
@@ -566,7 +568,7 @@ static JNINativeMethod Calls[] = {
 	{"PPPPManagementInit", "()V", (void*)PPPPManagementInit},
 	{"PPPPManagementFree", "()V", (void*)PPPPManagementFree},    
 	{"PPPPSetCallbackContext", "(Landroid/content/Context;)I", (void*)PPPPSetCallbackContext},
-	{"StartPPPP", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)StartPPPP},
+	{"StartPPPP", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)I", (void*)StartPPPP},
 	{"ClosePPPP", "(Ljava/lang/String;)I", (void*)ClosePPPP},
 	{"StartPPPPLivestream", "(Ljava/lang/String;Ljava/lang/String;IIIII)I", (void*)StartPPPPLivestream},
 	{"ClosePPPPLivestream", "(Ljava/lang/String;)I", (void*)ClosePPPPLivestream},

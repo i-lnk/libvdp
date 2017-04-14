@@ -6,7 +6,6 @@
 	
 CAudioDataList::CAudioDataList( int count, int Audio10msLength )
 {
-	Log2( "CEcrefList::CEcrefList" );
 	m_head	= NULL;
 	m_count = count;
 	AudioData * data	= NULL;
@@ -42,8 +41,8 @@ CAudioDataList::CAudioDataList( int count, int Audio10msLength )
 		if ( i == 0 ){
 			m_head = data;
 		}else if ( i == count - 1 ){
-			data->next	= m_head;
-			m_head->front	= data;
+			data->next = m_head;
+			m_head->front = data;
 		}
 		front = data;
 	}

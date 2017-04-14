@@ -110,7 +110,14 @@ typedef double UINT64;
 class CPPPPChannel
 {
 public:
-    CPPPPChannel(char *DID, char *user, char *pwd,char *server);
+    CPPPPChannel(
+		char * did, 
+		char * usr, 
+		char * pwd,
+		char * server,
+		char * connectionType
+		);
+	
     virtual ~CPPPPChannel();
 
     int  Start();
@@ -133,11 +140,11 @@ public:
 		);
 	
 	int CloseMediaStreams();
-	
 	int CloseWholeThreads();
 	
 	int SendAVAPIStartIOCtrl();
 	int SendAVAPICloseIOCtrl();
+	
 	int SetSystemParams(int type, char *msg, int len);
 	
     void MsgNotify(JNIEnv * hEnv,int MsgType, int Param);

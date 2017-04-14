@@ -118,7 +118,7 @@ char * GetCgiParam(
 	return To;
 }
 
-int SetUUIDData(
+static int SetUUIDData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -142,7 +142,7 @@ int SetUUIDData(
 }
 
 
-int GetGPIOData(
+static int GetGPIOData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -159,7 +159,7 @@ int GetGPIOData(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetGPIOData(
+static int SetGPIOData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -179,7 +179,7 @@ int SetGPIOData(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetWirelessData(
+static int GetWirelessData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -189,7 +189,7 @@ int GetWirelessData(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetWirelessData(
+static int SetWirelessData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -216,7 +216,7 @@ int SetWirelessData(
 }
 
 
-int SetPushData(
+static int SetPushData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -238,7 +238,7 @@ int SetPushData(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int DelPushData(
+static int DelPushData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -260,7 +260,7 @@ int DelPushData(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetPTZ(
+static int SetPTZ(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -280,7 +280,7 @@ int SetPTZ(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetStreamCtrl(
+static int SetStreamCtrl(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -302,7 +302,7 @@ int SetStreamCtrl(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetStreamCtrl(
+static int GetStreamCtrl(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -312,7 +312,7 @@ int GetStreamCtrl(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetRecordSchedule(
+static int SetRecordSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -357,7 +357,7 @@ int SetRecordSchedule(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetRecordSchedule(
+static int GetRecordSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -367,7 +367,7 @@ int GetRecordSchedule(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetLock(
+static int SetLock(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -391,7 +391,7 @@ int SetLock(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetLockPass(
+static int SetLockPass(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -412,7 +412,7 @@ int SetLockPass(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetVideo(
+static int SetVideo(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -442,7 +442,7 @@ int SetVideo(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetVideo(
+static int GetVideo(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -452,7 +452,7 @@ int GetVideo(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetSystem(
+static int SetSystem(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -474,7 +474,7 @@ int SetSystem(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetSystem(
+static int GetSystem(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -485,7 +485,7 @@ int GetSystem(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetMotionSchedule(
+static int SetMotionSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -526,7 +526,7 @@ int SetMotionSchedule(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetMotionScheduleEx(
+static int SetMotionScheduleEx(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -574,7 +574,7 @@ int SetMotionScheduleEx(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetMotionSchedule(
+static int GetMotionSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -586,7 +586,7 @@ int GetMotionSchedule(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetMotionScheduleEx(
+static int GetMotionScheduleEx(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -597,7 +597,7 @@ int GetMotionScheduleEx(
 }
 
 
-int GetTimeZone(
+static int GetTimeZone(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -607,7 +607,7 @@ int GetTimeZone(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetTimeZone(
+static int SetTimeZone(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -626,7 +626,7 @@ int SetTimeZone(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int XetSDCard(
+static int XetSDCard(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -637,7 +637,7 @@ int XetSDCard(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SerialSend(
+static int SerialSend(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szMsg,
@@ -653,7 +653,7 @@ int SerialSend(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetAPList(
+static int GetAPList(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -663,7 +663,7 @@ int GetAPList(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetSoundMode(
+static int SetSoundMode(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -682,7 +682,7 @@ int SetSoundMode(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetPassword(
+static int SetPassword(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -701,7 +701,7 @@ int SetPassword(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetOSD(
+static int GetOSD(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -721,7 +721,7 @@ int GetOSD(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetOSD(
+static int SetOSD(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -760,7 +760,7 @@ int SetOSD(
 }
 
 // set433dev.cgi?type=%d&name=%d
-int Set433Dev(
+static int Set433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -787,7 +787,7 @@ int Set433Dev(
 }
 
 // get433.cgi?
-int Get433Dev(
+static int Get433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -803,7 +803,7 @@ int Get433Dev(
 }
 
 // cfg433.cgi?
-int Cfg433Dev(
+static int Cfg433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -830,7 +830,7 @@ int Cfg433Dev(
 }
 
 // del433.cgi?id=%d
-int Del433Dev(
+static int Del433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -853,7 +853,7 @@ int Del433Dev(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int Cfg433DevExit(
+static int Cfg433DevExit(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -868,7 +868,7 @@ int Cfg433DevExit(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetUpdateUrl(
+static int SetUpdateUrl(
      int			avIdx,
      int			avMsgType,
      const char *	szCgi,
@@ -891,7 +891,7 @@ int SetUpdateUrl(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetUpdateProgress(
+static int GetUpdateProgress(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
@@ -906,7 +906,7 @@ int GetUpdateProgress(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetCapacity(
+static int GetCapacity(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
@@ -921,7 +921,7 @@ int GetCapacity(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int SetPlayRecordControl(
+static int SetPlayRecordControl(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
@@ -974,7 +974,7 @@ int SetPlayRecordControl(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetEventList(
+static int GetEventList(
 	int             avIdx,
     int             avMsgType,
     const char *	szCgi,
@@ -1041,7 +1041,32 @@ int GetEventList(
 	
 }
 
-int SetPresetPostion(
+static int GetEventListByMonth(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlEventByMonthReq sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+
+	char sYearMonth[8] = {0};
+
+	GetCgiParam(sYearMonth,Cgi,sizeof(sYearMonth),"time=","&");
+
+	sscanf(szCgi,"%d-%d",
+		&sMsg.year,
+		&sMsg.month
+		);
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+
+static int SetPresetPostion(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
@@ -1061,7 +1086,7 @@ int SetPresetPostion(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetPresetPostion(
+static int GetPresetPostion(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
@@ -1081,7 +1106,7 @@ int GetPresetPostion(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-int GetCameraView(
+static int GetCameraView(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
@@ -1100,6 +1125,7 @@ int GetCameraView(
     
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
+
 
 // fucntion list for each command
 
@@ -1147,6 +1173,7 @@ static APP_CMD_CALL hACC[] = {
     {IOTYPE_USER_IPCAM_GET_CAPACITY_REQ,GetCapacity},
 	{IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,SetPlayRecordControl},
 	{IOTYPE_USER_IPCAM_LISTEVENT_REQ,GetEventList},
+	{IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_REQ,GetEventListByMonth},
 	{IOTYPE_USER_IPCAM_SETPRESET_REQ,SetPresetPostion},
 	{IOTYPE_USER_IPCAM_GETPRESET_REQ,GetPresetPostion},
 	{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ,GetCameraView},

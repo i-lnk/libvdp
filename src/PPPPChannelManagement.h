@@ -19,9 +19,9 @@ public:
     CPPPPChannelManagement();
     ~CPPPPChannelManagement();
 
-    int Start(char *szDID, char *user, char *pwd,char *server);
-    int Stop(char *szDID);
-    void StopAll();
+    int Start(char *szDID, char *user, char *pwd,char *server,char *connectionType);
+    int Close(char *szDID);
+    void CloseAll();
 
     int StartPPPPLivestream(
 		char * szDID, 

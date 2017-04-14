@@ -15,7 +15,7 @@
 
 // function for device response
 
-int SetUUIDResp2JSON(
+static int SetUUID(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -25,7 +25,7 @@ int             JsonBufferSize
         return -1;
     }
     
-    SMsgAVIoctrlSetUUIDReq * hRQ = (SMsgAVIoctrlSetUUIDReq *)Msg;
+    SMsgAVIoctrlSetUUIDResp * hRQ = (SMsgAVIoctrlSetUUIDResp *)Msg;
     
     sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%s\"}",
             "result",hRQ->result,
@@ -35,7 +35,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int SetPasswordResp2JSON(
+static int SetPassword(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -54,7 +54,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int SetPushResp2JSON(
+static int SetPush(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -74,7 +74,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int DelPushResp2JSON(
+static int DelPush(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -94,7 +94,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetAPResp2JSON(
+static int GetAP(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -130,7 +130,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetWirelessResp2JSON(
+static int GetWireless(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -154,7 +154,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetRecordScheduleResp2JSON(
+static int GetRecordSchedule(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -178,7 +178,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetMotionScheduleResp2JSON(
+static int GetMotionSchedule(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -204,7 +204,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetMotionScheduleExResp2JSON(
+static int GetMotionScheduleEx(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -232,7 +232,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetDeviceAlarmingResp2JSON(
+static int GetDeviceAlarming(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -271,7 +271,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetVideoModeResp2JSON(
+static int GetVideoMode(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -292,7 +292,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetStreamCtrlResp2JSON(
+static int GetStreamCtrl(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -312,7 +312,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetSystemResp2JSON(
+static int GetSystem(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -331,7 +331,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetTimezoneResp2JSON(
+static int GetTimezone(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -348,7 +348,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetSDCardResp2JSON(
+static int GetSDCard(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -370,7 +370,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetFormatExtStorageResp2JSON(
+static int GetFormatExtStorage(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -390,7 +390,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetSerialResp2JSON(
+static int GetSerial(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -418,7 +418,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetOSDResp2JSON(
+static int GetOSD(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -438,7 +438,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int SetOSDResp2JSON(
+static int SetOSD(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -455,7 +455,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int Get433Resp2JSON(
+static int Get433(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -472,7 +472,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int Get433ListResp2JSON(
+static int Get433List(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -501,7 +501,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetUpdateResp2JSON(
+static int GetUpdate(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -518,7 +518,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetUpdateProgressResp2JSON(
+static int GetUpdateProgress(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -538,7 +538,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetCapacityResp2JSON(
+static int GetCapacity(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -561,7 +561,7 @@ int             JsonBufferSize
     return 0;
 }
 
-int GetEventListResp2JSON(
+static int GetEventList(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -609,44 +609,65 @@ int             JsonBufferSize
     return 0;
 }
 
+static int GetEventListByMonth(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlEventByMonthResp * hRQ = (SMsgAVIoctrlEventByMonthResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+            "year",hRQ->year,
+            "month",hRQ->month,
+            "map",hRQ->map
+            );
+    
+    return 0;
+}
 
 static APP_CMD_RESP hACR[] = {
-{IOTYPE_USER_IPCAM_SET_UUID,SetUUIDResp2JSON},
-{IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPasswordResp2JSON},
-{IOTYPE_USER_IPCAM_SET_PUSH_RESP,SetPushResp2JSON},
-{IOTYPE_USER_IPCAM_DEL_PUSH_RESP,DelPushResp2JSON},
-{IOTYPE_USER_IPCAM_LISTWIFIAP_RESP,GetAPResp2JSON},
-{IOTYPE_USER_IPCAM_GETWIFI_RESP,GetWirelessResp2JSON},
-{IOTYPE_USER_IPCAM_GETWIFI_RESP_2,GetWirelessResp2JSON},
-{IOTYPE_USER_IPCAM_SETRECORD_RESP,GetRecordScheduleResp2JSON},
-{IOTYPE_USER_IPCAM_GETRECORD_RESP,GetRecordScheduleResp2JSON},
-{IOTYPE_USER_IPCAM_SETMOTIONDETECT_RESP,GetMotionScheduleResp2JSON},
-{IOTYPE_USER_IPCAM_GETMOTIONDETECT_RESP,GetMotionScheduleResp2JSON},
-{IOTYPE_USER_IPCAM_GET_MD_ALAM_RESP,GetMotionScheduleExResp2JSON},
-{IOTYPE_USER_IPCAM_SET_MD_ALAM_RESP,GetMotionScheduleExResp2JSON},
-{IOTYPE_USER_IPCAM_SET_MDP_RESP,GetMotionScheduleResp2JSON},
-{IOTYPE_USER_IPCAM_GET_MDP_RESP,GetMotionScheduleResp2JSON},
-{IOTYPE_USER_IPCAM_ALARMING_REQ,GetDeviceAlarmingResp2JSON},
-{IOTYPE_USER_IPCAM_GET_VIDEOMODE_RESP,GetVideoModeResp2JSON},
-{IOTYPE_USER_IPCAM_GETSTREAMCTRL_RESP,GetStreamCtrlResp2JSON},
-{IOTYPE_USER_IPCAM_SET_SYSTEM_RESP,GetSystemResp2JSON},
-{IOTYPE_USER_IPCAM_GET_SYSTEM_RESP,GetSystemResp2JSON},
-{IOTYPE_USER_IPCAM_GET_TIMEZONE_RESP,GetTimezoneResp2JSON},
-{IOTYPE_USER_IPCAM_SET_TIMEZONE_RESP,GetTimezoneResp2JSON},
-{IOTYPE_USER_IPCAM_GET_SDCARD_RESP,GetSDCardResp2JSON},
-{IOTYPE_USER_IPCAM_FORMATEXTSTORAGE_RESP,GetFormatExtStorageResp2JSON},
-{IOTYPE_USER_IPCAM_SERIAL_SEND_REQ,GetSerialResp2JSON},
-{IOTYPE_USER_IPCAM_GET_OSD_RESP,GetOSDResp2JSON},
-{IOTYPE_USER_IPCAM_SET_OSD_RESP,SetOSDResp2JSON},
-{IOTYPE_USER_IPCAM_SET_433_RESP,Get433Resp2JSON},
-{IOTYPE_USER_IPCAM_DEL_433_RESP,Get433Resp2JSON},
-{IOTYPE_USER_IPCAM_CFG_433_RESP,Get433Resp2JSON},
-{IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP,Get433Resp2JSON},
-{IOTYPE_USER_IPCAM_GET_433_RESP,Get433ListResp2JSON},
-{IOTYPE_USER_IPCAM_UPDATE_RESP,GetUpdateResp2JSON},
-{IOTYPE_USER_IPCAM_UPDATE_PROG_RESP,GetUpdateProgressResp2JSON},
-{IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacityResp2JSON},
-{IOTYPE_USER_IPCAM_LISTEVENT_RESP,GetEventListResp2JSON},
+{IOTYPE_USER_IPCAM_SET_UUID,SetUUID},
+{IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPassword},
+{IOTYPE_USER_IPCAM_SET_PUSH_RESP,SetPush},
+{IOTYPE_USER_IPCAM_DEL_PUSH_RESP,DelPush},
+{IOTYPE_USER_IPCAM_LISTWIFIAP_RESP,GetAP},
+{IOTYPE_USER_IPCAM_GETWIFI_RESP,GetWireless},
+{IOTYPE_USER_IPCAM_GETWIFI_RESP_2,GetWireless},
+{IOTYPE_USER_IPCAM_SETRECORD_RESP,GetRecordSchedule},
+{IOTYPE_USER_IPCAM_GETRECORD_RESP,GetRecordSchedule},
+{IOTYPE_USER_IPCAM_SETMOTIONDETECT_RESP,GetMotionSchedule},
+{IOTYPE_USER_IPCAM_GETMOTIONDETECT_RESP,GetMotionSchedule},
+{IOTYPE_USER_IPCAM_GET_MD_ALAM_RESP,GetMotionScheduleEx},
+{IOTYPE_USER_IPCAM_SET_MD_ALAM_RESP,GetMotionScheduleEx},
+{IOTYPE_USER_IPCAM_SET_MDP_RESP,GetMotionSchedule},
+{IOTYPE_USER_IPCAM_GET_MDP_RESP,GetMotionSchedule},
+{IOTYPE_USER_IPCAM_ALARMING_REQ,GetDeviceAlarming},
+{IOTYPE_USER_IPCAM_GET_VIDEOMODE_RESP,GetVideoMode},
+{IOTYPE_USER_IPCAM_GETSTREAMCTRL_RESP,GetStreamCtrl},
+{IOTYPE_USER_IPCAM_SET_SYSTEM_RESP,GetSystem},
+{IOTYPE_USER_IPCAM_GET_SYSTEM_RESP,GetSystem},
+{IOTYPE_USER_IPCAM_GET_TIMEZONE_RESP,GetTimezone},
+{IOTYPE_USER_IPCAM_SET_TIMEZONE_RESP,GetTimezone},
+{IOTYPE_USER_IPCAM_GET_SDCARD_RESP,GetSDCard},
+{IOTYPE_USER_IPCAM_FORMATEXTSTORAGE_RESP,GetFormatExtStorage},
+{IOTYPE_USER_IPCAM_SERIAL_SEND_REQ,GetSerial},
+{IOTYPE_USER_IPCAM_GET_OSD_RESP,GetOSD},
+{IOTYPE_USER_IPCAM_SET_OSD_RESP,SetOSD},
+{IOTYPE_USER_IPCAM_SET_433_RESP,Get433},
+{IOTYPE_USER_IPCAM_DEL_433_RESP,Get433},
+{IOTYPE_USER_IPCAM_CFG_433_RESP,Get433},
+{IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP,Get433},
+{IOTYPE_USER_IPCAM_GET_433_RESP,Get433List},
+{IOTYPE_USER_IPCAM_UPDATE_RESP,GetUpdate},
+{IOTYPE_USER_IPCAM_UPDATE_PROG_RESP,GetUpdateProgress},
+{IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacity},
+{IOTYPE_USER_IPCAM_LISTEVENT_RESP,GetEventList},
+{IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_RESP,GetEventListByMonth},
 {0,NULL}
 };
 

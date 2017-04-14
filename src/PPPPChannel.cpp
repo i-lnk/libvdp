@@ -1572,12 +1572,18 @@ static void * MediaExitProcess(
 	pthread_exit(0);
 }
 
-CPPPPChannel::CPPPPChannel(char *DID, char *user, char *pwd,char *servser){ 
+CPPPPChannel::CPPPPChannel(
+	char * did, 
+	char * usr, 
+	char * pwd,
+	char * servser,
+	char * connectionType
+){ 
     memset(szDID, 0, sizeof(szDID));
-    strcpy(szDID, DID);
+    strcpy(szDID, did);
 
     memset(szUsr, 0, sizeof(szUsr));
-    strcpy(szUsr, user);
+    strcpy(szUsr, usr);
 
     memset(szPwd, 0, sizeof(szPwd));
     strcpy(szPwd, pwd);    
@@ -1937,20 +1943,6 @@ int CPPPPChannel::StartMediaStreams(
 	int ret = 0;
      
     if(SID < 0) return -1;
-
-	struct st_SInfo sInfo;
-
-/*
-	ret = IOTC_Session_Check(SID,&sInfo);
-	if(ret < 0){
-		MsgNotify(hCoreEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
-		Log3("[7:%s]=====>stop old media process start.\n",szDID);
-		PPPPClose();
-	    CloseWholeThreads();
-		Log3("[7:%s]=====>stop old media process close.\n",szDID);
-		return -1;
-	}
-*/
 
 	GET_LOCK(&SessionStatusLock);
 	if(SessionStatus != STATUS_SESSION_IDLE){
