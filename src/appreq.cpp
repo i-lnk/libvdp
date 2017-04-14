@@ -1057,7 +1057,7 @@ static int GetEventListByMonth(
 
 	GetCgiParam(sYearMonth,Cgi,sizeof(sYearMonth),"time=","&");
 
-	sscanf(szCgi,"%d-%d",
+	sscanf(sYearMonth,"%d-%d",
 		&sMsg.year,
 		&sMsg.month
 		);

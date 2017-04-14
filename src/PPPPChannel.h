@@ -232,7 +232,7 @@ public:
 	OutputStream 		sAOs;
 
 	char *				hAudioRecCaches;
-	int					aLen;			// 
+	int					aLen;			 // 
 
 
 	long long		  	vCTS;			// 

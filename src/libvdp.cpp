@@ -291,6 +291,7 @@ JNIEXPORT void JNICALL StartSearch(JNIEnv *env ,jobject obj,jstring ssid,jstring
     
     env->ReleaseStringUTFChars(ssid, gkwifiname);
     env->ReleaseStringUTFChars(psd, gkwifipwd);
+	
 	PUT_LOCK(&g_FindDevsProcessLock);
 }
 
