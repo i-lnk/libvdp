@@ -621,7 +621,7 @@ int             JsonBufferSize
     
     SMsgAVIoctrlEventByMonthResp * hRQ = (SMsgAVIoctrlEventByMonthResp *)Msg;
 
-	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%ld\"}",
             "year",hRQ->year,
             "month",hRQ->month,
             "map",hRQ->map

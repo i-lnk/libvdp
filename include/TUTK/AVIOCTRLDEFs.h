@@ -1063,7 +1063,7 @@ typedef struct
 {
 	unsigned char	year;			// 查询年，0~255取值范围，代表2000~2255年,如2017年，则year为17
 	unsigned char	month;			// 查询月，1~12为取值范围
-	long 			map;			// bit1~bit31代表1号到31号,有录像则改bit位=1
+	unsigned int	map;			// bit1~bit31代表1号到31号,有录像则改bit位=1
 }SMsgAVIoctrlEventByMonthReq,SMsgAVIoctrlEventByMonthResp;
 
 typedef struct
