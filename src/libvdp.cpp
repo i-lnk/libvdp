@@ -569,7 +569,7 @@ static JNINativeMethod Calls[] = {
 	{"PPPPManagementInit", "()V", (void*)PPPPManagementInit},
 	{"PPPPManagementFree", "()V", (void*)PPPPManagementFree},    
 	{"PPPPSetCallbackContext", "(Landroid/content/Context;)I", (void*)PPPPSetCallbackContext},
-	{"StartPPPP", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)I", (void*)StartPPPP},
+	{"StartPPPP", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)I", (void*)StartPPPP},
 	{"ClosePPPP", "(Ljava/lang/String;)I", (void*)ClosePPPP},
 	{"StartPPPPLivestream", "(Ljava/lang/String;Ljava/lang/String;IIIII)I", (void*)StartPPPPLivestream},
 	{"ClosePPPPLivestream", "(Ljava/lang/String;)I", (void*)ClosePPPPLivestream},
