@@ -273,6 +273,10 @@ connect:
 			case IOTC_ER_DEVICE_NOT_LISTENING:
 				status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
                 IOTC_Session_Close(hPC->sessionID);
+				if(wakeup_times--){
+					sleep(3);
+					goto connect;
+				}
 				goto jumperr;
 			default:
 				status = PPPP_STATUS_CONNECT_FAILED;
@@ -370,7 +374,7 @@ jumperr:
 	PUT_LOCK(&hPC->SessionStatusLock);
     
     if(status == PPPP_STATUS_ON_LINE){
-        status = PPPP_STATUS_DISCONNECT;
+        status = PPPP_STATUS_CONNECT_FAILED;
     }
     hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status);
 
@@ -668,7 +672,7 @@ static void * VideoPlayProcess(
 		// for yuv draw process
 		hEnv->CallVoidMethod(
 			g_CallBack_Handle,
-			g_CallBack_VideoDataProcess, 
+			g_CallBack_VideoDataProcess,
 			jstring_did,
 			jbyteArray_yuv,
 			1, 
@@ -1730,7 +1734,7 @@ int CPPPPChannel::PPPPClose()
 
 	if(SID >= 0 || avIdx >= 0 || spIdx >= 0){
 		Log3("close connection with session:[%d] avIdx:[%d] did:[%s].",SID,avIdx,szDID);
-		
+				
 		avClientExit(SID,avIdx);
 		avClientStop(avIdx);	// stop audio and video recv from device
 		avServExit(SID,spIdx);	// for avServStart block
@@ -1743,9 +1747,18 @@ int CPPPPChannel::PPPPClose()
 	return 0;
 }
 
-int CPPPPChannel::Start()
+int CPPPPChannel::Start(char * usr,char * pwd,char * server)
 {   
     Log3("start pppp connection to device with uuid:[%s].\n",szDID);
+
+	memset(szUsr, 0, sizeof(szUsr));
+    strcpy(szUsr, usr);
+
+    memset(szPwd, 0, sizeof(szPwd));
+    strcpy(szPwd, pwd);    
+
+    memset(szServer, 0, sizeof(szServer));
+    strcpy(szServer, server);
 
 	GET_LOCK(&SessionStatusLock);
 	
@@ -1774,7 +1787,11 @@ void CPPPPChannel::Close()
 	Log3("stop media core thread.");
 
 	if(mediaCoreThread != (pthread_t)-1){
+
+		Log3("waiting for media core thread exit.");
 		pthread_join(mediaCoreThread,NULL);
+		
+		Log3("waiting for media core thread exit done.");
 		mediaCoreThread = (pthread_t)-1;
 	}else{
 	

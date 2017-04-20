@@ -114,7 +114,7 @@ int  CAudioDataList::CheckData()
 	return 0;
 }
 
-AudioData* CAudioDataList::Read()
+AudioData * CAudioDataList::Read()
 {
 	GET_LOCK(&m_Lock);
 	AudioData * data = NULL;

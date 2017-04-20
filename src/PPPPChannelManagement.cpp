@@ -44,7 +44,7 @@ int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * s
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            r = m_PPPPChannel[i].pPPPPChannel->Start();
+            r = m_PPPPChannel[i].pPPPPChannel->Start(user, pwd, server);
             goto jumpout;
         }
     }
@@ -56,7 +56,7 @@ int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * s
             m_PPPPChannel[i].bValid = 1;            
             strcpy(m_PPPPChannel[i].szDID, szDID);      
             m_PPPPChannel[i].pPPPPChannel = new CPPPPChannel(szDID, user, pwd, server, connectionType);
-            r = m_PPPPChannel[i].pPPPPChannel->Start();
+            r = m_PPPPChannel[i].pPPPPChannel->Start(user, pwd, server);
 			goto jumpout;
         }
     }

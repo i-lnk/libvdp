@@ -591,10 +591,10 @@ int             JsonBufferSize
 	for(int i = 0;i < count;i++){
 	    len += sprintf(lps + len,"{\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\",\"%s\":\"%d\",\"%s\":\"%d\"},",
 	          	"start",
-	          	hRQ->stEvent[i].startTime.year,hRQ->stEvent[i].startTime.month,hRQ->stEvent[i].startTime.day,
+	          	hRQ->stEvent[i].startTime.year,hRQ->stEvent[i].startTime.month, hRQ->stEvent[i].startTime.day,
 	          	hRQ->stEvent[i].startTime.hour,hRQ->stEvent[i].startTime.minute,hRQ->stEvent[i].startTime.second,
                 "close",
-                hRQ->stEvent[i].closeTime.year,hRQ->stEvent[i].closeTime.month,hRQ->stEvent[i].closeTime.day,
+                hRQ->stEvent[i].closeTime.year,hRQ->stEvent[i].closeTime.month, hRQ->stEvent[i].closeTime.day,
                 hRQ->stEvent[i].closeTime.hour,hRQ->stEvent[i].closeTime.minute,hRQ->stEvent[i].closeTime.second,
 	          	"event",hRQ->stEvent[i].event,
 	          	"status",hRQ->stEvent[i].status
