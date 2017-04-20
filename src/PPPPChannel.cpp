@@ -273,10 +273,6 @@ connect:
 			case IOTC_ER_DEVICE_NOT_LISTENING:
 				status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
                 IOTC_Session_Close(hPC->sessionID);
-				if(wakeup_times--){
-					sleep(3);
-					goto connect;
-				}
 				goto jumperr;
 			default:
 				status = PPPP_STATUS_CONNECT_FAILED;
