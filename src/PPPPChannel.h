@@ -120,7 +120,7 @@ public:
 	
     virtual ~CPPPPChannel();
 
-    int  Start();
+    int  Start(char * usr,char * pwd,char * server);
 	void Close();
 
 	int StartMediaChannel();
