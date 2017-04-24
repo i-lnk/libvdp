@@ -98,9 +98,9 @@ static void recordCallback(
 	OPENXL_STREAM * p = (OPENXL_STREAM *)context;
 	CPPPPChannel * hPC = (CPPPPChannel *)p->context;
 
-    short *hFrame = p->recordBuffer+(p->iBufferIndex * hPC->Audio10msLength  / sizeof(short));
+    short * hFrame = p->recordBuffer+(p->iBufferIndex * hPC->Audio10msLength  / sizeof(short));
 	
-	hPC->hAudioGetList->Write(hFrame,GetAudioTime());
+	hPC->hAudioGetList->Put((char*)hFrame,hPC->Audio10msLength);
 
 	(*p->recorderBufferQueue)->Enqueue(p->recorderBufferQueue,(char*)hFrame,hPC->Audio10msLength);
 
@@ -117,12 +117,12 @@ static void playerCallback(
 
     short *hFrame = p->outputBuffer+(p->oBufferIndex * hPC->Audio10msLength / sizeof(short));
 
-	hPC->hAudioPutList->Write((short*)hFrame,GetAudioTime());
+	hPC->hAudioPutList->Put((char*)hFrame,hPC->Audio10msLength);
 	
-	int stocksize = hPC->hSoundBuffer->GetStock();
+	int stocksize = hPC->hSoundBuffer->Used();
 
 	if(stocksize >= hPC->Audio10msLength){
-		hPC->hSoundBuffer->Read((char*)hFrame,hPC->Audio10msLength);
+		hPC->hSoundBuffer->Get((char*)hFrame,hPC->Audio10msLength);
 	}else{
         memset((char*)hFrame,0,hPC->Audio10msLength);
 	}
@@ -396,7 +396,7 @@ void * IOCmdSendProcess(
 	int nBytesRead = 0;
 	int ret = 0;
 
-	hPC->hIOCmdBuffer->Reset();
+	hPC->hIOCmdBuffer->Clear();
 
     while(hPC->iocmdSending){
 		if(hPC->hIOCmdBuffer == NULL){
@@ -405,9 +405,9 @@ void * IOCmdSendProcess(
 			continue;
 		}
 
-		if(hPC->hIOCmdBuffer->GetStock() >= (int)sizeof(APP_CMD_HEAD)){
+		if(hPC->hIOCmdBuffer->Used() >= (int)sizeof(APP_CMD_HEAD)){
 			
-			nBytesRead = hPC->hIOCmdBuffer->Read(hCmds,sizeof(APP_CMD_HEAD));
+			nBytesRead = hPC->hIOCmdBuffer->Get((char*)hCmds,sizeof(APP_CMD_HEAD));
 			if(nBytesRead == sizeof(APP_CMD_HEAD)){
                 if(hCmds->Magic != 0x78787878
                 || hCmds->CgiLens > sizeof(Cmds)
@@ -419,12 +419,12 @@ void * IOCmdSendProcess(
                          hCmds->CgiLens
                          );
                     
-                    hPC->hIOCmdBuffer->Reset();
+                    hPC->hIOCmdBuffer->Clear();
                 }
 
 				nBytesRead = 0;
 				while(nBytesRead != hCmds->CgiLens){
-					nBytesRead = hPC->hIOCmdBuffer->Read(hCmds->CgiData,hCmds->CgiLens);
+					nBytesRead = hPC->hIOCmdBuffer->Get(hCmds->CgiData,hCmds->CgiLens);
 					Log3("[X:%s]=====>data not ready.\n",hPC->szDID);
 					usleep(1000);
 				}
@@ -886,7 +886,9 @@ static void * VideoRecvProcess(
 		}
 
 		if(hPC->avExit == 1){	
-			if(hPC->hVideoBuffer->Write(hFrm,hFrm->len + sizeof(AV_HEAD)) == 0){
+			if(hPC->hVideoBuffer->Available() >= hFrm->len + sizeof(AV_HEAD)){
+				hPC->hVideoBuffer->Put((char*)hFrm,hFrm->len + sizeof(AV_HEAD));
+			}else{
 				Log3("recording buffer is full.may lost frame in mp4.");
 			}
 		}
@@ -986,8 +988,8 @@ static void * AudioRecvProcess(
 		return NULL;
 	}
 
-	hPC->hAudioBuffer->Reset();
-	hPC->hSoundBuffer->Reset();
+	hPC->hAudioBuffer->Clear();
+	hPC->hSoundBuffer->Clear();
 	
 	char Cache[2048] = {0};
 	char Codec[4096] = {0};
@@ -1129,8 +1131,8 @@ static void * AudioRecvProcess(
 #ifdef ENABLE_AGC
 			audio_agc_proc(hAgc,&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength);
 #endif
-			hPC->hAudioBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio avi record
-			hPC->hSoundBuffer->Write(&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio player callback
+			hPC->hAudioBuffer->Put((char*)&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio avi record
+			hPC->hSoundBuffer->Put((char*)&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio player callback
 		}
         
         CodecLength -= CodecLengthNeed;
@@ -1270,8 +1272,8 @@ tryagain:
 	}
 #endif
 
-	hPC->hAudioPutList = new CAudioDataList(32,hPC->Audio10msLength);
-	hPC->hAudioGetList = new CAudioDataList(32,hPC->Audio10msLength);
+	hPC->hAudioPutList = new CCircleBuffer(32,hPC->Audio10msLength);
+	hPC->hAudioGetList = new CCircleBuffer(32,hPC->Audio10msLength);
 	
 	if(hPC->hAudioPutList == NULL || hPC->hAudioGetList == NULL){
 		Log2("audio data list init failed.");
@@ -1309,26 +1311,26 @@ tryagain:
 	int nBytesNeed = 960;	// max is 960 for opus encoder process.
 	int nVadFrames = 0;
 
+	char speakerData[320] = {0};
+	char captureData[320] = {0};
+
 	while(hPC->audioPlaying){
 		if(hPC->mediaEnabled != 1){
 			usleep(1000); continue;
 		}
 
-		if(hPC->hAudioGetList->CheckData() != 1
-		|| hPC->hAudioPutList->CheckData() != 1
-		){
+		int captureLens = hPC->hAudioGetList->Used();
+		int speakerLens = hPC->hAudioPutList->Used();
+
+//		Log3("audio get capture lens:[%d] speaker lens:[%d].\n",captureLens,speakerLens);
+
+		if(captureLens < hPC->Audio10msLength || speakerLens < hPC->Audio10msLength){
 			usleep(10);
 			continue;
 		}
 
-		AudioData * hCapture = hPC->hAudioGetList->Read();
-		AudioData * hSpeaker = hPC->hAudioPutList->Read();
-
-		if(hCapture == NULL || hSpeaker == NULL){
-            Log3("audio data lost...");
-			usleep(10);
-			continue;
-		}
+		hPC->hAudioGetList->Get(captureData,hPC->Audio10msLength);
+		hPC->hAudioPutList->Get(speakerData,hPC->Audio10msLength);
 
 		if(hPC->voiceEnabled != 1){
 			usleep(10); 
@@ -1336,18 +1338,15 @@ tryagain:
 		}
 
 #ifdef ENABLE_AEC
-	    short * hAecCapturePCM = hCapture->buf;
-		short * hAecSpeakerPCM = hSpeaker->buf;
-
-		if (audio_echo_cancellation_farend(hAEC,(char*)hAecSpeakerPCM,hPC->Audio10msLength/sizeof(short)) != 0){
+		if (audio_echo_cancellation_farend(hAEC,(char*)speakerData,hPC->Audio10msLength/sizeof(short)) != 0){
 				Log3("WebRtcAecm_BufferFarend() failed.");
 		}
 		
-		if (audio_echo_cancellation_proc(hAEC,(char*)hAecCapturePCM,(char*)WritePtr,hPC->Audio10msLength/sizeof(short)) != 0){
+		if (audio_echo_cancellation_proc(hAEC,(char*)captureData,(char*)WritePtr,hPC->Audio10msLength/sizeof(short)) != 0){
 				Log3("WebRtcAecm_Process() failed.");
 		}
 #else
-		memcpy(WritePtr,hCapture->buf,hPC->Audio10msLength);
+		memcpy(WritePtr,captureData,hPC->Audio10msLength);
 #endif
 
 #ifdef ENABLE_NSX_O
@@ -1497,30 +1496,30 @@ void * RecordingProcess(void * Ptr){
 
 	AV_HEAD * hFrm = (AV_HEAD*)malloc(128*1024);
 
-	hClass->hAudioBuffer->Reset();
-	hClass->hVideoBuffer->Reset();
+	hClass->hAudioBuffer->Clear();
+	hClass->hVideoBuffer->Clear();
 
 	hClass->aIdx = 0;
 	hClass->vIdx = 0;
 
 	while(hClass->avExit){
-		int aBytesHave = hClass->hAudioBuffer->GetStock();
-		int vBytesHave = hClass->hVideoBuffer->GetStock();
+		int aBytesHave = hClass->hAudioBuffer->Used();
+		int vBytesHave = hClass->hVideoBuffer->Used();
 		
 		if(vBytesHave > (int)(sizeof(AV_HEAD))){
-			nBytesRead = hClass->hVideoBuffer->Read(hFrm,sizeof(AV_HEAD));
-			while((nBytesHave = hClass->hVideoBuffer->GetStock()) < hFrm->len){
+			nBytesRead = hClass->hVideoBuffer->Get((char*)hFrm,sizeof(AV_HEAD));
+			while((nBytesHave = hClass->hVideoBuffer->Used()) < hFrm->len){
 				Log3("wait video recording buffer arriver size:[%d] now:[%d].",hFrm->len,nBytesHave);
 				usleep(10); continue;
 			}
-			nBytesRead = hClass->hVideoBuffer->Read(hFrm->d,hFrm->len);
+			nBytesRead = hClass->hVideoBuffer->Get(hFrm->d,hFrm->len);
 			hClass->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
 
 //			Log3("video frame write size:[%d].\n",hFrm->len);
 		}
 
 		if(aBytesHave >= 640){
-			nBytesRead = hClass->hAudioBuffer->Read(hFrm->d,640);
+			nBytesRead = hClass->hAudioBuffer->Get(hFrm->d,640);
 			hClass->WriteRecorder(hFrm->d,nBytesRead,0,0,ts);
 
 //			Log3("audio frame write size:[%d].\n",nBytesRead);
@@ -1627,34 +1626,10 @@ CPPPPChannel::CPPPPChannel(
 	MH = 1080;
 	YUVSize = (MW * MH) + (MW * MH)/2;
 
-	hAudioBuffer = new CCircleBuf();
-	hVideoBuffer = new CCircleBuf();
-	hSoundBuffer = new CCircleBuf();
-	hIOCmdBuffer = new CCircleBuf();
-	
-    if(!hIOCmdBuffer->Create(COMMAND_BUFFER_SIZE)){
-		while(1){
-			Log2("create iocmd procssing buffer failed.\n");
-		}
-	}
-	
-	if(!hAudioBuffer->Create(512 * 1024)){
-		while(1){
-			Log2("create audio recording buffer failed.\n");
-		}
-	}
-
-	if(!hSoundBuffer->Create(512 * 1024)){
-		while(1){
-			Log2("create sound procssing buffer failed.\n");
-		}
-	}
-
-	if(!hVideoBuffer->Create((3*1024*1024))){
-		while(1){
-			Log2("create video recording buffer failed.\n");
-		}
-	}
+	hAudioBuffer = new CCircleBuffer(128 * 1024);
+	hSoundBuffer = new CCircleBuffer(128 * 1024);
+	hVideoBuffer = new CCircleBuffer(3 * 1024 * 1024);
+	hIOCmdBuffer = new CCircleBuffer(COMMAND_BUFFER_SIZE);
     
     hDec = new CH264Decoder();
 
@@ -2025,7 +2000,7 @@ int CPPPPChannel::SetSystemParams(int type,char * msg,int len)
 	
 	memcpy(hCmds->CgiData,msg,hCmds->CgiLens);
 
-	return hIOCmdBuffer->Write(AppCmds,sizeof(APP_CMD_HEAD) + hCmds->CgiLens);
+	return hIOCmdBuffer->Put(AppCmds,sizeof(APP_CMD_HEAD) + hCmds->CgiLens);
 }
 
 void CPPPPChannel::AlarmNotifyDoorBell(JNIEnv* hEnv,char *did, char *type, char *time )

@@ -3,7 +3,7 @@
 #ifndef _PPPP_CHANNEL_H_
 #define _PPPP_CHANNEL_H_
 
-#include "CircleBuf.h"
+#include "circlebuffer.h"
 
 #ifdef PLATFORM_ANDROID
 #include <jni.h>
@@ -30,7 +30,6 @@
 
 #include "openxl_io.h"
 #include "audio_codec.h"
-#include "audiodatalist.h"
 
 #include "libvdp.h"
 
@@ -157,8 +156,8 @@ public:
 	JNIEnv *            hCoreEnv;	// Java env
 	
 	// 
-	CAudioDataList *	hAudioGetList;
-	CAudioDataList *	hAudioPutList;
+	CCircleBuffer *		hAudioGetList;
+	CCircleBuffer *		hAudioPutList;
 	
 	COMMO_LOCK			SessionStatusLock;
 	int					SessionStatus;
@@ -255,11 +254,11 @@ public:
 	char 				avExit;			// 
 
 	// for avi proc
-	CCircleBuf *		hVideoBuffer;	// 
-	CCircleBuf *		hAudioBuffer;	// 
-	CCircleBuf *		hSoundBuffer;	// 
+	CCircleBuffer *		hVideoBuffer;	// 
+	CCircleBuffer *		hAudioBuffer;	// 
+	CCircleBuffer *		hSoundBuffer;	// 
 	
-	CCircleBuf *		hIOCmdBuffer;	// 
+	CCircleBuffer *		hIOCmdBuffer;	// 
 	
 	int StartRecorder(
 		int 			W,				//

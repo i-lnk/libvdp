@@ -58,7 +58,7 @@ ANDROID_LIBS = -L$(SYSROOT)\usr\lib -L$(LIBPATH) \
 	$(SOURCES)\cxx-stl\gnu-libstdc++\4.8\libs\armeabi-v7a\libgnustl_static.a \
 	$(TOOLCHAIN)\lib\gcc\arm-linux-androideabi\4.8\armv7-a\libgcc.a  
 
-OBJECT_FILE = src/CircleBuf.o \
+OBJECT_FILE = src/circlebuffer.o \
 src/ffmpeg_mp4.o \
 src/H264Decoder.o \
 src/PPPPChannel.o \
@@ -72,7 +72,6 @@ src/audio_codec_enc.o \
 src/audio_codec_ext.o \
 src/appreq.o \
 src/apprsp.o \
-src/audiodatalist.o \
 src/libvdp.o
 
 %.o:%.cpp
