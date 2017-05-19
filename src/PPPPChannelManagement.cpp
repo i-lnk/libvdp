@@ -123,7 +123,9 @@ int CPPPPChannelManagement::StartPPPPLivestream(
 	int	audio_channel,
 	int audio_recv_codec,
 	int audio_send_codec,
-	int video_recv_codec
+	int video_recv_codec,
+	int video_w_crop,
+	int video_h_crop
 ){
   	if(szDID == NULL) return 0;
 
@@ -143,7 +145,9 @@ int CPPPPChannelManagement::StartPPPPLivestream(
 					audio_channel,
 					audio_recv_codec,
 					audio_send_codec,
-					video_recv_codec
+					video_recv_codec,
+					video_w_crop,
+					video_h_crop
 					);
 			
 			break;
@@ -254,7 +258,7 @@ int CPPPPChannelManagement::StartRecorderByDID(char * szDID,char * filepath){
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            int ret = m_PPPPChannel[i].pPPPPChannel->StartRecorder(0,0,25,filepath);
+            int ret = m_PPPPChannel[i].pPPPPChannel->StartRecorder(0,0,0,filepath);
 			PUT_LOCK( &PPPPChannelLock );
             return ret;
         }

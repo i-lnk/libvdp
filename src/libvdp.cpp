@@ -401,7 +401,9 @@ JNIEXPORT int JNICALL StartPPPPLivestream(
 		audio_channel,
 		audio_recv_codec,
 		audio_send_codec,
-		video_recv_codec
+		video_recv_codec,
+		0,
+		0
 		);
 
 jumperr:

@@ -26,12 +26,12 @@
 #include <libswscale/swscale.h>
 #include <libavutil/time.h>
 
-#include "ffmpeg_mp4.h"
-
 #include "openxl_io.h"
 #include "audio_codec.h"
 
 #include "libvdp.h"
+#include "muxing.h"
+
 
 #ifdef PLATFORM_ANDROID
 #define SET_THREAD_NAME(name) \
@@ -135,7 +135,9 @@ public:
 		int audio_channel,
 		int audio_recv_codec,
 		int audio_send_codec,
-		int video_recv_codec
+		int video_recv_codec,
+		int video_w_crop,
+		int video_h_crop
 		);
 	
 	int CloseMediaStreams();
@@ -198,6 +200,7 @@ public:
 	int					VideoRecvFormat;	// video codec from device
 
 	int					Audio10msLength;	// audio data 10ms length
+	int					AudioSaveLength;	// audio aac codec length
 
 	pthread_t			mediaCoreThread;
 
@@ -212,7 +215,10 @@ public:
 
 	int					MW;				
 	int					MH;				// 
+	int					MWCropSize;
+	int					MHCropSize;
 	int					YUVSize;		//
+	int					FPS;			//
 
     CH264Decoder    *   hDec;
 	char 			* 	hVideoFrame;	//
@@ -221,35 +227,8 @@ public:
 	COMMO_LOCK			DisplayLock;	//
 	COMMO_LOCK			SndplayLock;	//
 
-	AVFormatContext * 	hAVFmtContext;
-	AVOutputFormat  * 	hAVFmtOutput;
-	AVStream		* 	hAudioStream;
-	AVStream		* 	hVideoStream;
-	AVCodecContext  * 	hAVCodecContext;
-
-	OutputStream 		sVOs;
-	OutputStream 		sAOs;
-
-	char *				hAudioRecCaches;
-	int					aLen;			 // 
-
-
-	long long		  	vCTS;			// 
-	long long		  	vLTS;			// 
-	long long		 	vPTS;			//
-
-	long long			aCTS;			// 
-	long long			aLTS;			// 
-	long long		 	aPTS;			// 
-	
-	long long		  	sSTS;			// 
-
-	long long			vIdx;			// 
-	long long			aIdx;			// 
-
 	char			*	hRecordFile;
 
-	COMMO_LOCK			AviDataLock;
 	PROCESS_HANDLE		avProc;			// 
 	char 				avExit;			// 
 

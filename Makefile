@@ -26,10 +26,16 @@ CFLAGS_EXTRA +=
 
 CROSS = $(ARM_PREBUILT)/bin/arm-linux-androideabi-
 CC = g++ --sysroot=$(SYSROOT)
+#	-D__STDC_FORMAT_MACROS \
+#	-D__STDC_CONSTANT_MACROS \
+
 
 ANDROID_CFLAGS = -O2 -msoft-float -fPIC -mthumb-interwork \
+	-D__STDC_FORMAT_MACROS \
+	-D__STDC_CONSTANT_MACROS \
 	-DX264_VERSION -DANDROID -DPLATFORM_ANDROID -DHAVE_PTHREAD \
 	-DTUTK_PPPP \
+	-fpermissive \
 	-I$(CYGWIN_BASE)/$(ARM_PLATFORM)/usr/include \
 	-I$(INCPATH)/ffmpeg \
 	-I$(INCPATH)/opus \
@@ -59,11 +65,11 @@ ANDROID_LIBS = -L$(SYSROOT)\usr\lib -L$(LIBPATH) \
 	$(TOOLCHAIN)\lib\gcc\arm-linux-androideabi\4.8\armv7-a\libgcc.a  
 
 OBJECT_FILE = src/circlebuffer.o \
-src/ffmpeg_mp4.o \
 src/H264Decoder.o \
 src/PPPPChannel.o \
 src/PPPPChannelManagement.o \
 src/SearchDVS.o \
+src/muxing.o \
 src/openxl_io.o \
 src/audio_codec_adpcm.o \
 src/audio_codec_g711.o \

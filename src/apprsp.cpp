@@ -188,7 +188,7 @@ int             JsonBufferSize
         return -1;
     }
     
-    SMsgAVIoctrlSetMDPReq * hRQ = (SMsgAVIoctrlSetMDPReq *)Msg;
+    SMsgAVIoctrlGetMDPResp * hRQ = (SMsgAVIoctrlGetMDPResp *)Msg;
     
     sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
             "enable",hRQ->MotionEnable,

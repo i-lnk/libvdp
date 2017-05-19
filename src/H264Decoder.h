@@ -251,8 +251,16 @@ public:
 
 	void YUV4202RGB565(uint8_t *out);
     void YUV4202RGB565(uint8_t *yuv420, uint8_t *rgb565, int width, int height);
+	void YUV420CUTSIZE(char * src,char * dst,int iw,int ih,int ow,int oh);
+	
 	int  DecoderFrame(uint8_t *pbuf, int len,int &width ,int &height,int isKeyFrame);
-    int  GetYUVBuffer(uint8_t *pYUVBuffer, int bufLen);
+	
+    int  GetYUVBuffer(
+			unsigned char * dst,
+			int size,
+			int ow,
+			int oh
+	);
 
 private:
 	void DeleteYUVTab();

@@ -6,6 +6,8 @@ extern int g_sdkVersion;
 #include <CoreMedia/CoreMedia.h>
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "H264Decoder.h"
 #include "utility.h"
 
@@ -42,7 +44,7 @@ CH264Decoder::CH264Decoder()
 
     av_register_all();      
 
-    m_pCodec = avcodec_find_decoder(CODEC_ID_H264);
+    m_pCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
     if(m_pCodec == NULL)
     {
         Log("pCodec == NULL\n");
@@ -210,46 +212,68 @@ void CH264Decoder::DisplayYUV_16(unsigned int *pdst1,
 }
 
 
-int CH264Decoder::GetYUVBuffer(uint8_t * pYUVBuffer,int bufLen)
-{
-    if(pYUVBuffer == NULL)
-    {
+int CH264Decoder::GetYUVBuffer(
+	unsigned char * dst,
+	int size,
+	int ow,
+	int oh
+){
+    if(dst == NULL){
         return 0;
     }
 
-	int CopySize = m_pCodecCtx->width * m_pCodecCtx->height;
+	unsigned char * Y = m_pFrame->data[0];
+	unsigned char * U = m_pFrame->data[1];
+	unsigned char * V = m_pFrame->data[2];
 
-	unsigned char * P = pYUVBuffer;
-	
-	memcpy(&P[0],m_pFrame->data[0],CopySize);
-	memcpy(&P[CopySize],m_pFrame->data[1],CopySize/4);
-	memcpy(&P[CopySize + CopySize/4],m_pFrame->data[2],CopySize/4);
-	
-	/*
-    int iWidth = m_pCodecCtx->width ;
-    int iHeight = m_pCodecCtx->height ;
-    
-     int i, j, k;    
-     unsigned char *p = pYUVBuffer;
-     for(i=0;i<iHeight;i++)        
-     {
-        memcpy(p, m_pFrame->data[0]+m_pFrame->linesize[0]*i, iWidth);
-        p += iWidth ;
-     }
+	int iw = m_pCodecCtx->width;
+	int ih = m_pCodecCtx->height;
 
-     for(j=0;j<iHeight/2;j++)   
-     {
-        memcpy(p, m_pFrame->data[1]+m_pFrame->linesize[1]*j, iWidth/2);
-        p += iWidth/2 ; 
-     }
+	int w_offset = (iw - ow) / 2;
+	int h_offset = (ih - oh) / 2;
 
-     for(k=0;k<iHeight/2;k++)      
-     {
-        memcpy(p, m_pFrame->data[2]+m_pFrame->linesize[2]*k, iWidth/2);
-        p += iWidth/2 ; 
-     }
-     */
+	int o_u_offset = ow * oh;
+	int o_v_offset = ow * oh + ow * oh / 4;
 
+	int i_u_offset = iw * ih;
+	int i_v_offset = iw * ih + iw * ih / 4;
+
+	if(ow > m_pCodecCtx->width 
+	|| oh > m_pCodecCtx->height
+	){
+		return 0;
+	}
+
+	// copy directly
+	if(ow == m_pCodecCtx->width 
+	&& oh == m_pCodecCtx->height
+	){
+		memcpy(&dst[0],m_pFrame->data[0],ow * oh);
+		memcpy(&dst[o_u_offset],m_pFrame->data[1],ow * oh/4);
+		memcpy(&dst[o_v_offset],m_pFrame->data[2],ow * oh/4);
+		return 1;
+	}
+
+	// copy crop area
+	if(ow % 2 != 0 
+	|| oh % 2 != 0
+	){
+		return 0;
+	}
+
+	for(int row = 0;row < oh;row ++){
+		memcpy(&dst[ow * row],&Y[(h_offset + row) * iw + w_offset],ow);
+	}
+
+	int k = 0;
+    for (int row = 0; row < oh; row += 2) {
+        for (int col = 0; col < ow; col += 2) {
+            int idx = (h_offset + row) * iw / 4 + (w_offset + col) / 2;
+            dst[o_u_offset + k] = U[idx];
+            dst[o_v_offset + k] = V[idx];
+            k++;
+        }
+    }
 	
     return 1;
 }
@@ -262,17 +286,33 @@ int CH264Decoder::DecoderFrame(uint8_t *pbuf, int len, int &width, int &height,i
     avpkt.size = len;
 	avpkt.flags = isKeyFrame ? AV_PKT_FLAG_KEY : AV_PKT_FLAG_CORRUPT;
 
+	int ret = 0;
 	int consumed_bytes = 0;
-	int ret = avcodec_decode_video2(m_pCodecCtx, m_pFrame, &consumed_bytes, &avpkt);
+
+#ifdef FUCKING_FFMPEG_GROUP
+	ret = avcodec_decode_video2(m_pCodecCtx, m_pFrame, &consumed_bytes, &avpkt);
 	if(ret <= 0) return ret;
+#else
+	ret = avcodec_send_packet(m_pCodecCtx,&avpkt);
+	if(ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF){
+		av_packet_unref(&avpkt);
+		return ret;
+	}
 
-    //Log("m_pCodecCtx->width: %d, height: %d", m_pCodecCtx->width, m_pCodecCtx->height);
-    width = m_pCodecCtx->width ;
-    height = m_pCodecCtx->height ;
+	ret = avcodec_receive_frame(m_pCodecCtx,m_pFrame);
+	if(ret < 0 && ret != AVERROR_EOF){
+		av_packet_unref(&avpkt);
+		return ret;
+	}
 
-    if(consumed_bytes > 0)
-    {
-        return consumed_bytes ;
+	consumed_bytes = m_pFrame->pkt_size;
+#endif
+
+	width = m_pFrame->width;
+    height = m_pFrame->height;
+
+	if(consumed_bytes > 0){
+        return consumed_bytes;
     }
         
     return 0;
@@ -296,6 +336,62 @@ void CH264Decoder::YUV4202RGB565(uint8_t *out)
     DisplayYUV_16((unsigned int*)out, m_pFrame->data[0], m_pFrame->data[1], m_pFrame->data[2], 
 							m_pCodecCtx->width, m_pCodecCtx->height, m_pFrame->linesize[0], m_pFrame->linesize[1]
 							, m_pCodecCtx->width);
+}
+
+void CH264Decoder::YUV420CUTSIZE(
+	char * src,
+	char * dst,
+	int iw,
+	int ih,
+	int ow,
+	int oh
+){
+	if(ow > iw || oh > ih) return;
+	if(ow % 2 != 0 
+	|| oh % 2 != 0
+	){
+		return;
+	}
+
+//	int i_copy_lens = iw * ih;
+//	int o_copy_lens = ow * oh;
+	int w_offset = (iw - ow) / 2;
+	int h_offset = (ih - oh) / 2;
+
+	int o_u_offset = ow * oh;
+	int o_v_offset = ow * oh + ow * oh / 4;
+
+	int i_u_offset = iw * ih;
+	int i_v_offset = iw * ih + iw * ih / 4;
+
+	for(int line = 0;line < oh;line ++){
+		memcpy(&dst[ow * line],&src[(h_offset + line) * iw + w_offset],ow);
+	}
+	
+	int k = 0;
+    for (int row = 0; row < oh; row += 2) {
+        for (int col = 0; col < ow; col += 2) {
+            int old_index = (h_offset + row) * iw / 4 + (w_offset + col) / 2;
+            dst[o_u_offset + k] = src[i_u_offset + old_index];
+            dst[o_v_offset + k] = src[i_v_offset + old_index];
+            k++;
+        }
+    }
+	
+
+	/*
+	for(int line = 0;line < oh/4; line ++){
+		memcpy(
+			&dst[o_u_offset + ow * line],
+			&src[i_u_offset + (h_offset + line) * iw + w_offset],
+			ow);
+		
+		memcpy(
+			&dst[o_v_offset + ow * line],
+			&src[i_v_offset + (h_offset + line) * iw + w_offset],
+			ow);
+	};
+	*/
 }
 
 CH264Decoder::~CH264Decoder()

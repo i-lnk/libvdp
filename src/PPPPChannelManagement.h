@@ -30,7 +30,9 @@ public:
 		int	audio_channel,
 		int audio_recv_codec,
 		int audio_send_codec,
-		int video_recv_codec
+		int video_recv_codec,
+		int video_w_crop,
+		int video_h_crop
 		);
 	
     int ClosePPPPLivestream(char *szDID);
