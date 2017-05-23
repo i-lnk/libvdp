@@ -151,7 +151,7 @@ static void recordCallback(char * data, int lens, void *context){
     p->recordSize += lens;
     
     if(p->recordSize >= hPC->Audio10msLength){
-        hPC->hAudioGetList->Write((short*)pr,GetAudioTime());
+        hPC->hAudioGetList->Put(pr,hPC->Audio10msLength);
         p->recordSize -= hPC->Audio10msLength;
         memcpy(pr,pr + hPC->Audio10msLength,p->recordSize);
     }
@@ -166,10 +166,10 @@ static void playerCallback(char * data, int lens, void *context){
         return;
     }
     
-    int stocksize = hPC->hSoundBuffer->GetStock();
+    int stocksize = hPC->hSoundBuffer->Used();
     
     if(stocksize >= lens){
-        hPC->hSoundBuffer->Read((char*)data,lens);
+        hPC->hSoundBuffer->Get((char*)data,lens);
     }else{
         memset((char*)data,0,lens);
     }
@@ -179,7 +179,7 @@ static void playerCallback(char * data, int lens, void *context){
     p->outputSize += lens;
     
     if(p->outputSize >= hPC->Audio10msLength){
-        hPC->hAudioPutList->Write((short*)po,GetAudioTime());
+        hPC->hAudioPutList->Put(po,hPC->Audio10msLength);
         p->outputSize -= hPC->Audio10msLength;
         memcpy(po,
                po + hPC->Audio10msLength,

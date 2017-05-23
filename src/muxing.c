@@ -436,6 +436,8 @@ static int open_video(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AV
         Log3("Could not copy the stream parameters\n");
         return -1;
     }
+    
+    return 0;
 }
 
 static AVFrame *get_video_frame(OutputStream *ost,char * frameData,int frameLens)
