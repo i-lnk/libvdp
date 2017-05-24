@@ -945,8 +945,6 @@ static void * VideoRecvProcess(
 			}
 		}
 
-		Log3("video buffer have free space:[%d][%d].\n",nBytesHave,hPC->avExit);	
-
 		if(TRY_LOCK(&hPC->DisplayLock) != 0){
 			continue;
 		}
