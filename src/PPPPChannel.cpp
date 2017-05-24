@@ -2133,9 +2133,6 @@ int CPPPPChannel::StartRecorder(
 		FPS = this->FPS;
 	}
 
-	if(){
-	}
-
 	if(StartRecording(SavePath,FPS,W,H,this->AudioSampleRate,&AudioSaveLength) < 0){
 		Log3("start recording with muxing failed.\n");
 		return -1;
