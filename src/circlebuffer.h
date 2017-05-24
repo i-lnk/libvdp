@@ -11,6 +11,7 @@ public:
 	 CCircleBuffer(int Count,int Audio10msLength,int Lock);
 	~CCircleBuffer();
 
+	void Debug(int val);
 	void Clear();
 	int Available();
 	unsigned int Used();
@@ -24,6 +25,7 @@ protected:
 	unsigned int  	rp;
 
 	int				lock_used;
+	int				dmsg;
 	COMMO_LOCK		lock;
 
 private:

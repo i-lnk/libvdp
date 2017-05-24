@@ -18,6 +18,7 @@ CCircleBuffer::CCircleBuffer( int Size)
 	size = Size;
 	memset(d,0,Size);
 	lock_used = 0;
+	dmsg = 0;
 
 	Clear();
 }
@@ -25,6 +26,7 @@ CCircleBuffer::CCircleBuffer( int Size)
 CCircleBuffer::CCircleBuffer( int Size, int Lock)
 {
 	lock_used = 0;
+	dmsg = 0;
 
 	if(Lock){
 		INT_LOCK(&lock);
@@ -41,6 +43,7 @@ CCircleBuffer::CCircleBuffer( int Size, int Lock)
 CCircleBuffer::CCircleBuffer( int Count, int Audio10msLength, int Lock)
 {	
 	lock_used = 0;
+	dmsg = 0;
 
 	if(Lock){
 		INT_LOCK(&lock);
@@ -71,6 +74,10 @@ void CCircleBuffer::GetLock(){
 
 void CCircleBuffer::PutLock(){
 	if(lock_used) PUT_LOCK(&lock);
+}
+
+void CCircleBuffer::Debug(int val){
+	dmsg = val;
 }
 
 void CCircleBuffer::Clear(){
@@ -118,6 +125,17 @@ unsigned int CCircleBuffer::Get(char * buffer, unsigned int len)
 	len = _min(len, wp - rp); 
 	/* first get the data from fifo->out until the end of the buffer */
 	l = _min(len, size - (rp & (size - 1))); 
+
+#if 0
+	if(dmsg){
+		Log3("1.memcpy to [%p] from [%p] lens [%d]",
+			buffer,d + (rp & (size - 1)),l
+			);
+		Log3("2.memcpy to [%p] from [%p] lens [%d]",
+			buffer + l,d,len - l
+			);
+	}
+#endif
 	
 	memcpy(buffer, d + (rp & (size - 1)), l); 
 	/* then get the rest (if any) from the beginning of the buffer */

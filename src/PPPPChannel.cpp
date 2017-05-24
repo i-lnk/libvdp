@@ -28,9 +28,8 @@
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
 
-#define ENABLE_AUDIO_RECORD
-//#define ENABLE_VIDEO_ENCODE
 //#define ENABLE_VAD
+#define ENABLE_AUDIO_RECORD
 
 #ifdef PLATFORM_ANDROID
 #endif
@@ -939,7 +938,7 @@ static void * VideoRecvProcess(
 
 		int nBytesHave = hPC->hVideoBuffer->Available();
 
-		if(hPC->avExit){	
+		if(hPC->avExit){
 			if(nBytesHave >= hFrm->len + sizeof(AV_HEAD)){
 				hPC->hVideoBuffer->Put((char*)hFrm,hFrm->len + sizeof(AV_HEAD));
 			}
@@ -1548,41 +1547,20 @@ void * RecordingProcess(void * Ptr){
 	long long   ts = 0;
 	int nBytesRead = 0;
 	int nBytesHave = 0;
+
+	int firstKeyFrameComming = 0;
+//	int	isKeyFrame = 0;
 	
 	hPC->hAudioBuffer->Clear();
 	hPC->hVideoBuffer->Clear();
-#ifdef ENABLE_VIDEO_ENCODE
-	AV_HEAD * hFrm = (AV_HEAD*)malloc(hPC->YUVSize + sizeof(AV_HEAD));
-#else
-	AV_HEAD * hFrm = (AV_HEAD*)malloc(128*1024);
-#endif
+
+	AV_HEAD * hFrm = (AV_HEAD*)malloc(hPC->YUVSize/3);
 
 	while(hPC->avExit){
 
 		int Type = WriteFrameType();
 		
 		if(Type){
-#ifdef ENABLE_VIDEO_ENCODE
-
-			GET_LOCK(&hPC->DisplayLock);
-
-			if(hPC->hVideoFrame == NULL){
-				PUT_LOCK(&hPC->DisplayLock);
-				usleep(1000); continue;
-			}
-			
-			memcpy(hFrm->d,hPC->hVideoFrame,hPC->YUVSize);
-			
-			int NW = hPC->MW;
-			int NH = hPC->MH;
-			hFrm->len = NW * NH + NW * NH * 3 / 2;
-			
-			PUT_LOCK(&hPC->DisplayLock);
-
-			hPC->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
-			
-#else
-
 			int vBytesHave = hPC->hVideoBuffer->Used();
 			
 			if(vBytesHave > (int)(sizeof(AV_HEAD))){
@@ -1600,12 +1578,20 @@ void * RecordingProcess(void * Ptr){
 					usleep(10); continue;
 				}
 				*/
-				
+
 				nBytesRead = hPC->hVideoBuffer->Get(hFrm->d,hFrm->len);
+				
+				if(hFrm->type == IPC_FRAME_FLAG_IFRAME){
+					firstKeyFrameComming = 1;
+				}
+
+				if(firstKeyFrameComming != 1){
+					continue;
+				}
+
 				hPC->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
 			}
 			
-#endif
 		}else{
 #ifdef ENABLE_AUDIO_RECORD
 			int aBytesHave = hPC->hAudioBuffer->Used();
@@ -1727,6 +1713,8 @@ CPPPPChannel::CPPPPChannel(
 	hSoundBuffer = new CCircleBuffer( 128 * 1024);
 	hVideoBuffer = new CCircleBuffer(4096 * 1024);
 	hIOCmdBuffer = new CCircleBuffer(COMMAND_BUFFER_SIZE);
+
+//	hVideoBuffer->Debug(1);
     
     hDec = new CH264Decoder();
 
@@ -2143,6 +2131,9 @@ int CPPPPChannel::StartRecorder(
 
 	if(FPS == 0){
 		FPS = this->FPS;
+	}
+
+	if(){
 	}
 
 	if(StartRecording(SavePath,FPS,W,H,this->AudioSampleRate,&AudioSaveLength) < 0){
