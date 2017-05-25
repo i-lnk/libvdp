@@ -663,6 +663,7 @@ int WriteFrameType(){
 
 	if(av_compare_ts(video_st.next_pts, video_st.enc->time_base,
                      audio_st.next_pts, audio_st.enc->time_base) <= 0){
+        PUT_LOCK(&lock);
 		return 1;
     }
 
