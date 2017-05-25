@@ -938,7 +938,7 @@ static void * VideoRecvProcess(
 
 		int nBytesHave = hPC->hVideoBuffer->Available();
 
-		if(hPC->avExit){
+		if(hPC->recordingExit){
 			if(nBytesHave >= hFrm->len + sizeof(AV_HEAD)){
 				hPC->hVideoBuffer->Put((char*)hFrm,hFrm->len + sizeof(AV_HEAD));
 			}
@@ -1556,7 +1556,7 @@ void * RecordingProcess(void * Ptr){
 
 	AV_HEAD * hFrm = (AV_HEAD*)malloc(hPC->YUVSize/3);
 
-	while(hPC->avExit){
+	while(hPC->recordingExit){
 
 		int Type = WriteFrameType();
 		
@@ -1590,6 +1590,13 @@ void * RecordingProcess(void * Ptr){
 				}
 
 				hPC->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
+			}else{
+				if(firstKeyFrameComming != 1){
+					continue;
+				}
+				hFrm->len = 1024;
+				memset(hFrm->d,0,hFrm->len);
+				hPC->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
 			}
 			
 		}else{
@@ -1597,7 +1604,7 @@ void * RecordingProcess(void * Ptr){
 			int aBytesHave = hPC->hAudioBuffer->Used();
 			
 			if(aBytesHave > hPC->AudioSaveLength){
-				Log3("audio have:[%d] request:[%d].\n",aBytesHave,hPC->AudioSaveLength);
+//				Log3("audio have:[%d] request:[%d].\n",aBytesHave,hPC->AudioSaveLength);
 				nBytesRead = hPC->hAudioBuffer->Get(hFrm->d,hPC->AudioSaveLength);
 				hPC->WriteRecorder(hFrm->d,nBytesRead,0,0,ts);
 			}
@@ -1688,10 +1695,11 @@ CPPPPChannel::CPPPPChannel(
 	videoRecvThread = (pthread_t)-1;
 	audioSendThread = (pthread_t)-1;
 	audioRecvThread = (pthread_t)-1;
+	recordingThread = (pthread_t)-1;
 
 	deviceType = -1;
 
-	avExit = 0;
+	recordingExit = 0;
 	avIdx = spIdx = sessionID = -1;
 
     SID = -1;
@@ -1720,6 +1728,7 @@ CPPPPChannel::CPPPPChannel(
 
 	INT_LOCK(&DisplayLock);
 	INT_LOCK(&SndplayLock);
+	INT_LOCK(&CaptureLock);
 	
 	INT_LOCK(&SessionStatusLock);
 
@@ -1756,6 +1765,7 @@ CPPPPChannel::~CPPPPChannel()
 
 	DEL_LOCK(&DisplayLock);
 	DEL_LOCK(&SndplayLock);
+	DEL_LOCK(&CaptureLock);
 
 	DEL_LOCK(&SessionStatusLock);
     
@@ -1942,7 +1952,7 @@ int CPPPPChannel::CloseWholeThreads()
 	mediaEnabled = 0;
     audioPlaying = 0;
 	videoPlaying = 0;
-	avExit = 0;
+	recordingExit = 0;
 
 	Log3("stop iocmd process.");
     if(iocmdSendThread != (pthread_t)-1) pthread_join(iocmdSendThread,NULL);
@@ -2133,16 +2143,17 @@ int CPPPPChannel::StartRecorder(
 		FPS = this->FPS;
 	}
 
+	GET_LOCK(&CaptureLock);
+
 	if(StartRecording(SavePath,FPS,W,H,this->AudioSampleRate,&AudioSaveLength) < 0){
 		Log3("start recording with muxing failed.\n");
-		return -1;
+		goto jumperr;
 	}
 
-	avExit = 1;
-	memset(&avProc,0,sizeof(avProc));
+	recordingExit = 1;
 
 	Err = pthread_create(
-		&avProc,
+		&recordingThread,
 		NULL,
 		RecordingProcess,
 		this);
@@ -2150,12 +2161,19 @@ int CPPPPChannel::StartRecorder(
 	if(Err != 0){
 		Log3("create av recording process failed.");
 		CloseRecording();
-		return -1;
+		goto jumperr;
 	}
 
 	Log3("start recording process done.");
 
-	return 0;
+	PUT_LOCK(&CaptureLock);
+
+	return  0;
+	
+jumperr:
+	PUT_LOCK(&CaptureLock);
+
+	return -1;
 }
 
 int CPPPPChannel::WriteRecorder(
@@ -2170,12 +2188,20 @@ int CPPPPChannel::WriteRecorder(
 }
 
 int CPPPPChannel::CloseRecorder(){
+
+	GET_LOCK(&CaptureLock);
+	
 	Log3("wait avi record process exit.");
-	avExit = 0;
-	pthread_join(avProc,NULL);
+	recordingExit = 0;
+	if((long)recordingThread != -1){
+		pthread_join(recordingThread,NULL);
+		recordingThread = (pthread_t)-1;
+	}
 	Log3("avi record process exit done.");
 
 	CloseRecording();
+
+	PUT_LOCK(&CaptureLock);
 
 	return 0;
 }

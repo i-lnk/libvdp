@@ -258,7 +258,7 @@ int CPPPPChannelManagement::StartRecorderByDID(char * szDID,char * filepath){
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            int ret = m_PPPPChannel[i].pPPPPChannel->StartRecorder(0,0,0,filepath);
+            int ret = m_PPPPChannel[i].pPPPPChannel->StartRecorder(0,0,25,filepath);
 			PUT_LOCK( &PPPPChannelLock );
             return ret;
         }

@@ -212,6 +212,7 @@ public:
 
 	pthread_t 			audioRecvThread;
 	pthread_t 			audioSendThread;
+	pthread_t			recordingThread;
 
 	int					MW;				
 	int					MH;				// 
@@ -226,11 +227,11 @@ public:
 	
 	COMMO_LOCK			DisplayLock;	//
 	COMMO_LOCK			SndplayLock;	//
+	COMMO_LOCK			CaptureLock;	//
 
 	char			*	hRecordFile;
 
-	PROCESS_HANDLE		avProc;			// 
-	char 				avExit;			// 
+	char 				recordingExit;			// 
 
 	// for avi proc
 	CCircleBuffer *		hVideoBuffer;	// 
