@@ -88,18 +88,27 @@ int CSearchDVS::Open(char *ssid,char *psd)
 				}
 			}
 		}
+
+		int f = 1;
+
+		if(setsockopt(socks[i], SOL_SOCKET, SO_REUSEADDR, &f, sizeof(f)) < 0){   
+      		Log3("set socket reuseful failed.\n");
+      		goto jumperr;
+   		}   
 	    
 	    struct sockaddr_in servaddr;
 		memset((char *)&servaddr, 0, sizeof(servaddr));  
 
 		servaddr.sin_family = AF_INET;
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-		
         servaddr.sin_port = htons(sockattrs[i].sock_port);
-    	r = bind(socks[i], (sockaddr *)&servaddr, sizeof(servaddr));
+		
+    	r = bind(socks[i], (sockaddr *)&servaddr, sizeof(servaddr) );
     	if (r < 0){
-			Log3("set socket port for:[%d] failed.\n",socks[i]);
-    		goto jumperr;
+			Log3("set socket port:[%d] for:[%d] failed with error:[%d].\n",sockattrs[i].sock_port,socks[i],errno);
+    		close(socks[i]);
+			socks[i] = -1;
+			continue;
     	}
 
 		if(sockattrs[i].sock_type == SOCK_STREAM){
@@ -108,6 +117,7 @@ int CSearchDVS::Open(char *ssid,char *psd)
 
 		Log3("==========>>>> open device find socket:[%d] port:[%d].\n",socks[i],sockattrs[i].sock_port);
 	}
+	
     m_bSendThreadRuning = 1;
     pthread_create(&m_SendThreadID, NULL, CSearchDVS::SendThread, this);
 
@@ -176,7 +186,7 @@ int CSearchDVS::SearchDVS()
     
     servAddr.sin_port = htons(BROADCAST_SEND_PORT1);
 	char * p = (char*)&searchCmd;
-   *((short*)p) = (short)STARTCODE;
+    *((short*)p) = (short)STARTCODE;
     p += sizeof(short);
     *((short*)p) = (short)CMD_GET;
 
