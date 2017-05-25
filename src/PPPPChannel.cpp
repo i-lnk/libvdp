@@ -1559,6 +1559,10 @@ void * RecordingProcess(void * Ptr){
 	while(hPC->recordingExit){
 
 		int Type = WriteFrameType();
+
+		if(Type < 0){
+			usleep(10); continue;
+		}
 		
 		if(Type){
 			int vBytesHave = hPC->hVideoBuffer->Used();
@@ -1572,13 +1576,6 @@ void * RecordingProcess(void * Ptr){
 					usleep(10); continue;
 				}
 
-				/*
-				while((nBytesHave = hPC->hVideoBuffer->Used()) < hFrm->len){
-					Log3("wait video recording buffer arriver size:[%d] now:[%d].",hFrm->len,nBytesHave);
-					usleep(10); continue;
-				}
-				*/
-
 				nBytesRead = hPC->hVideoBuffer->Get(hFrm->d,hFrm->len);
 				
 				if(hFrm->type == IPC_FRAME_FLAG_IFRAME){
@@ -1589,7 +1586,12 @@ void * RecordingProcess(void * Ptr){
 					continue;
 				}
 
-				hPC->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
+				hPC->WriteRecorder(
+					hFrm->d,hFrm->len,
+					1,
+					hFrm->type == IPC_FRAME_FLAG_IFRAME ? 1: 0,
+					ts);
+				
 			}else{
 				if(firstKeyFrameComming != 1){
 					continue;
