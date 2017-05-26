@@ -15,6 +15,7 @@ public:
 	void Clear();
 	int Available();
 	unsigned int Used();
+	unsigned int Mov(unsigned int len);
 	unsigned int Get(char* buffer, unsigned int len);
 	unsigned int Put(char* buffer, unsigned int len);
 

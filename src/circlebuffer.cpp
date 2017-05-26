@@ -116,6 +116,19 @@ unsigned int CCircleBuffer::Put(char * buffer, unsigned int len)
 	
 	return len;
 }
+
+unsigned int CCircleBuffer::Mov(unsigned int len){
+	unsigned int l;  
+
+	GetLock();
+	len = _min(len, wp - rp); 
+	l = _min(len, size - (rp & (size - 1))); 
+
+	rp += len;
+	PutLock();
+
+	return len;
+}
  
 unsigned int CCircleBuffer::Get(char * buffer, unsigned int len)
 {

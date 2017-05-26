@@ -1576,14 +1576,15 @@ void * RecordingProcess(void * Ptr){
 					usleep(10); continue;
 				}
 
-				nBytesRead = hPC->hVideoBuffer->Get(hFrm->d,hFrm->len);
-				
 				if(hFrm->type == IPC_FRAME_FLAG_IFRAME){
 					firstKeyFrameComming = 1;
 				}
 
 				if(firstKeyFrameComming != 1){
+					hPC->hVideoBuffer->Mov(hFrm->len);
 					continue;
+				}else{
+					nBytesRead = hPC->hVideoBuffer->Get(hFrm->d,hFrm->len);
 				}
 
 				hPC->WriteRecorder(
@@ -1592,13 +1593,6 @@ void * RecordingProcess(void * Ptr){
 					hFrm->type == IPC_FRAME_FLAG_IFRAME ? 1: 0,
 					ts);
 				
-			}else{
-				if(firstKeyFrameComming != 1){
-					continue;
-				}
-				hFrm->len = 1024;
-				memset(hFrm->d,0,hFrm->len);
-				hPC->WriteRecorder(hFrm->d,hFrm->len,1,hFrm->type,ts);
 			}
 			
 		}else{
@@ -1606,13 +1600,12 @@ void * RecordingProcess(void * Ptr){
 			int aBytesHave = hPC->hAudioBuffer->Used();
 			
 			if(aBytesHave > hPC->AudioSaveLength){
-//				Log3("audio have:[%d] request:[%d].\n",aBytesHave,hPC->AudioSaveLength);
 				nBytesRead = hPC->hAudioBuffer->Get(hFrm->d,hPC->AudioSaveLength);
 				hPC->WriteRecorder(hFrm->d,nBytesRead,0,0,ts);
+			}else{
+				memset(hFrm->d,0,hPC->AudioSaveLength);
+				hPC->WriteRecorder(hFrm->d,hPC->AudioSaveLength,0,0,ts);
 			}
-#else
-			memset(hFrm->d,0,hPC->AudioSaveLength);
-			hPC->WriteRecorder(hFrm->d,hPC->AudioSaveLength,0,0,ts);
 #endif
 		}
 	}
