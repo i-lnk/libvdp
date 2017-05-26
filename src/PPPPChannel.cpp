@@ -1545,16 +1545,25 @@ void * RecordingProcess(void * Ptr){
 	}
 
 	long long   ts = 0;
+
+	int nFrame = 0;
 	int nBytesRead = 0;
 	int nBytesHave = 0;
 
 	int firstKeyFrameComming = 0;
+	int sts = time(NULL);
+	int pts = 0;
+	int fps = 0;
+	int fix = 0;
 //	int	isKeyFrame = 0;
 	
 	hPC->hAudioBuffer->Clear();
 	hPC->hVideoBuffer->Clear();
 
-	AV_HEAD * hFrm = (AV_HEAD*)malloc(hPC->YUVSize/3);
+	AV_HEAD * pVFrm = (AV_HEAD*)malloc(hPC->YUVSize/3);
+	AV_HEAD * pAFrm = (AV_HEAD*)malloc(hPC->AudioSaveLength + sizeof(AV_HEAD));
+
+	pAFrm->len = hPC->AudioSaveLength;
 
 	while(hPC->recordingExit){
 
@@ -1568,49 +1577,79 @@ void * RecordingProcess(void * Ptr){
 			int vBytesHave = hPC->hVideoBuffer->Used();
 			
 			if(vBytesHave > (int)(sizeof(AV_HEAD))){
-				nBytesRead = hPC->hVideoBuffer->Get((char*)hFrm,sizeof(AV_HEAD));
+				nBytesRead = hPC->hVideoBuffer->Get((char*)pVFrm,sizeof(AV_HEAD));
 
-				if(hFrm->startcode != 0xa815aa55){
-					Log3("invalid video frame lens:[%d].",hFrm->len);
+				if(pVFrm->startcode != 0xa815aa55){
+					Log3("invalid video frame lens:[%d].",pVFrm->len);
 					hPC->hVideoBuffer->Clear();
 					usleep(10); continue;
 				}
 
-				if(hFrm->type == IPC_FRAME_FLAG_IFRAME){
+				if(pVFrm->type == IPC_FRAME_FLAG_IFRAME){
 					firstKeyFrameComming = 1;
 				}
 
 				if(firstKeyFrameComming != 1){
-					hPC->hVideoBuffer->Mov(hFrm->len);
+					hPC->hVideoBuffer->Mov(pVFrm->len);
 					continue;
 				}else{
-					nBytesRead = hPC->hVideoBuffer->Get(hFrm->d,hFrm->len);
+					nBytesRead = hPC->hVideoBuffer->Get(pVFrm->d,pVFrm->len);
 				}
 
 				hPC->WriteRecorder(
-					hFrm->d,hFrm->len,
+					pVFrm->d,pVFrm->len,
 					1,
-					hFrm->type == IPC_FRAME_FLAG_IFRAME ? 1: 0,
+					pVFrm->type == IPC_FRAME_FLAG_IFRAME ? 1: 0,
 					ts);
+
+				nFrame++;
+			}else{
 				
+				if(fix == 0){
+					continue;
+				}
+			
+				Log3("recording fps:[%d] lost frame count:[%d] auto fix.\n",fps,fix);
+				memset(pVFrm->d,0,8);
+				pVFrm->len = 8;
+
+				for(int i = 0;i < fix;i++){
+					hPC->WriteRecorder(
+						pVFrm->d,pVFrm->len,
+						1,
+						pVFrm->type == IPC_FRAME_FLAG_IFRAME ? 1: 0,
+						ts
+						);
+				}
+
+				nFrame += fix;
 			}
+
+			pts = time(NULL) - sts;
+			pts = pts > 0 ? pts : 1;
+			
+			fps = nFrame / pts;
+			
+			fix = 25 - fps;
+			fix = fix > 0 ? fix : 0;
 			
 		}else{
 #ifdef ENABLE_AUDIO_RECORD
 			int aBytesHave = hPC->hAudioBuffer->Used();
 			
-			if(aBytesHave > hPC->AudioSaveLength){
-				nBytesRead = hPC->hAudioBuffer->Get(hFrm->d,hPC->AudioSaveLength);
-				hPC->WriteRecorder(hFrm->d,nBytesRead,0,0,ts);
+			if(aBytesHave > pAFrm->len){
+				nBytesRead = hPC->hAudioBuffer->Get(pAFrm->d,pAFrm->len);
+				hPC->WriteRecorder(pAFrm->d,nBytesRead,0,0,ts);
 			}else{
-				memset(hFrm->d,0,hPC->AudioSaveLength);
-				hPC->WriteRecorder(hFrm->d,hPC->AudioSaveLength,0,0,ts);
+				memset(pAFrm->d,0,pAFrm->len);
+				hPC->WriteRecorder(pAFrm->d,pAFrm->len,0,0,ts);
 			}
 #endif
 		}
 	}
 
-	free(hFrm); hFrm = NULL;
+	free(pAFrm); pAFrm = NULL;
+	free(pVFrm); pVFrm = NULL;
 
 	Log3("stop recording process done.");
 	
