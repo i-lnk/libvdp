@@ -1616,7 +1616,7 @@ void * RecordingProcess(void * Ptr){
 
 				for(int i = 0;i < fix;i++){
 					hPC->WriteRecorder(
-						pVFrm->d,pVFrm->len,
+						pVFrm->d,128,
 						1,
 						0,
 						ts
