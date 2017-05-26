@@ -702,6 +702,8 @@ int StartRecording(
     }
 	
 	fmt = oc->oformat;
+	fmt->video_codec = AV_CODEC_ID_H264;
+	fmt->audio_codec = AV_CODEC_ID_AAC;
 
     /* Add the audio and video streams using the default format codecs
      * and initialize the codecs. */
