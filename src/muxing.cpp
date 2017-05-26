@@ -781,6 +781,13 @@ int CloseRecording(){
 	
     /* free the stream */
     avformat_free_context(oc);
+    
+    oc = NULL;
+    video_codec = NULL;
+    audio_codec = NULL;
+    
+    memset(&video_st,0,sizeof(video_st));
+    memset(&audio_st,0,sizeof(audio_st));
 
 	instance = 0;
 

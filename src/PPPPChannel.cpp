@@ -745,9 +745,6 @@ static void * VideoRecvProcess(
 	int 			avIdx = hPC->avIdx;
 	int				ioIdx = hPC->avIdx;
 
-	int				frameCount = 0;
-	int				st = 0;
-
 	char 			avMsg[1024] = {0};
 
 	hPC->FPS = 0;
@@ -855,8 +852,6 @@ static void * VideoRecvProcess(
 	int firstKeyFrameComming = 0;
 	int	isKeyFrame = 0;
 
-	st = time(NULL);
-
 	while(hPC->videoPlaying)
 	{
 #if 0
@@ -931,10 +926,6 @@ static void * VideoRecvProcess(
 			Log3("invalid decode resolution W:%d H:%d.",W,H);
 			continue;
 		}
-
-		int tp = time(NULL) - st;
-		tp = tp <= 0 ? 1 : tp;
-		hPC->FPS = frameCount++ / tp;
 
 		int nBytesHave = hPC->hVideoBuffer->Available();
 
@@ -1548,7 +1539,6 @@ void * RecordingProcess(void * Ptr){
 
 	int nFrame = 0;
 	int nBytesRead = 0;
-	int nBytesHave = 0;
 
 	int firstKeyFrameComming = 0;
 	int sts = time(NULL);
@@ -1611,8 +1601,6 @@ void * RecordingProcess(void * Ptr){
                 }
 			
 				Log3("recording fps:[%d] lost frame count:[%d] auto fix.\n",fps,fix);
-//				memset(pVFrm->d,0,8);
-//				pVFrm->len = 8;
 
 				for(int i = 0;i < fix;i++){
 					hPC->WriteRecorder(
@@ -1631,10 +1619,14 @@ void * RecordingProcess(void * Ptr){
 			
 			fps = nFrame / pts;
 			
-			fix = 25 - fps;
+			fix = hPC->FPS - fps;
 			fix = fix > 0 ? fix : 0;
 			
 		}else{
+            if(firstKeyFrameComming != 1){
+                continue;
+            }
+
 #ifdef ENABLE_AUDIO_RECORD
 			int aBytesHave = hPC->hAudioBuffer->Used();
 			
@@ -1738,6 +1730,7 @@ CPPPPChannel::CPPPPChannel(
 	avIdx = spIdx = sessionID = -1;
 
     SID = -1;
+    FPS = 25;
 
 	hRecordFile = NULL;
 
@@ -2176,7 +2169,9 @@ int CPPPPChannel::StartRecorder(
 
 	if(FPS == 0){
 		FPS = this->FPS;
-	}
+    }else{
+        this->FPS = FPS;
+    }
 
 	GET_LOCK(&CaptureLock);
 
