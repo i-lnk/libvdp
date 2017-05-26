@@ -1604,20 +1604,21 @@ void * RecordingProcess(void * Ptr){
 
 				nFrame++;
 			}else{
-				
-				if(fix == 0){
-					continue;
-				}
+                
+                if(pts <= 5) continue;
+                if(fix == 0 || firstKeyFrameComming != 1){
+                    continue;
+                }
 			
 				Log3("recording fps:[%d] lost frame count:[%d] auto fix.\n",fps,fix);
-				memset(pVFrm->d,0,8);
-				pVFrm->len = 8;
+//				memset(pVFrm->d,0,8);
+//				pVFrm->len = 8;
 
 				for(int i = 0;i < fix;i++){
 					hPC->WriteRecorder(
 						pVFrm->d,pVFrm->len,
 						1,
-						pVFrm->type == IPC_FRAME_FLAG_IFRAME ? 1: 0,
+						0,
 						ts
 						);
 				}
