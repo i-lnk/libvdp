@@ -376,6 +376,7 @@ typedef struct{
 	char	AppKey[64];
 	char	Master[64];
 	char	Alias [64];
+	char 	FCMKey[64];	// for google msg push
 	int		Type;
 }SMsgAVIoctrlSetPushReq,SMsgAVIoctrlDelPushReq;
 

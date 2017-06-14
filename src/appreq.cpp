@@ -230,6 +230,7 @@ static int SetPushData(
 	
 	GetCgiParam(sMsg.AppKey,szCgi,sizeof(sMsg.AppKey),"AppKey=","&");
 	GetCgiParam(sMsg.Master,szCgi,sizeof(sMsg.Master),"Master=","&");
+	GetCgiParam(sMsg.FCMKey,szCgi,sizeof(sMsg.FCMKey),"FCMKey=","&");
 	GetCgiParam(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
 	
 	GetCgiParam(szType,szCgi,sizeof(szType),"Type=","&");
