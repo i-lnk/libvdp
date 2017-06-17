@@ -619,6 +619,8 @@ int             JsonBufferSize
             "src",hRQ->src,
             "uid",hRQ->uid,
             "type",hRQ->type);
+
+	return 0;
 }
 
 static int DelIOTDevs(
