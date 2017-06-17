@@ -446,7 +446,7 @@ void * IOCmdSendProcess(
 				}
 				
 				while(hPC->iocmdSending){
-					ret = SendCmds(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hPC);
+					ret = SendCmds(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hCmds->CgiLens,hPC);
 					if(ret == 0){
 						break;
 					}
@@ -529,6 +529,8 @@ void * IOCmdRecvProcess(
 		hCCH->len = ret;
         
         switch(IOCtrlType){
+			case IOTYPE_USER_IPCAM_RAW_RESP: // for byte data response
+				break;
 			case IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP:{
 					SMsgAVIoctrlPlayRecordResp * hRQ = (SMsgAVIoctrlPlayRecordResp *)hCCH->d;
 					if(hRQ->command == AVIOCTRL_RECORD_PLAY_START){
@@ -585,6 +587,7 @@ void * IOCmdRecvProcess(
                 break;
             default:
                 Rsp2Json(IOCtrlType, hCCH->d, MsgStr, sizeof(MsgStr));
+				hCCH->len = strlen(MsgStr);
                 break;
         }
         
@@ -593,12 +596,19 @@ void * IOCmdRecvProcess(
         GET_LOCK( &g_CallbackContextLock );	
         
         jstring jstring_did = hEnv->NewStringUTF(hPC->szDID);
-        jstring jstring_msg = hEnv->NewStringUTF(MsgStr);
+        jbyteArray jbyteArray_msg = hEnv->NewByteArray(hCCH->len);
+		jbyte *	   jbyte_msg = (jbyte *)(hEnv->GetByteArrayElements(jbyteArray_msg,0));
         
-        hEnv->CallVoidMethod(g_CallBack_Handle,g_CallBack_UILayerNotify,jstring_did,IOCtrlType,jstring_msg);
+        hEnv->CallVoidMethod(g_CallBack_Handle,g_CallBack_UILayerNotify,
+			jstring_did,
+			IOCtrlType,
+			jbyteArray_msg,
+			hCCH->len
+			);
         
         hEnv->DeleteLocalRef(jstring_did);
-        hEnv->DeleteLocalRef(jstring_msg);
+        hEnv->ReleaseByteArrayElements(jbyteArray_msg,jbyte_msg,0);
+		hEnv->DeleteLocalRef(jbyteArray_msg);
         
         PUT_LOCK( &g_CallbackContextLock );	
         

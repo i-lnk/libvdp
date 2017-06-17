@@ -6,15 +6,11 @@
 #include "AVFRAMEINFO.h"
 #include "AVIOCTRLDEFs.h"
 
-typedef struct APP_BIN_DATA{
-	int		lens;
-	char 	d[1024];
-}APP_BIN_DATA,*PAPP_BIN_DATA;
-
 typedef int (*CMD_DO)(
 	int				Idx,
 	int				MsgType,
 	const char *	Cgi,
+	int				CgiLens,
 	void *			Params
 );
 
@@ -42,6 +38,7 @@ int SendCmds(
 	int 			Idx,
 	int				MsgType,
 	const char *	Cgi,
+	int				CgiLens,
 	void *			Params
 );
 

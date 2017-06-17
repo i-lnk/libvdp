@@ -78,8 +78,8 @@ void   JNIEnv::CallVoidMethod(void * a, void * b, ...){
         goto jumpout;
     }
     if(b == g_CallBack_UILayerNotify){
-        void (*Call)(const char *,int,const char *) = (void (*)(const char *,int,const char *))b;
-        Call(va_arg(args,const char *),va_arg(args,int),va_arg(args,const char *));
+        void (*Call)(const char *,int,const char *,int) = (void (*)(const char *,int,const char *,int))b;
+        Call(va_arg(args,const char *),va_arg(args,int),va_arg(args,const char *),va_arg(args,int));
         goto jumpout;
     }
     if(b == g_CallBack_VideoDataProcess){
@@ -257,7 +257,7 @@ JNIEXPORT int JNICALL PPPPSetCallbackContext(JNIEnv *env, jobject obj, jobject c
 		g_CallBack_UILayerNotify = env->GetMethodID(
 			clazz,
 			"UILayerNotify",
-			"(Ljava/lang/String;ILjava/lang/String;)V"
+			"(Ljava/lang/String;I[BI)V"
 			);
 #else
         g_CallBack_Handle = (jobject)malloc(sizeof(jobject));
@@ -333,7 +333,6 @@ JNIEXPORT int JNICALL StartPPPP(JNIEnv * env, jobject obj, jstring did, jstring 
 	env->ReleaseStringUTFChars(connectionType, szConnectionType);
 	
     return nRet;
-
 }
 
 JNIEXPORT int JNICALL ClosePPPP(JNIEnv *env, jobject obj, jstring did)
@@ -462,30 +461,25 @@ JNIEXPORT int JNICALL GetAudioStatus(JNIEnv *env , jobject obj, jstring did){
 	return res;
 }
 
-JNIEXPORT int JNICALL SendHexsCommand(
+JNIEXPORT int JNICALL SendBytes(
 	JNIEnv * 	env, 
 	jobject 	obj, 
-	jstring 	did, 
-	jint 		msgtype, 
+	jstring 	did,
 	jbyteArray 	msg,
 	jint 		msglens
 ){
-	char * szDID = (char*)env->GetStringUTFChars(did,0);
-	jbyte * hexs = (jbyte*)env->GetByteArrayElements(msg,0);
+	char  * szDID = (char*)env->GetStringUTFChars(did,0);
+	jbyte * dat = (jbyte*)env->GetByteArrayElements(msg,0);
 
-	APP_BIN_DATA ABD;
-	ABD.lens = msglens;
-	memcpy(ABD.d,hexs,msglens);
-
-	int MsgType = msgtype;
-	int MsgLens = sizeof(ABD);
+	int MsgType = IOTYPE_USER_IPCAM_RAW_REQ;
+	int MsgLens = msglens;
 
 	g_pPPPPChannelMgt->PPPPSetSystemParams(
-		szDID,MsgType,(char*)&ABD,MsgLens
+		szDID,MsgType,(char*)dat,MsgLens
 		);
 
 	env->ReleaseStringUTFChars(did,szDID);
-	env->ReleaseByteArrayElements(msg,hexs,0); 
+	env->ReleaseByteArrayElements(msg,dat,0); 
 
 	return 0;
 }
@@ -577,7 +571,7 @@ static JNINativeMethod Calls[] = {
 	{"ClosePPPPLivestream", "(Ljava/lang/String;)I", (void*)ClosePPPPLivestream},
 	{"StartRecorder", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)StartRecorder},
 	{"CloseRecorder", "(Ljava/lang/String;)I", (void*)CloseRecorder},
-	{"SendHexsCommand", "(Ljava/lang/String;I[BI)I", (void*)SendHexsCommand},
+	{"SendBytes", "(Ljava/lang/String;[BI)I", (void*)SendBytes},
 	{"SendCtrlCommand", "(Ljava/lang/String;ILjava/lang/String;I)I", (void*)SendCtrlCommand},
 	{"SetAudioStatus", "(Ljava/lang/String;I)I", (void*)SetAudioStatus},
 	{"GetAudioStatus", "(Ljava/lang/String;)I", (void*)GetAudioStatus},

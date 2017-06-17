@@ -64,7 +64,7 @@ void CBSearchResults(int nTrue,const char * szMac,const char * szName,const char
 // 1. device id,
 // 2. cmd response for
 // 3. response data in json format
-void CBUILayerNotify(const char * szDID,int nCmd,const char * szJson);
+void CBUILayerNotify(const char * szDID,int nCmd,const char * data,int datalens);
 
 // callback for video YUV data
 // parameters:
@@ -189,13 +189,12 @@ JNIEXPORT int  JNICALL CloseRecorder(JNIEnv *, jobject, jstring);
 // for serial port data relay
 // parameters:
 // 3. device id
-// 4. msg type
 // 5. msg data
 // 6. msg data lens
 
 // return
 // 0: success
-JNIEXPORT int  JNICALL SendHexsCommand(JNIEnv *, jobject, jstring, jint, jbyteArray, jint);
+JNIEXPORT int  JNICALL SendBytes(JNIEnv *, jobject, jstring, jbyteArray, jint);
 
 // send device control command
 // parameters:

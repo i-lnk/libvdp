@@ -250,25 +250,36 @@ typedef enum
 
 	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ		= 0x901,	 
 	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_RESP		= 0x902,	
-	
-	IOTYPE_USER_IPCAM_SERIAL_OPEN_REQ			= 0x1001,	// ¥Úø™¥Æø⁄«Î«Û
-	IOTYPE_USER_IPCAM_SERIAL_OPEN_RESP			= 0x1002,	// ¥Úø™¥Æø⁄”¶¥
 
-	IOTYPE_USER_IPCAM_SERIAL_SEND_REQ			= 0x1003,	// ¥Æø⁄∑¢ÀÕ«Î«Û
-	IOTYPE_USER_IPCAM_SERIAL_SEND_RESP			= 0x1004,	// ¥Æø⁄∑¢ÀÕ”¶¥
-
-	IOTYPE_USER_IPCAM_SERIAL_SHUT_REQ			= 0x1005,	// ¥Æø⁄πÿ±’«Î«Û	
-	IOTYPE_USER_IPCAM_SERIAL_SHUT_RESP			= 0x1006,	// ¥Æø⁄πÿ±’”¶¥
+	IOTYPE_USER_IPCAM_RAW_REQ					= 0x1003,	// 
+	IOTYPE_USER_IPCAM_RAW_RESP					= 0x1004,	//
 
 	IOTYPE_USER_IPCAM_SET_GPIO					= 0x1007,	// …Ë÷√ GPIO
 	IOTYPE_USER_IPCAM_GET_GPIO					= 0x1008,	// ªÒ»° GPIO
 
 	IOTYPE_USER_IPCAM_SOUND_CTRL				= 0x1009,	// ∞ÎÀ´π§“Ù∆µøÿ÷∆
+
+	IOTYPE_USER_IPCAM_LST_IOT_REQ				= 0x2012,
+	IOTYPE_USER_IPCAM_LST_IOT_RESP				= 0x2013,
+	
+	IOTYPE_USER_IPCAM_DEL_IOT_REQ				= 0x2014,
+	IOTYPE_USER_IPCAM_DEL_IOT_RESP				= 0x2015,
 	
 	IOTYPE_USER_IPCAM_SET_UUID					= 0x9999,	// –¥»Î UUID
 	
     IOTYPE_USER_CMD_MAX
 }ENUM_AVIOCTRL_MSGTYPE;
+
+typedef struct _T_IOT_DEV{
+	unsigned int 	head;
+	unsigned int 	dst;
+	unsigned int 	src;
+	unsigned int 	uid;
+	unsigned char 	type;
+	unsigned char 	cmd;
+	unsigned char   lens;
+	unsigned char   d[0];
+}T_IOT_DEV,*PT_IOT_DEV;
 
 //
 // 433 ≈‰∂‘
@@ -502,12 +513,6 @@ typedef struct{
 #pragma pack(pop)
 
 typedef struct{
-	int			serial_no;
-	int			size;		// ”––ß ˝æ›≥§∂»
-	char		data[16];	//  ˝æ›‘ÿ∫…
-}SMsgAVIoctrlSerialSendReq;
-
-typedef struct{
 	int			result;		// …Ë÷√Ω·π˚
 	char		uuid[64];	// …Ë±∏P2PID
 }SMsgAVIoctrlSetUUIDReq,SMsgAVIoctrlSetUUIDResp;
@@ -569,9 +574,9 @@ SMsgAVIoctrlGetMDPReq,SMsgAVIoctrlSetMDPResp,
 SMsgAVIoctrlSetPushResp,SMsgAVIoctrlDelPushResp,
 SMsgAVIoctrlAlarmingResp,
 SMsgAVIoctrlDoorOpenResp,SMsgAVIoctrlDoorPassResp,
-SMsgAVIoctrlSerialOpenResp,SMsgAVIoctrlSerialShutResp,SMsgAVIoctrlSerialSendResp,
 SMsgAVIoctrlSetOSDResp,
-SMsgAVIoctrlSetDeviceSleepResp;
+SMsgAVIoctrlSetDeviceSleepResp,
+SMsgAVIoctrlCommonReq,SMsgAVIoctrlCommonResp;
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////// Type ENUM Define ////////////////////////////////////////////
@@ -1183,52 +1188,6 @@ typedef struct
 	unsigned char reserved[4];
 } SMsgAVIoctrlEvent;
 
-#if 0
-
-/* 	IOTYPE_USER_IPCAM_GET_EVENTCONFIG_REQ	= 0x0400,	// Get Event Config Msg Request 
- */
-/** @struct SMsgAVIoctrlGetEventConfig
- */
-typedef struct
-{
-	unsigned int	channel; 		  //Camera Index
-	unsigned char   externIoOutIndex; //extern out index: bit0->io0 bit1->io1 ... bit7->io7;=1: get this io value or not get
-    unsigned char   externIoInIndex;  //extern in index: bit0->io0 bit1->io1 ... bit7->io7; =1: get this io value or not get
-	char reserved[2];
-} SMsgAVIoctrlGetEventConfig;
- 
-/*
-	IOTYPE_USER_IPCAM_GET_EVENTCONFIG_RESP	= 0x0401,	// Get Event Config Msg Response 
-	IOTYPE_USER_IPCAM_SET_EVENTCONFIG_REQ	= 0x0402,	// Set Event Config Msg req 
-*/
-/* @struct SMsgAVIoctrlSetEventConfig
- * @struct SMsgAVIoctrlGetEventCfgResp
- */
-typedef struct
-{
-	unsigned int    channel;        // Camera Index
-	unsigned char   mail;           // enable send email
-	unsigned char   ftp;            // enable ftp upload photo
-	unsigned char   externIoOutStatus;   // enable extern io output //bit0->io0 bit1->io1 ... bit7->io7; 1:on; 0:off
-	unsigned char   p2pPushMsg;			 // enable p2p push msg
-	unsigned char   externIoInStatus;    // enable extern io input  //bit0->io0 bit1->io1 ... bit7->io7; 1:on; 0:off
-	char            reserved[3];
-}SMsgAVIoctrlSetEventConfig, SMsgAVIoctrlGetEventCfgResp;
-
-/*
-	IOTYPE_USER_IPCAM_SET_EVENTCONFIG_RESP	= 0x0403,	// Set Event Config Msg resp 
-*/
-/** @struct SMsgAVIoctrlSetEventCfgResp
- */
-typedef struct
-{
-	unsigned int channel; 	// Camera Index
-	unsigned int result;	// 0: success; otherwise: failed.
-}SMsgAVIoctrlSetEventCfgResp;
-
-#endif
-
-
 /*
 IOTYPE_USER_IPCAM_SET_ENVIRONMENT_REQ		= 0x0360,
 ** @struct SMsgAVIoctrlSetEnvironmentReq
@@ -1240,7 +1199,6 @@ typedef struct
 	unsigned char reserved[3];
 }SMsgAVIoctrlSetEnvironmentReq;
 
-
 /*
 IOTYPE_USER_IPCAM_SET_ENVIRONMENT_RESP		= 0x0361,
 ** @struct SMsgAVIoctrlSetEnvironmentResp
@@ -1251,7 +1209,6 @@ typedef struct
 	unsigned char result;		// 0: success; otherwise: failed.
 	unsigned char reserved[3];
 }SMsgAVIoctrlSetEnvironmentResp;
-
 
 /*
 IOTYPE_USER_IPCAM_GET_ENVIRONMENT_REQ		= 0x0362,
@@ -1330,7 +1287,6 @@ typedef struct
 	unsigned int storage; 	// Storage index (ex. sdcard slot = 0, internal flash = 1, ...)
 	unsigned char reserved[4];
 }SMsgAVIoctrlFormatExtStorageReq;
-
 
 /*
 IOTYPE_USER_IPCAM_FORMATEXTSTORAGE_REQ		= 0x0381,
@@ -1432,37 +1388,11 @@ typedef struct
  * IOTYPE_USER_IPCAM_SET_TIMEZONE_RESP              = 0x3B1
  */
 
-#if 0
-/* ±«¯∫Õœƒ ±÷∆≤Œ ˝*/
-typedef struct 
-{
-    unsigned int dwMonth;  		//‘¬ 0-11±Ì æ1-12∏ˆ‘¬
-    unsigned int dwWeekNo;  	//µ⁄º∏÷‹£∫0£≠µ⁄1÷‹£ª1£≠µ⁄2÷‹£ª2£≠µ⁄3÷‹£ª 3£≠µ⁄4÷‹£ª4£≠◊Ó∫Û“ª÷‹ 
-    unsigned int dwWeekDate;  	//–«∆⁄º∏£∫0£≠–«∆⁄»’£ª1£≠–«∆⁄“ª£ª2£≠–«∆⁄∂˛£ª3£≠–«∆⁄»˝£ª4£≠–«∆⁄Àƒ£ª5£≠–«∆⁄ŒÂ£ª6£≠–«∆⁄¡˘
-    unsigned int dwHour; 		//–° ±£¨ø™ º ±º‰»°÷µ∑∂Œß0£≠23£ª Ω· ¯ ±º‰»°÷µ∑∂Œß1£≠23 
-    unsigned int dwMin; 		//∑÷0£≠59
-}DMS_NET_TIMEPOINT;
-
-typedef struct
-{
-	unsigned int		dwSize;			//±æΩ·ππ¥Û–°
-    int					nTimeZone;		// ±«¯
-    char                byDstMode;		//œƒ¡Ó ±ƒ£ Ω£¨0-ƒ¨»œ£¨1-◊‘∂®“Â
-    char                byStartDst;     // «∑Ò“—æ≠ø™ º÷¥––Dst;
-    char				byRes1[10];		//±£¡Ù
-    unsigned int		dwEnableDST;	// «∑Ò∆Ù”√œƒ ±÷∆ 0£≠≤ª∆Ù”√ 1£≠∆Ù”√
-    char				byDSTBias;		//œƒ¡Ó ±∆´“∆÷µ£¨30min, 60min, 90min, 120min, “‘∑÷÷”º∆£¨¥´µ›‘≠ º ˝÷µ
-    char				byRes2[3];		//±£¡Ù
-    DMS_NET_TIMEPOINT	stBeginPoint;	//œƒ ±÷∆ø™ º ±º‰
-    DMS_NET_TIMEPOINT	stEndPoint;		//œƒ ±÷∆Õ£÷π ±º‰
-}SMsgAVIoctrlTimeZone;
-#else
 typedef struct{
 	int 	x[2];							
 	int 	nTimeZone;			// the difference between GMT in hours
 	char 	sZone[256];			// the timezone description string in multi-bytes char format
 }SMsgAVIoctrlTimeZone;
-#endif
 
 /*
 // dropbox support
@@ -1490,7 +1420,5 @@ typedef struct
 	char szAppKey[128];                  // App Key (reserved)
 	char szSecret[128];                  // Secret  (reserved)
 }SMsgAVIoctrlSetDropbox;
-
-
 
 #endif

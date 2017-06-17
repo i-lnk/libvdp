@@ -390,34 +390,6 @@ int             JsonBufferSize
     return 0;
 }
 
-static int GetSerial(
-int             Cmd,
-void *          Msg,
-char *          JsonBuffer,
-int             JsonBufferSize
-){
-    if(Msg == NULL || JsonBuffer == NULL){
-        return -1;
-    }
-    
-    SMsgAVIoctrlSerialSendReq * hRQ = (SMsgAVIoctrlSerialSendReq *)Msg;
-    
-    char hexstr[48] = {0};
-    char * p = hexstr;
-    
-    hRQ->size = hRQ->size > (int)sizeof(hRQ->data) ? (int)sizeof(hRQ->data) : hRQ->size;
-    int lens = 0;
-    int i = 0;
-    
-    for(i = 0;i < hRQ->size;i++){
-        lens += sprintf(p + lens,"%02X",hRQ->data[i]);
-    }
-    
-    sprintf(JsonBuffer,"{\"%s\":\"%s\"}","serial",hexstr);
-    
-    return 0;
-}
-
 static int GetOSD(
 int             Cmd,
 void *          Msg,
@@ -630,6 +602,42 @@ int             JsonBufferSize
     return 0;
 }
 
+static int GetIOTDevsList(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+	if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+	
+	PT_IOT_DEV hRQ = (PT_IOT_DEV)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+            "dst",hRQ->dst,
+            "src",hRQ->src,
+            "uid",hRQ->uid,
+            "type",hRQ->type);
+}
+
+static int DelIOTDevs(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+	if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+
+    SMsgAVIoctrlCommonResp * hRQ = (SMsgAVIoctrlCommonResp *)Msg;
+
+    sprintf(JsonBuffer,"{\"%s\":\"%d\"}","result",hRQ->result);
+
+	return 0;
+}
+
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUID},
 {IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPassword},
@@ -655,7 +663,6 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_TIMEZONE_RESP,GetTimezone},
 {IOTYPE_USER_IPCAM_GET_SDCARD_RESP,GetSDCard},
 {IOTYPE_USER_IPCAM_FORMATEXTSTORAGE_RESP,GetFormatExtStorage},
-{IOTYPE_USER_IPCAM_SERIAL_SEND_REQ,GetSerial},
 {IOTYPE_USER_IPCAM_GET_OSD_RESP,GetOSD},
 {IOTYPE_USER_IPCAM_SET_OSD_RESP,SetOSD},
 {IOTYPE_USER_IPCAM_SET_433_RESP,Get433},
@@ -668,6 +675,8 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacity},
 {IOTYPE_USER_IPCAM_LISTEVENT_RESP,GetEventList},
 {IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_RESP,GetEventListByMonth},
+{IOTYPE_USER_IPCAM_LST_IOT_RESP,GetIOTDevsList},
+{IOTYPE_USER_IPCAM_DEL_IOT_RESP,DelIOTDevs},
 {0,NULL}
 };
 

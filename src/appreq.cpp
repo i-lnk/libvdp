@@ -122,6 +122,7 @@ static int SetUUIDData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlSetUUIDReq sMsg;
@@ -146,6 +147,7 @@ static int GetGPIOData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlGetGPIOReq sMsg;
@@ -163,6 +165,7 @@ static int SetGPIOData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlSetGPIOReq sMsg;
@@ -183,6 +186,7 @@ static int GetWirelessData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlGetWifiReq sMsg;
@@ -193,6 +197,7 @@ static int SetWirelessData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlSetWifiReq sMsg;
@@ -220,6 +225,7 @@ static int SetPushData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlSetPushReq sMsg;
@@ -243,6 +249,7 @@ static int DelPushData(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlDelPushReq sMsg;
@@ -265,6 +272,7 @@ static int SetPTZ(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char szControl[8] = {0};
@@ -285,6 +293,7 @@ static int SetStreamCtrl(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char szChannel[8] = {0};
@@ -307,6 +316,7 @@ static int GetStreamCtrl(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlGetStreamCtrlReq sMsg;
@@ -317,6 +327,7 @@ static int SetRecordSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char szChannel[8] = {0};
@@ -362,6 +373,7 @@ static int GetRecordSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlGetRecordReq sMsg;
@@ -372,6 +384,7 @@ static int SetLock(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char szDoorNumb[8]  = {0};
@@ -396,6 +409,7 @@ static int SetLockPass(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char szOrigPass[32] = {0};
@@ -417,6 +431,7 @@ static int SetVideo(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char szFlipEnable[8] = {0};
@@ -447,6 +462,7 @@ static int GetVideo(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlGetVideoModeReq sMsg;
@@ -457,6 +473,7 @@ static int SetSystem(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char szPower[8] = {0};
@@ -479,6 +496,7 @@ static int GetSystem(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlGetSystemReq sMsg;
@@ -490,6 +508,7 @@ static int SetMotionSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -531,6 +550,7 @@ static int SetMotionScheduleEx(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -579,6 +599,7 @@ static int GetMotionSchedule(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlGetMDPReq sMsg;
@@ -591,6 +612,7 @@ static int GetMotionScheduleEx(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlMDAlarmReq sMsg;
@@ -602,6 +624,7 @@ static int GetTimeZone(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlTimeZone sMsg;
@@ -612,6 +635,7 @@ static int SetTimeZone(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -631,6 +655,7 @@ static int XetSDCard(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlFormatExtStorageReq sMsg;
@@ -638,26 +663,22 @@ static int XetSDCard(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-static int SerialSend(
+static int PutRaw(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szMsg,
+	int				CgiLens,
 	void *			lpParams
 ){
-	SMsgAVIoctrlSerialSendReq sMsg;
-
-	PAPP_BIN_DATA hABD = (PAPP_BIN_DATA)szMsg;
-	sMsg.size = hABD->lens;
-	sMsg.serial_no = 0;
-	memcpy(sMsg.data,hABD->d,sMsg.size);
-	
-	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+	const char * sMsg = szMsg;
+	return avSendIOCtrl(avIdx,avMsgType,sMsg,CgiLens);
 }
 
 static int GetAPList(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	SMsgAVIoctrlListWifiApReq sMsg;
@@ -668,6 +689,7 @@ static int SetSoundMode(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -687,6 +709,7 @@ static int SetPassword(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -706,6 +729,7 @@ static int GetOSD(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -726,6 +750,7 @@ static int SetOSD(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -765,6 +790,7 @@ static int Set433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -792,6 +818,7 @@ static int Get433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -808,6 +835,7 @@ static int Cfg433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -835,6 +863,7 @@ static int Del433Dev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -858,6 +887,7 @@ static int Cfg433DevExit(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
+	int				CgiLens,
 	void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -873,6 +903,7 @@ static int SetUpdateUrl(
      int			avIdx,
      int			avMsgType,
      const char *	szCgi,
+     int			CgiLens,
      void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -896,6 +927,7 @@ static int GetUpdateProgress(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -911,6 +943,7 @@ static int GetCapacity(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -926,6 +959,7 @@ static int SetPlayRecordControl(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -979,6 +1013,7 @@ static int GetEventList(
 	int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
 	char * Cgi = (char*)szCgi;
@@ -1046,6 +1081,7 @@ static int GetEventListByMonth(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -1071,6 +1107,7 @@ static int SetPresetPostion(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -1091,6 +1128,7 @@ static int GetPresetPostion(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -1111,6 +1149,7 @@ static int GetCameraView(
     int             avIdx,
     int             avMsgType,
     const char *	szCgi,
+    int				CgiLens,
     void *			lpParams
 ){
     char * Cgi = (char*)szCgi;
@@ -1127,6 +1166,42 @@ static int GetCameraView(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int GetIOTDevsList(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    int				CgiLens,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    SMsgAVIoctrlCommonReq sMsg;
+    memset(&sMsg,0,sizeof(sMsg));
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+static int DelIOTDevs(
+    int             avIdx,
+    int             avMsgType,
+    const char *	szCgi,
+    int				CgiLens,
+    void *			lpParams
+){
+    char * Cgi = (char*)szCgi;
+    
+    T_IOT_DEV sMsg;
+    
+    memset(&sMsg,0,sizeof(sMsg));
+
+	char src[32] = {0};
+	
+	GetCgiParam(src,Cgi,sizeof(src),"addr=","&");
+
+	sMsg.src = atoi(src);
+    
+    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
 
 // fucntion list for each command
 
@@ -1158,7 +1233,7 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SET_TIMEZONE_REQ,SetTimeZone},
 	{IOTYPE_USER_IPCAM_FORMATEXTSTORAGE_REQ,XetSDCard},
 	{IOTYPE_USER_IPCAM_GET_SDCARD_REQ,XetSDCard},
-	{IOTYPE_USER_IPCAM_SERIAL_SEND_REQ,SerialSend},
+	{IOTYPE_USER_IPCAM_RAW_REQ,PutRaw},
 	{IOTYPE_USER_IPCAM_LISTWIFIAP_REQ,GetAPList},
 	{IOTYPE_USER_IPCAM_SOUND_CTRL,SetSoundMode},
 	{IOTYPE_USER_IPCAM_SETPASSWORD_REQ,SetPassword},
@@ -1178,6 +1253,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SETPRESET_REQ,SetPresetPostion},
 	{IOTYPE_USER_IPCAM_GETPRESET_REQ,GetPresetPostion},
 	{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ,GetCameraView},
+	{IOTYPE_USER_IPCAM_LST_IOT_REQ,GetIOTDevsList},
+	{IOTYPE_USER_IPCAM_DEL_IOT_REQ,DelIOTDevs},
 	{0,NULL}
 };
 
@@ -1185,6 +1262,7 @@ int SendCmds(
 	int 			Idx,
 	int				MsgType,
 	const char *	Cgi,
+	int				CgiLens,
 	void *			Params
 ){
 //	Log3("CCCCCCCCCCCCall SendCmds:[%08X].\n",MsgType);
@@ -1199,7 +1277,9 @@ int SendCmds(
 				Idx,
 				hACC[i].CmdType,
 				Cgi,
-				Params);
+				CgiLens,
+				Params
+				);
 		}
 	}
 
