@@ -618,7 +618,8 @@ int             JsonBufferSize
             "dst",hRQ->dst,
             "src",hRQ->src,
             "uid",hRQ->uid,
-            "type",hRQ->type);
+            "type",hRQ->type
+            );
 
 	return 0;
 }

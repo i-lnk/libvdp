@@ -530,6 +530,7 @@ void * IOCmdRecvProcess(
         
         switch(IOCtrlType){
 			case IOTYPE_USER_IPCAM_RAW_RESP: // for byte data response
+				memcpy(MsgStr,hCCH->d,hCCH->len);
 				break;
 			case IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP:{
 					SMsgAVIoctrlPlayRecordResp * hRQ = (SMsgAVIoctrlPlayRecordResp *)hCCH->d;
@@ -598,6 +599,8 @@ void * IOCmdRecvProcess(
         jstring jstring_did = hEnv->NewStringUTF(hPC->szDID);
         jbyteArray jbyteArray_msg = hEnv->NewByteArray(hCCH->len);
 		jbyte *	   jbyte_msg = (jbyte *)(hEnv->GetByteArrayElements(jbyteArray_msg,0));
+
+		memcpy(jbyte_msg,MsgStr,hCCH->len);
         
         hEnv->CallVoidMethod(g_CallBack_Handle,g_CallBack_UILayerNotify,
 			jstring_did,
