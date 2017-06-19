@@ -663,17 +663,6 @@ static int XetSDCard(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-static int PutRaw(
-	int				avIdx,
-	int				avMsgType,
-	const char *	szMsg,
-	int				CgiLens,
-	void *			lpParams
-){
-	const char * sMsg = szMsg;
-	return avSendIOCtrl(avIdx,avMsgType,sMsg,CgiLens);
-}
-
 static int GetAPList(
 	int				avIdx,
 	int				avMsgType,
@@ -1196,7 +1185,6 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SET_TIMEZONE_REQ,SetTimeZone},
 	{IOTYPE_USER_IPCAM_FORMATEXTSTORAGE_REQ,XetSDCard},
 	{IOTYPE_USER_IPCAM_GET_SDCARD_REQ,XetSDCard},
-	{IOTYPE_USER_IPCAM_RAW_REQ,PutRaw},
 	{IOTYPE_USER_IPCAM_LISTWIFIAP_REQ,GetAPList},
 	{IOTYPE_USER_IPCAM_SOUND_CTRL,SetSoundMode},
 	{IOTYPE_USER_IPCAM_SETPASSWORD_REQ,SetPassword},

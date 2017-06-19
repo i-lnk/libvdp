@@ -446,7 +446,17 @@ void * IOCmdSendProcess(
 				}
 				
 				while(hPC->iocmdSending){
-					ret = SendCmds(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hCmds->CgiLens,hPC);
+					switch(hCmds->AppType){
+						case IOTYPE_USER_IPCAM_DEL_IOT_REQ:
+						case IOTYPE_USER_IPCAM_LST_IOT_REQ:
+						case IOTYPE_USER_IPCAM_RAW_REQ: // for byte data request
+							ret = avSendIOCtrl(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hCmds->CgiLens);
+							break;
+						default:
+							ret = SendCmds(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hCmds->CgiLens,hPC);
+							break;
+					}
+					
 					if(ret == 0){
 						break;
 					}
