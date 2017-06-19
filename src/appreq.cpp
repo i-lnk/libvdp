@@ -1166,43 +1166,6 @@ static int GetCameraView(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-static int GetIOTDevsList(
-    int             avIdx,
-    int             avMsgType,
-    const char *	szCgi,
-    int				CgiLens,
-    void *			lpParams
-){
-    char * Cgi = (char*)szCgi;
-    
-    SMsgAVIoctrlCommonReq sMsg;
-    memset(&sMsg,0,sizeof(sMsg));
-    
-    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
-}
-
-static int DelIOTDevs(
-    int             avIdx,
-    int             avMsgType,
-    const char *	szCgi,
-    int				CgiLens,
-    void *			lpParams
-){
-    char * Cgi = (char*)szCgi;
-    
-    T_IOT_DEV sMsg;
-    
-    memset(&sMsg,0,sizeof(sMsg));
-
-	char src[32] = {0};
-	
-	GetCgiParam(src,Cgi,sizeof(src),"addr=","&");
-
-	sMsg.src = atoi(src);
-    
-    return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
-}
-
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -1253,8 +1216,6 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SETPRESET_REQ,SetPresetPostion},
 	{IOTYPE_USER_IPCAM_GETPRESET_REQ,GetPresetPostion},
 	{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ,GetCameraView},
-	{IOTYPE_USER_IPCAM_LST_IOT_REQ,GetIOTDevsList},
-	{IOTYPE_USER_IPCAM_DEL_IOT_REQ,DelIOTDevs},
 	{0,NULL}
 };
 

@@ -465,13 +465,14 @@ JNIEXPORT int JNICALL SendBytes(
 	JNIEnv * 	env, 
 	jobject 	obj, 
 	jstring 	did,
+	jint		msgtype,
 	jbyteArray 	msg,
 	jint 		msglens
 ){
 	char  * szDID = (char*)env->GetStringUTFChars(did,0);
 	jbyte * dat = (jbyte*)env->GetByteArrayElements(msg,0);
 
-	int MsgType = IOTYPE_USER_IPCAM_RAW_REQ;
+	int MsgType = msgtype;
 	int MsgLens = msglens;
 
 	g_pPPPPChannelMgt->PPPPSetSystemParams(
@@ -571,7 +572,7 @@ static JNINativeMethod Calls[] = {
 	{"ClosePPPPLivestream", "(Ljava/lang/String;)I", (void*)ClosePPPPLivestream},
 	{"StartRecorder", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)StartRecorder},
 	{"CloseRecorder", "(Ljava/lang/String;)I", (void*)CloseRecorder},
-	{"SendBytes", "(Ljava/lang/String;[BI)I", (void*)SendBytes},
+	{"SendBytes", "(Ljava/lang/String;I[BI)I", (void*)SendBytes},
 	{"SendCtrlCommand", "(Ljava/lang/String;ILjava/lang/String;I)I", (void*)SendCtrlCommand},
 	{"SetAudioStatus", "(Ljava/lang/String;I)I", (void*)SetAudioStatus},
 	{"GetAudioStatus", "(Ljava/lang/String;)I", (void*)GetAudioStatus},

@@ -602,45 +602,6 @@ int             JsonBufferSize
     return 0;
 }
 
-static int GetIOTDevsList(
-int             Cmd,
-void *          Msg,
-char *          JsonBuffer,
-int             JsonBufferSize
-){
-	if(Msg == NULL || JsonBuffer == NULL){
-        return -1;
-    }
-	
-	PT_IOT_DEV hRQ = (PT_IOT_DEV)Msg;
-
-	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
-            "dst",hRQ->dst,
-            "src",hRQ->src,
-            "uid",hRQ->uid,
-            "type",hRQ->type
-            );
-
-	return 0;
-}
-
-static int DelIOTDevs(
-int             Cmd,
-void *          Msg,
-char *          JsonBuffer,
-int             JsonBufferSize
-){
-	if(Msg == NULL || JsonBuffer == NULL){
-        return -1;
-    }
-
-    SMsgAVIoctrlCommonResp * hRQ = (SMsgAVIoctrlCommonResp *)Msg;
-
-    sprintf(JsonBuffer,"{\"%s\":\"%d\"}","result",hRQ->result);
-
-	return 0;
-}
-
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUID},
 {IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPassword},
@@ -678,8 +639,6 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacity},
 {IOTYPE_USER_IPCAM_LISTEVENT_RESP,GetEventList},
 {IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_RESP,GetEventListByMonth},
-{IOTYPE_USER_IPCAM_LST_IOT_RESP,GetIOTDevsList},
-{IOTYPE_USER_IPCAM_DEL_IOT_RESP,DelIOTDevs},
 {0,NULL}
 };
 

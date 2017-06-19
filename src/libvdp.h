@@ -194,7 +194,7 @@ JNIEXPORT int  JNICALL CloseRecorder(JNIEnv *, jobject, jstring);
 
 // return
 // 0: success
-JNIEXPORT int  JNICALL SendBytes(JNIEnv *, jobject, jstring, jbyteArray, jint);
+JNIEXPORT int  JNICALL SendBytes(JNIEnv *, jobject, jstring, jint, jbyteArray, jint);
 
 // send device control command
 // parameters:

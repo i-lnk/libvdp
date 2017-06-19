@@ -529,6 +529,8 @@ void * IOCmdRecvProcess(
 		hCCH->len = ret;
         
         switch(IOCtrlType){
+			case IOTYPE_USER_IPCAM_DEL_IOT_RESP
+			case IOTYPE_USER_IPCAM_LST_IOT_RESP:
 			case IOTYPE_USER_IPCAM_RAW_RESP: // for byte data response
 				memcpy(MsgStr,hCCH->d,hCCH->len);
 				break;
