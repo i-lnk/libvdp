@@ -507,18 +507,23 @@ void * IOCmdRecvProcess(
 	}
 #endif
 
-	char Params[2048] = {0};
-    char MsgStr[8192] = {0};
-
 	unsigned int IOCtrlType = 0;
-	CMD_CHANNEL_HEAD * hCCH = (CMD_CHANNEL_HEAD*)Params;
+
 	int avIdx = hPC->avIdx;
+	int jbyteArrayLens = 8192;
+	
+	char D[2048] = {0};
+	char S[8192] = {0};
+
+	CMD_CHANNEL_HEAD * hCCH = (CMD_CHANNEL_HEAD*)D;
+
+	jbyteArray jbyteArray_msg = hEnv->NewByteArray(jbyteArrayLens);
 
     while(hPC->iocmdRecving){
 		int ret = avRecvIOCtrl(avIdx,
 			&IOCtrlType,
 			 hCCH->d,
-			 sizeof(Params) - sizeof(CMD_CHANNEL_HEAD),
+			 sizeof(D) - sizeof(CMD_CHANNEL_HEAD),
 			 100);
 
 		if(ret < 0){
@@ -542,7 +547,7 @@ void * IOCmdRecvProcess(
 			case IOTYPE_USER_IPCAM_DEL_IOT_RESP:
 			case IOTYPE_USER_IPCAM_LST_IOT_RESP:
 			case IOTYPE_USER_IPCAM_RAW_RESP: // for byte data response
-				memcpy(MsgStr,hCCH->d,hCCH->len);
+				hEnv->SetByteArrayRegion(jbyteArray_msg, 0, hCCH->len, (const jbyte *)hCCH->d);
 				break;
 			case IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP:{
 					SMsgAVIoctrlPlayRecordResp * hRQ = (SMsgAVIoctrlPlayRecordResp *)hCCH->d;
@@ -599,42 +604,37 @@ void * IOCmdRecvProcess(
                 }
                 break;
             default:
-                Rsp2Json(IOCtrlType, hCCH->d, MsgStr, sizeof(MsgStr));
-				hCCH->len = strlen(MsgStr);
+				memset(S,0,sizeof(S));
+                ParseResponseForUI(IOCtrlType, hCCH->d, S, jbyteArrayLens);
+				hCCH->len = strlen(S);
+				hEnv->SetByteArrayRegion(jbyteArray_msg, 0, hCCH->len, (const jbyte *)S);
+				Log3("response parse to json is:[%s].",S);
                 break;
         }
-        
-        Log3("json:[%s].",MsgStr);
         
         GET_LOCK( &g_CallbackContextLock );	
         
         jstring jstring_did = hEnv->NewStringUTF(hPC->szDID);
-        jbyteArray jbyteArray_msg = hEnv->NewByteArray(hCCH->len);
-		jbyte *	   jbyte_msg = (jbyte *)(hEnv->GetByteArrayElements(jbyteArray_msg,0));
-
-		memcpy(jbyte_msg,MsgStr,hCCH->len);
         
-        hEnv->CallVoidMethod(g_CallBack_Handle,g_CallBack_UILayerNotify,
+        hEnv->CallVoidMethod(
+			g_CallBack_Handle,
+			g_CallBack_UILayerNotify,
 			jstring_did,
 			IOCtrlType,
 			jbyteArray_msg,
 			hCCH->len
 			);
-        
-        hEnv->DeleteLocalRef(jstring_did);
-        hEnv->ReleaseByteArrayElements(jbyteArray_msg,jbyte_msg,0);
-		hEnv->DeleteLocalRef(jbyteArray_msg);
+
+		hEnv->DeleteLocalRef(jstring_did);
         
         PUT_LOCK( &g_CallbackContextLock );	
         
         Log3("[X:%s]=====>call UILayerNotify done by cmd:[%d].\n",hPC->szDID,IOCtrlType);
         
-        memset(Params,0,sizeof(Params));
-        memset(MsgStr,0,sizeof(MsgStr));
-        
-        // here we process command for tutk
-		// ...
+        memset(D,0,sizeof(D));
     }
+
+	hEnv->DeleteLocalRef(jbyteArray_msg);
 
 #ifdef PLATFORM_ANDROID
 	if(isAttached) g_JavaVM->DetachCurrentThread();

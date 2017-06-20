@@ -23,6 +23,10 @@ jmethodID g_CallBack_UILayerNotify = NULL;
 JavaVM * g_JavaVM = NULL;
 static const char * classPathName = ANDROID_CLASS_PATH;
 #else
+void   JNIEnv::SetByteArrayRegion(char * a, int b, int c, char * d){
+	memcpy(a,&d[b],c);
+}
+
 void * JNIEnv::GetByteArrayElements(char * a, int b){
     return a;
 }

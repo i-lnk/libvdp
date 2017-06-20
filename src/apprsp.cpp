@@ -642,7 +642,7 @@ static APP_CMD_RESP hACR[] = {
 {0,NULL}
 };
 
-int Rsp2Json(
+int ParseResponseForUI(
     int             Cmd,
     void *          Msg,
     char *          JsonBuffer,
