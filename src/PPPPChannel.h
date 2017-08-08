@@ -94,16 +94,6 @@ typedef struct _CMD_CHANNEL_HEAD
 	char 		   d[0];
 }CMD_CHANNEL_HEAD, *PCMD_CHANNEL_HEAD;
 
-typedef enum{
-	STATUS_SESSION_START = 1,		
-	STATUS_SESSION_CLOSE,		
-	STATUS_SESSION_IDLE,
-	STATUS_SESSION_DIED,
-	STATUS_SESSION_START_PLAY,
-	STATUS_SESSION_PLAYING,
-	STATUS_SESSION_CLOSE_PLAY,
-}SESSION_STATUS;
-
 typedef double UINT64;
 
 class CPPPPChannel
@@ -121,13 +111,6 @@ public:
 
     int  Start(char * usr,char * pwd,char * server);
 	void Close();
-
-	int StartMediaChannel();
-    int StartVideoChannel();
-	int StartAudioChannel();
-    int StartAlarmChannel();
-    int StartIOCmdChannel();
-	int StartIOSesChannel();
 	
 	int StartMediaStreams(
 		const char * url,
@@ -160,34 +143,34 @@ public:
 	// 
 	CCircleBuffer *		hAudioGetList;
 	CCircleBuffer *		hAudioPutList;
-	
-	COMMO_LOCK			SessionStatusLock;
-	int					SessionStatus;
 
 	char 				szURL[256];		//
 
 	char 				szDID[64];		//
     char 				szUsr[64];		//
     char 				szPwd[64]; 		//
-    char 				szServer[1024];	//
-
-	int					avstremChannel; // 
+    char 				szSvr[1024];	//
+ 
 	int					speakerChannel;	//
 	int					playrecChannel; //
+	
 	int					sessionID;		//
-	int					avIdx;			//
-	int					spIdx;			//
+	int					avIdx;			// for video recv
+	int					spIdx;			// for audio send
+	int					rpIdx;			// for vidoe replay
+	
 	unsigned int		deviceType;		//
     int                 deviceStandby;
+	
+	int					startSession;	//
 
 	int					SID; 			// P2P session id
 	
-    int 				mediaEnabled;	// enable recv thread get media stream data.
 	int					voiceEnabled;	// enable voice
 	int					audioEnabled;	// enable audio
 	int					speakEnabled;	// for vad detect we talk to device,set this to zero.
 
-	int					mediaLinking;
+	int					mediaLinking;	
 	int 				videoPlaying;	
 	int 				audioPlaying;		
 	int 				iocmdRecving;	
@@ -225,13 +208,15 @@ public:
 	char 			* 	hVideoFrame;	//
 	unsigned int		FrameTimestamp; //				;
 	
-	COMMO_LOCK			DisplayLock;	//
-	COMMO_LOCK			SndplayLock;	//
-	COMMO_LOCK			CaptureLock;	//
+	COMMO_LOCK			DisplayLock;	// lock for yuv frame data
+	COMMO_LOCK			CaptureLock;	// lock for mp4 recroding thread
+	COMMO_LOCK			SessionLock;	// lock for session core process
+	COMMO_LOCK			PlayingLock;	// lock for start playing function
+	COMMO_LOCK			DestoryLock;	// lock for close playing function
 
 	char			*	hRecordFile;
 
-	char 				recordingExit;			// 
+	char 				recordingExit;  // 
 
 	// for avi proc
 	CCircleBuffer *		hVideoBuffer;	// 

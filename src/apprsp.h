@@ -28,7 +28,7 @@ typedef struct {
     CMD_RP          RspJson;
 }APP_CMD_RESP;
 
-int Rsp2Json(
+int ParseResponseForUI(
     int             Cmd,
     void *          Msg,
     char *          JsonBuffer,

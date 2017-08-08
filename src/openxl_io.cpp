@@ -35,6 +35,8 @@
 #include "utility.h"
 #include "openxl_io.h"
 
+static COMMO_LOCK OpenSLLock = PTHREAD_MUTEX_INITIALIZER;
+
 #ifdef PLATFORM_ANDROID
 
 #include <jni.h>
@@ -781,6 +783,10 @@ OPENXL_STREAM * InitOpenXLStream(
 	bqRecordCallback cbr,
     bqPlayerCallback cbp
 ){
+	if(TRY_LOCK(&OpenSLLock) != 0){
+		return NULL;
+	}
+
     OPENXL_STREAM * p;
     p = (OPENXL_STREAM *)malloc(sizeof(OPENXL_STREAM));
     memset(p, 0, sizeof(OPENXL_STREAM));
@@ -833,6 +839,8 @@ OPENXL_STREAM * InitOpenXLStream(
     
 jumperr:
     free(p); p = NULL;
+
+	PUT_LOCK(&OpenSLLock);
     
     return NULL;
 }
@@ -842,6 +850,8 @@ void FreeOpenXLStream(OPENXL_STREAM *p){
 
     if (p == NULL)
     return;
+
+	PUT_LOCK(&OpenSLLock);
 
 #ifdef PLATFORM_ANDROID
     openSLDestroyEngine(p);

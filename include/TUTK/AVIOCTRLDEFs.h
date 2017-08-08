@@ -387,8 +387,8 @@ typedef struct{
 	char	AppKey[64];
 	char	Master[64];
 	char	Alias [64];
-	char 	FCMKey[64];	// for google msg push
 	int		Type;
+	char 	FCMKey[64];	// for google msg push
 }SMsgAVIoctrlSetPushReq,SMsgAVIoctrlDelPushReq;
 
 //NEW ADD 东舜开发的移动侦测报警联动结构体

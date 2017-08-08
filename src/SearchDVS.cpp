@@ -438,6 +438,7 @@ void CSearchDVS::ProcMessageGoke(const char * lpMsg){
 
 	GET_LOCK( &g_CallbackContextLock );
 
+	
 	m_envLocal->CallVoidMethod(
 		g_CallBack_Handle,
 		g_CallBack_SearchResults,
