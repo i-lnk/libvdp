@@ -200,7 +200,7 @@ JNIEXPORT void JNICALL PPPPInitialize(JNIEnv *env ,jobject obj, jstring svr)
 
     Log3("init pppp lib.");
     IOTC_Set_Max_Session_Number(128);
-    //	IOTC_Setup_Session_Alive_Timeout(6);
+    IOTC_Setup_Session_Alive_Timeout(5);
     
     int ret = IOTC_Initialize2(0);
     if(ret != IOTC_ER_NoERROR){
