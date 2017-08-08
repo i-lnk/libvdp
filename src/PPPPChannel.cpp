@@ -1958,6 +1958,7 @@ int CPPPPChannel::CloseMediaStreams(
 		Log3("close audio send server with idx:[%d]",spIdx);
 		avServStop(spIdx);
 	}
+	
 	/*
 	if(speakerChannel >= 0){
 		Log3("shutdown audio send server with sid:[%d] channel:[%d]",SID,speakerChannel);

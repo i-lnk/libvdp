@@ -26,6 +26,7 @@
 
 class JNIEnv{
 public:
+	void * SetByteArrayRegion(char * a, int b, int c, char * d);
     void * GetByteArrayElements(char * a, int b);
     void   ReleaseByteArrayElements(char * a, char * b, int c);
     char * GetStringUTFChars(char * a, int b);
