@@ -24,6 +24,13 @@
 #define JNIEXPORT
 #define JNICALL
 
+typedef void * jobject;
+typedef char * jbyteArray;
+typedef char * jstring;
+typedef  int   jint;
+typedef void * jmethodID;
+typedef char   jbyte;
+
 class JNIEnv{
 public:
 	void * SetByteArrayRegion(char * a, int b, int c, const jbyte * d);
@@ -36,13 +43,6 @@ public:
     char * NewByteArray(int b);
     void   CallVoidMethod(void * a, void * b, ...);
 };
-
-typedef void * jobject;
-typedef char * jbyteArray;
-typedef char * jstring;
-typedef  int   jint;
-typedef void * jmethodID;
-typedef char   jbyte;
 
 // on iOS platform, you must pass this to all JNICALL functions.
 // example:
