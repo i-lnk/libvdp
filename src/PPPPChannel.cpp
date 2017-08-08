@@ -541,7 +541,7 @@ static void * VideoPlayProcess(
 	return NULL;
 }
 
-void * VideoRecvProcess(void * hVoid){
+static void * VideoRecvProcess(void * hVoid){
 
 	SET_THREAD_NAME("VideoRecvProcess");
 	
@@ -692,6 +692,8 @@ void * VideoRecvProcess(void * hVoid){
     hPC->hVideoFrame = NULL;
     
 	PUT_LOCK(&hPC->DisplayLock);
+    
+    return NULL;
 }
 
 static void * AudioRecvProcess(
