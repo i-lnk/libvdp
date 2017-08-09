@@ -1327,7 +1327,6 @@ void * MeidaCoreProcess(
 
 connect:
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
-    
 	hPC->speakerChannel = -1;
 	
 	Log3("[1:%s]=====>start get free session id for client connection.",
@@ -1441,6 +1440,8 @@ connect:
 		hPC->szDID,
 		resend
 		);
+    
+    hPC->mediaLinking = 1;
 
 	hPC->iocmdSending = 1;
     hPC->iocmdRecving = 1;
@@ -1515,7 +1516,9 @@ jumperr:
     
     hPC->PPPPClose();
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
-    hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status);
+    hPC->MsgNotify(hEnv,
+                   MSG_NOTIFY_TYPE_PPPP_STATUS,
+                   status == 0 ? PPPP_STATUS_CONNECT_FAILED : status);
 
 #ifdef PLATFORM_ANDROID
 	if(isAttached) g_JavaVM->DetachCurrentThread();
@@ -1710,12 +1713,15 @@ void CPPPPChannel::Close()
 {
 	mediaLinking = 0;
 
-	PPPPClose();
-
 	while(1){
 		if(TRY_LOCK(&SessionLock) == 0){
 			break;
 		}
+        
+        IOTC_Connect_Stop_BySID(sessionID);
+        avClientExit(SID,avIdx);
+        
+        mediaLinking = 0;
 		
 		Log3("waiting for core media process exit.");
 		sleep(1);
