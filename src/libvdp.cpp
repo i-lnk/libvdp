@@ -25,7 +25,7 @@ static const char * classPathName = ANDROID_CLASS_PATH;
 #else
 void   JNIEnv::SetByteArrayRegion(char * a, int b, int c, const jbyte * d){
 	memcpy(a,&d[b],c);
-    a[c + 1] = 0;
+    a[c] = 0;
 }
 
 void * JNIEnv::GetByteArrayElements(char * a, int b){
