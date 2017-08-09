@@ -1493,7 +1493,7 @@ connect:
 		struct st_SInfo sInfo;
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
 		if(ret < 0){
-			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DISCONNECT);
+			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
 			Log3("[7:%s]=====>stop old media process start.\n",hPC->szDID);
 			hPC->mediaLinking = 0;
 			hPC->PPPPClose();
@@ -1701,7 +1701,6 @@ int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
     strcpy(szSvr, svr);
 
 	Log3("start pppp connection to device with uuid:[%s].",szDID);
-	mediaLinking = 1;
 	pthread_create(&mediaCoreThread,NULL,MeidaCoreProcess,(void*)this);
 
 	PUT_LOCK(&SessionLock);
@@ -2047,19 +2046,13 @@ int CPPPPChannel::StartMediaStreams(
 		memcpy(szURL,url,strlen(url));
 	}
 
-	SendAVAPIStartIOCtrl();
+    ret = SendAVAPIStartIOCtrl();
 	
 	PUT_LOCK(&DestoryLock);
 
-	Log3("media stream start done.");
+    Log3("media stream start %s.",ret == 0 ? "done" : "fail");
 
-	ret = 0;
-	
-jumperr:
-
-	Log3("media stream start fail.");
-
-	return ret;
+    return ret;
 }
 
 int CPPPPChannel::SetSystemParams(int type,char * msg,int len)
