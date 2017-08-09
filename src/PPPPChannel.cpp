@@ -623,7 +623,7 @@ static void * VideoRecvProcess(void * hVoid){
 					usleep(10000);
 					continue;
 				default:
-					Log3("tutk recv frame with error:[%d],avIdx:[%d].",ret,hPC->avIdx);
+//					Log3("tutk recv frame with error:[%d],avIdx:[%d].",ret,hPC->avIdx);
 					break;
 			}
 			continue;
@@ -806,7 +806,7 @@ jump_rst:
 					usleep(10000);
 					continue;
 				default:
-					Log3("tutk recv frame with error:[%d],avIdx:[%d].",ret,hPC->avIdx);
+//					Log3("tutk recv frame with error:[%d],avIdx:[%d].",ret,hPC->avIdx);
 					break;
 			}
 			continue;
