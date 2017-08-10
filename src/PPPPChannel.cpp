@@ -1516,9 +1516,7 @@ jumperr:
     
     hPC->PPPPClose();
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
-    hPC->MsgNotify(hEnv,
-                   MSG_NOTIFY_TYPE_PPPP_STATUS,
-                   status == 0 ? PPPP_STATUS_CONNECT_FAILED : status);
+    hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status == 0 ? PPPP_STATUS_CONNECT_FAILED : status);
 
 #ifdef PLATFORM_ANDROID
 	if(isAttached) g_JavaVM->DetachCurrentThread();
@@ -1569,6 +1567,7 @@ CPPPPChannel::CPPPPChannel(
 	recordingThread = (pthread_t)-1;
 
 	deviceType = -1;
+	connectionStatus = -1;
 
 	recordingExit = 0;
 	avIdx = spIdx = rpIdx = sessionID = -1;
@@ -1652,6 +1651,8 @@ void CPPPPChannel::MsgNotify(
     int Param
 ){
     GET_LOCK( &g_CallbackContextLock );
+
+	connectionStatus = Param;
 
     if(g_CallBack_Handle != NULL && g_CallBack_ConnectionNotify!= NULL){
         jstring jsDID = ((JNIEnv *)hEnv)->NewStringUTF(szDID);
@@ -1995,6 +1996,7 @@ int CPPPPChannel::StartMediaStreams(
 ){    
     //F_LOG;	
 	int ret = 0;
+	int status = 0;
      
     if(SID < 0) return -1;
 
@@ -2007,6 +2009,24 @@ int CPPPPChannel::StartMediaStreams(
 		Log3("media stream will be destory.");
 		PUT_LOCK(&PlayingLock);
 		return -1;
+	}
+
+	while(1){
+		GET_LOCK( &g_CallbackContextLock );
+		status = connectionStatus;
+		PUT_LOCK( &g_CallbackContextLock );
+
+		if(status == PPPP_STATUS_ON_LINE){
+			break;
+		}else if(status == PPPP_STATUS_CONNECTING){
+			Log3("media stream connecting, wait for a moment.");
+			sleep(1); continue;
+		}else{
+			Log3("media stream already destory.");
+			PUT_LOCK(&PlayingLock);
+			PUT_LOCK(&DestoryLock);
+			return -1;
+		}
 	}
 
 	Log3("media stream start here.");

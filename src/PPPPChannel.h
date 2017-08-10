@@ -161,6 +161,7 @@ public:
 	
 	unsigned int		deviceType;		//
     int                 deviceStandby;
+	int					connectionStatus;	//
 	
 	int					startSession;	//
 
