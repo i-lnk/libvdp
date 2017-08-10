@@ -185,6 +185,10 @@ typedef enum
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_REQ      = 0x502,
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_RESP     = 0x503,
 
+	IOTYPE_XM_CALL_REQ							= 0x700,	// Device向App发呼叫请求
+	IOTYPE_XM_CALL_RESP							= 0x701,	// App呼叫应答
+	IOTYPE_XM_CALL_IND							= 0x702,	// Device告知App已有移动设备接听指令或有设备呼叫
+
 	IOTYPE_USER_IPCAM_DEVICESLEEP_REQ			= 0x720, 	// 休眠
 	IOTYPE_USER_IPCAM_DEVICESLEEP_RESP			= 0x721, 	// 休眠应答
 
@@ -577,6 +581,7 @@ SMsgAVIoctrlDoorOpenResp,SMsgAVIoctrlDoorPassResp,
 SMsgAVIoctrlSetOSDResp,
 SMsgAVIoctrlSetDeviceSleepResp,
 SMsgAVIoctrlCommonReq,SMsgAVIoctrlCommonResp;
+
 
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////// Type ENUM Define ////////////////////////////////////////////
@@ -1420,5 +1425,27 @@ typedef struct
 	char szAppKey[128];                  // App Key (reserved)
 	char szSecret[128];                  // Secret  (reserved)
 }SMsgAVIoctrlSetDropbox;
+
+//IOTYPE_XM_CALL_REQ
+typedef struct{	
+unsigned  char  index; //门索引号，0：Door1,1:Door2	
+STimeDay stTime; //事件时间    
+unsigned char reserved[3];
+}__attribute__((packed))SMsgAVIoctrlCallReq;
+
+//IOTYPE_XM_CALL_RESP
+typedef struct{   
+unsigned  char  index; //门索引号，0：Door1,1:Door2   
+int nAnswered; //0：挂断,  1：接听   
+unsigned char reserved[3];
+}__attribute__((packed))SMsgAVIoctrlCallResp;
+
+//IOTYPE_XM_CALL_IND
+typedef struct{   
+unsigned  char  index; //门索引号，0：Door1,1:Door2   
+unsigned  char  type; //类型，0：有用户呼叫,1:有其他用户应答   
+STimeDay stTime; //事件时间   
+unsigned  char reserved[3];
+}__attribute__((packed))SMsgAVIoctrlCallInd;
 
 #endif

@@ -1155,6 +1155,31 @@ static int GetCameraView(
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int XMCallResp(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlCallResp sMsg;
+	
+	memset(&sMsg,0,sizeof(sMsg));
+
+	char sIdx[8] = {0};
+	char sAck[8] = {0};
+	GetCgiParam(sIdx,Cgi,sizeof(sIdx),"index=","&");
+	GetCgiParam(sIdx,Cgi,sizeof(sIdx),"ack=","&");
+
+	sMsg.index = atoi(sIdx);
+	sMsg.nAnswered = atoi(sAck);
+	
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -1204,6 +1229,7 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SETPRESET_REQ,SetPresetPostion},
 	{IOTYPE_USER_IPCAM_GETPRESET_REQ,GetPresetPostion},
 	{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ,GetCameraView},
+	{IOTYPE_XM_CALL_RESP,XMCallResp},
 	{0,NULL}
 };
 

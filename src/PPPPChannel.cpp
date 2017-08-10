@@ -1518,14 +1518,14 @@ jumperr:
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
     hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status == 0 ? PPPP_STATUS_CONNECT_FAILED : status);
 
-#ifdef PLATFORM_ANDROID
-	if(isAttached) g_JavaVM->DetachCurrentThread();
-#endif
-
 	PUT_LOCK(&hPC->DestoryLock);
 	PUT_LOCK(&hPC->SessionLock);
     
     Log3("MediaCoreProcess Exit By Status:[%d].",status);
+
+#ifdef PLATFORM_ANDROID
+	if(isAttached) g_JavaVM->DetachCurrentThread();
+#endif
 
 	return NULL;	
 }

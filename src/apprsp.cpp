@@ -602,6 +602,53 @@ int             JsonBufferSize
     return 0;
 }
 
+static int XMCallReq(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlCallReq * hRQ = (SMsgAVIoctrlCallReq *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\"}",
+			"index",hRQ->index,
+            "time",
+	         hRQ->stTime.year,hRQ->stTime.month, hRQ->stTime.day,
+	         hRQ->stTime.hour,hRQ->stTime.minute,hRQ->stTime.second
+            );
+    
+    return 0;
+}
+
+static int XMCallInd(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlCallInd * hRQ = (SMsgAVIoctrlCallInd *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%04d-%02d-%02d %02d:%02d:%02d\"}",
+			"index",hRQ->index,
+			"type",hRQ->type,
+            "time",
+	         hRQ->stTime.year,hRQ->stTime.month, hRQ->stTime.day,
+	         hRQ->stTime.hour,hRQ->stTime.minute,hRQ->stTime.second
+            );
+    
+    return 0;
+}
+
+
+
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUID},
 {IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPassword},
@@ -639,6 +686,8 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacity},
 {IOTYPE_USER_IPCAM_LISTEVENT_RESP,GetEventList},
 {IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_RESP,GetEventListByMonth},
+{IOTYPE_XM_CALL_REQ,XMCallReq},
+{IOTYPE_XM_CALL_IND,XMCallInd},
 {0,NULL}
 };
 
