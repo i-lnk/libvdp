@@ -647,6 +647,22 @@ int             JsonBufferSize
     return 0;
 }
 
+static int GetBatteryStatus(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlGetBatteryResp * hRQ = (SMsgAVIoctrlGetBatteryResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\"}","battery",hRQ->battery);
+    
+    return 0;
+}
 
 
 static APP_CMD_RESP hACR[] = {
@@ -688,6 +704,7 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_LISTEVENT_BY_MONTH_RESP,GetEventListByMonth},
 {IOTYPE_XM_CALL_REQ,XMCallReq},
 {IOTYPE_XM_CALL_IND,XMCallInd},
+{IOTYPE_USER_IPCAM_GET_BATTERY_RESP,GetBatteryStatus},
 {0,NULL}
 };
 

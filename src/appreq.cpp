@@ -1179,6 +1179,20 @@ static int XMCallResp(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int GetBatteryStatus(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlCallResp sMsg;
+	
+	memset(&sMsg,0,sizeof(sMsg));
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
 
 // fucntion list for each command
 
@@ -1230,6 +1244,7 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_GETPRESET_REQ,GetPresetPostion},
 	{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ,GetCameraView},
 	{IOTYPE_XM_CALL_RESP,XMCallResp},
+	{IOTYPE_USER_IPCAM_GET_BATTERY_REQ,GetBatteryStatus},
 	{0,NULL}
 };
 

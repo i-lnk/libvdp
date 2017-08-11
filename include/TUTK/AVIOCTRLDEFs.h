@@ -185,6 +185,9 @@ typedef enum
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_REQ      = 0x502,
     IOTYPE_USER_IPCAM_SET_SAVE_DROPBOX_RESP     = 0x503,
 
+	IOTYPE_USER_IPCAM_GET_BATTERY_REQ 			= 0x60A,	
+	IOTYPE_USER_IPCAM_GET_BATTERY_RESP	 		= 0x60B,
+
 	IOTYPE_XM_CALL_REQ							= 0x700,	// Device向App发呼叫请求
 	IOTYPE_XM_CALL_RESP							= 0x701,	// App呼叫应答
 	IOTYPE_XM_CALL_IND							= 0x702,	// Device告知App已有移动设备接听指令或有设备呼叫
@@ -1447,5 +1450,20 @@ unsigned  char  type; //类型，0：有用户呼叫,1:有其他用户应答
 STimeDay stTime; //事件时间   
 unsigned  char reserved[3];
 }__attribute__((packed))SMsgAVIoctrlCallInd;
+
+typedef struct				//0x60A
+{    
+	unsigned int channel; // Camera Index    
+	unsigned char reserved[4];
+} SMsgAVIoctrlGetBatteryReq;
+
+//P.S. IP camera is allowed to send specific RESP IO command without getting the REQ first.
+typedef struct				//0x60B
+{    
+	unsigned int channel; // Camera Index    
+	unsigned char battery; // 0 – 100 (%) ; -1 : charging    
+	unsigned char reserved[3];
+} SMsgAVIoctrlGetBatteryResp;
+
 
 #endif
