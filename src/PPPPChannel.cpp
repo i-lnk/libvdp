@@ -905,7 +905,6 @@ static void * AudioSendProcess(
 
 	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
 	int ret = 0;
-	int avIdx = hPC->avIdx;
 
 	void * hCodec = NULL;
 	void * hAEC = NULL;
@@ -972,9 +971,6 @@ jump_rst:
 wait_next:
 	
 	if(hPC->mediaLinking == 0) return NULL;
-	
-	Log3("tutk start audio send process by speaker channel:[%d].",hPC->speakerChannel);
-	hPC->spIdx = avServStart(hPC->SID, NULL, NULL,  2, 0, hPC->speakerChannel);
 
 	if(hPC->spIdx < 0){
 		Log3("tutk start audio send process with error:[%d] try again.",hPC->spIdx);
@@ -1327,7 +1323,6 @@ void * MeidaCoreProcess(
 
 connect:
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
-	hPC->speakerChannel = -1;
 	
 	Log3("[1:%s]=====>start get free session id for client connection.",
          hPC->szDID);
@@ -1812,6 +1807,12 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 		return -1;
 	}
 
+    speakerChannel = IOTC_Session_Get_Free_Channel(SID);
+    if(speakerChannel < 0){
+        Log3("tutk get channel for audio send failed:[%d].",speakerChannel);
+        return -1;
+    }
+    
 	pMsg->channel = speakerChannel;
 
 	avErr = avSendIOCtrlEx(
@@ -1825,7 +1826,12 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
 		return -1;
 	}
-	
+    
+    Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
+    spIdx = avServStart(SID, NULL, NULL,  0, 0, speakerChannel);
+    if(spIdx < 0){
+        return -1;
+    }
 	
 	return 0;
 }
@@ -1962,17 +1968,16 @@ int CPPPPChannel::CloseMediaStreams(
 		Log3("close replay client.");
 		avClientExit(SID,playrecChannel);
 	}
+    
 	if(spIdx >= 0){
 		Log3("close audio send server with idx:[%d]",spIdx);
 		avServStop(spIdx);
 	}
 	
-	/*
 	if(speakerChannel >= 0){
 		Log3("shutdown audio send server with sid:[%d] channel:[%d]",SID,speakerChannel);
 		avServExit(SID,speakerChannel);
 	}
-	*/
 
 	spIdx = -1;
 
@@ -2048,8 +2053,6 @@ int CPPPPChannel::StartMediaStreams(
 
 	MHCropSize = video_h_crop;
 	MWCropSize = video_w_crop;
-
-	speakerChannel = IOTC_Session_Get_Free_Channel(SID);
 
 	videoPlaying = 1;
 	audioPlaying = 1;

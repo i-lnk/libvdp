@@ -1171,7 +1171,7 @@ static int XMCallResp(
 	char sIdx[8] = {0};
 	char sAck[8] = {0};
 	GetCgiParam(sIdx,Cgi,sizeof(sIdx),"index=","&");
-	GetCgiParam(sIdx,Cgi,sizeof(sIdx),"ack=","&");
+	GetCgiParam(sAck,Cgi,sizeof(sAck),"ack=","&");
 
 	sMsg.index = atoi(sIdx);
 	sMsg.nAnswered = atoi(sAck);
