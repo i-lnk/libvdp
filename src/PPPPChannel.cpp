@@ -905,6 +905,7 @@ static void * AudioSendProcess(
 
 	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
 	int ret = 0;
+    int chn = 0;
 
 	void * hCodec = NULL;
 	void * hAEC = NULL;
@@ -912,8 +913,8 @@ static void * AudioSendProcess(
 	void * hVad = NULL;
 	OPENXL_STREAM * hOSL = NULL;
 
-	SMsgAVIoctrlAVStream ioMsg;	
-	memset(&ioMsg,0,sizeof(ioMsg));
+	SMsgAVIoctrlAVStream avMsg;
+	memset(&avMsg,0,sizeof(avMsg));
 
 	Log3("audio send process sid:[%d].", hPC->SID);
 
@@ -971,12 +972,32 @@ jump_rst:
 wait_next:
 	
 	if(hPC->mediaLinking == 0) return NULL;
-
-	if(hPC->spIdx < 0){
-		Log3("tutk start audio send process with error:[%d] try again.",hPC->spIdx);
-		sleep(1);
-		goto wait_next;
-	}
+    
+    chn = IOTC_Session_Get_Free_Channel(hPC->SID);
+    if(chn < 0){
+        Log3("tutk get channel for audio send failed:[%d].",chn);
+        return NULL;
+    }
+    
+    hPC->speakerChannel = avMsg.channel = chn;
+    
+    ret = avSendIOCtrlEx(
+                           hPC->avIdx,
+                           IOTYPE_USER_IPCAM_SPEAKERSTART,
+                           (char *)&avMsg,
+                           sizeof(SMsgAVIoctrlAVStream)
+                           );
+    
+    if(ret != AV_ER_NoERROR){
+        Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",ret,hPC->SID,hPC->avIdx);
+        return NULL;
+    }
+    
+    Log3("tutk start audio send process by speaker channel:[%d].",chn);
+    hPC->spIdx = avServStart(hPC->SID, NULL, NULL,  0, 0, chn);
+    if(hPC->spIdx < 0){
+        return NULL;
+    }
 	
 	Log3("tutk start audio send process by speaker channel:[%d] spIdx:[%d].",
 		hPC->speakerChannel,
@@ -1806,32 +1827,6 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
 		return -1;
 	}
-
-    speakerChannel = IOTC_Session_Get_Free_Channel(SID);
-    if(speakerChannel < 0){
-        Log3("tutk get channel for audio send failed:[%d].",speakerChannel);
-        return -1;
-    }
-    
-	pMsg->channel = speakerChannel;
-
-	avErr = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_SPEAKERSTART,
-		(char *)&avMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-	
-	if(avErr != AV_ER_NoERROR){
-		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
-		return -1;
-	}
-    
-    Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
-    spIdx = avServStart(SID, NULL, NULL,  0, 0, speakerChannel);
-    if(spIdx < 0){
-        return -1;
-    }
 	
 	return 0;
 }
