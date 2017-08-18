@@ -958,16 +958,6 @@ jump_rst:
 	}
 #endif
 
-	hPC->hAudioPutList = new CCircleBuffer(32,hPC->Audio10msLength,0);
-	hPC->hAudioGetList = new CCircleBuffer(32,hPC->Audio10msLength,0);
-	
-	if(hPC->hAudioPutList == NULL || hPC->hAudioGetList == NULL){
-		Log2("audio data list init failed.");
-		hPC->audioPlaying = 0;
-	}
-
-	Log3("=====> opensl init start.\n");
-
 wait_next:
 	
 	if(hPC->mediaLinking == 0) return NULL;
@@ -982,8 +972,18 @@ wait_next:
 		hPC->speakerChannel,
 		hPC->spIdx);
 
-	hPC->hAudioPutList->Clear();
-	hPC->hAudioGetList->Clear();
+	if(hPC->hAudioPutList) delete hPC->hAudioPutList;
+	if(hPC->hAudioGetList) delete hPC->hAudioGetList;
+
+	hPC->hAudioPutList = new CCircleBuffer(32,hPC->Audio10msLength,0);
+	hPC->hAudioGetList = new CCircleBuffer(32,hPC->Audio10msLength,0);
+	
+	if(hPC->hAudioPutList == NULL || hPC->hAudioGetList == NULL){
+		Log2("audio data list init failed.");
+		hPC->audioPlaying = 0;
+	}
+
+	Log3("=====> opensl init start.\n");
 	
 	hOSL = InitOpenXLStream(
 		hPC->AudioSampleRate,
@@ -1026,7 +1026,7 @@ wait_next:
 		int speakerLens = hPC->hAudioPutList->Used();
 
 		if(captureLens < hPC->Audio10msLength || speakerLens < hPC->Audio10msLength){
-			usleep(10);
+			usleep(10000);
 			continue;
 		}
 
@@ -1034,7 +1034,7 @@ wait_next:
 		hPC->hAudioPutList->Get(speakerData,hPC->Audio10msLength);
 
 		if(hPC->voiceEnabled != 1){
-			usleep(10); 
+			usleep(10000); 
 			continue;
 		}
 
@@ -1109,18 +1109,20 @@ wait_next:
         frameInfo.reserve2 = ret;
 
 		ret = avSendAudioData(hPC->spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
-        
-//      Log3("avSendAudioData with lens:[%d].", frameInfo.reserve2);
-		if(ret == AV_ER_EXCEED_MAX_SIZE){
-			avServResetBuffer(hPC->spIdx,RESET_AUDIO,0);
-			Log3("tutk av server audio buffer is full.");
-		}
-		
-		if(ret != AV_ER_NoERROR){
-			Log3("tutk av server send audio data failed.err:[%d].", ret);
-            continue;
-        }
 
+//		Log3("avSendAudioData with lens:[%d].",ret);
+
+		switch(ret){
+			case AV_ER_NoERROR:
+				break;
+			case AV_ER_EXCEED_MAX_SIZE:
+				avServResetBuffer(hPC->spIdx,RESET_AUDIO,0);
+				break;
+			default:
+				Log3("tutk av server send audio data failed.err:[%d].", ret);
+				break;
+		}
+	
 		hAV->len = 0;
 		WritePtr = hAV->d;
 	}
@@ -1364,6 +1366,7 @@ connect:
                 }
 
 				Log3("[2:%s]=====>device standby is:%d.",hPC->szDID,hPC->deviceStandby);
+				
                 status = PPPP_STATUS_DEVICE_SLEEP;
                 hPC->deviceStandby = 1;
 				
@@ -1489,12 +1492,12 @@ connect:
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
 		if(ret < 0){
 			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
-			Log3("[7:%s]=====>stop old media process start.\n",hPC->szDID);
-			hPC->mediaLinking = 0;
-			hPC->PPPPClose();
-    	    hPC->CloseWholeThreads();
-			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
-			goto connect;
+//			Log3("[7:%s]=====>stop old media process start.\n",hPC->szDID);
+//			hPC->mediaLinking = 0;
+//			hPC->PPPPClose();
+//    	    hPC->CloseWholeThreads();
+//			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
+			break;
 		}
 
 		if(hPC->startSession){	// for reconnect, we just refresh status for ui layer
@@ -1590,6 +1593,9 @@ CPPPPChannel::CPPPPChannel(
 	hVideoBuffer = new CCircleBuffer(4096 * 1024);
 	hIOCmdBuffer = new CCircleBuffer(COMMAND_BUFFER_SIZE);
 
+	hAudioPutList = NULL;
+	hAudioGetList = NULL;
+	
 //	hVideoBuffer->Debug(1);
     
     hDec = new CH264Decoder();

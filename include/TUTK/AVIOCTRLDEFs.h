@@ -921,9 +921,9 @@ IOTYPE_USER_IPCAM_SETPASSWORD_REQ		= 0x0332,
 */
 typedef struct
 {
-	char user[32];
 	char oldpasswd[32];			// The old security code
 	char newpasswd[32];			// The new security code
+	char user[32];
 }SMsgAVIoctrlSetPasswdReq;
 
 
