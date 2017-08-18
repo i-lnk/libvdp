@@ -345,17 +345,6 @@ void * IOCmdRecvProcess(
 					}
 				}
 				break;
-			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	
-					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
-					if(hRQ->result == 0){
-						hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
-						hPC->deviceStandby = 1;
-						Log3("[X:%s]=====>device sleeping now.\n",hPC->szDID);
-					}else{
-						Log3("[X:%s]=====>device sleeping failed,still keep online.\n",hPC->szDID);
-					}
-				}
-				break;
             case IOTYPE_USER_IPCAM_ALARMING_REQ:{
                 SMsgAVIoctrlAlarmingReq * hRQ = (SMsgAVIoctrlAlarmingReq *)hCCH->d;
                 
@@ -1834,10 +1823,8 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 	}
     
     Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
-    spIdx = avServStart(SID, NULL, NULL,  0, 0, speakerChannel);
-    if(spIdx < 0){
-        return -1;
-    }
+    spIdx = avServStart(SID, NULL, NULL,  10, 0, speakerChannel);
+    if(spIdx < 0) return -1;
 	
 	return 0;
 }
@@ -2075,7 +2062,10 @@ int CPPPPChannel::StartMediaStreams(
 		memcpy(szURL,url,strlen(url));
 	}
 
-    ret = SendAVAPIStartIOCtrl();
+    if(SendAVAPIStartIOCtrl() != 0){
+        Log3("start pppp live stream failed with [SendAVAPIStartIOCtrl].");
+        ret = -1;
+    }
 	
 	PUT_LOCK(&DestoryLock);
 
