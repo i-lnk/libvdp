@@ -9,6 +9,7 @@
 
 #include "appreq.h"
 #include "apprsp.h"
+#include "IOTCWakeUp.h"
 
 jobject   g_CallBack_Handle = NULL;
 
@@ -446,6 +447,16 @@ JNIEXPORT int JNICALL ClosePPPPLivestream(
     return nRet;
 }
 
+JNIEXPORT int JNICALL SetVideoStatus(JNIEnv *env , jobject obj, jstring did,jint status){
+	char * szDID = (char*)env->GetStringUTFChars(did,0);
+
+	int res = g_pPPPPChannelMgt->SetVideoStatus(szDID,(int)status);
+	
+	env->ReleaseStringUTFChars(did, szDID);
+
+	return res;
+}
+
 JNIEXPORT int JNICALL SetAudioStatus(JNIEnv *env , jobject obj, jstring did,jint status){
 	char * szDID = (char*)env->GetStringUTFChars(did,0);
 
@@ -561,6 +572,22 @@ JNIEXPORT int JNICALL CloseRecorder(
 	return ret == 0 ? 1 : 0;
 }
 
+JNIEXPORT int JNICALL Wake(
+	JNIEnv *env, jobject obj, jstring did
+){
+	char * szDID = (char*)env->GetStringUTFChars(did,0);
+	if(szDID == NULL){
+		env->ReleaseStringUTFChars(did,szDID);
+		return 0;
+	}
+	
+	IOTC_WakeUp_WakeDevice(szDID);
+
+	env->ReleaseStringUTFChars(did,szDID);
+
+	return 0;
+}
+
 #ifdef PLATFORM_ANDROID
 
 static JNINativeMethod Calls[] = {
@@ -579,8 +606,10 @@ static JNINativeMethod Calls[] = {
 	{"CloseRecorder", "(Ljava/lang/String;)I", (void*)CloseRecorder},
 	{"SendBytes", "(Ljava/lang/String;I[BI)I", (void*)SendBytes},
 	{"SendCtrlCommand", "(Ljava/lang/String;ILjava/lang/String;I)I", (void*)SendCtrlCommand},
+	{"SetVideoStatus", "(Ljava/lang/String;I)I", (void*)SetVideoStatus},
 	{"SetAudioStatus", "(Ljava/lang/String;I)I", (void*)SetAudioStatus},
 	{"GetAudioStatus", "(Ljava/lang/String;)I", (void*)GetAudioStatus},
+	{"Wake", "(Ljava/lang/String;)I", (void*)Wake},
 };
 
 static int RegisterNativeMethods(JNIEnv* env, const char* className, JNINativeMethod * gMethods, int numMethods) {

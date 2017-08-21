@@ -216,18 +216,25 @@ int             JsonBufferSize
     
     SMsgAVIoctrlMDAlarmResp * hRQ = (SMsgAVIoctrlMDAlarmResp *)Msg;
     
-    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
-            "enable",hRQ->MotionEnable,
-            "level",hRQ->MotionLevel,
-            "frequency",hRQ->MotionAlarmFrequency,
-            "notify",hRQ->MotionNotify,
-            "record",hRQ->MotionRecord,
-            "audio",hRQ->MotionAudioOutput,
-            "start_hour",hRQ->MotionStartHour,
-            "start_mins",hRQ->MotionStartMins,
-            "close_hour",hRQ->MotionCloseHour,
-            "close_mins",hRQ->MotionCloseMins
-            );
+    sprintf(JsonBuffer,"{"
+		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\","
+		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\","
+		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\","
+		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\","
+		"}",
+        "enable",hRQ->MotionEnable,
+        "level",hRQ->MotionLevel,
+        "frequency",hRQ->MotionAlarmFrequency,
+        "notify",hRQ->MotionNotify,
+        "record",hRQ->MotionRecord,
+        "audio",hRQ->MotionAudioOutput,
+        "enablePIR",hRQ->EnablePir,
+        "enableRemoveAlaram",hRQ->EnableRemoveAlarm,
+        "start_hour",hRQ->MotionStartHour,
+        "start_mins",hRQ->MotionStartMins,
+        "close_hour",hRQ->MotionCloseHour,
+        "close_mins",hRQ->MotionCloseMins
+        );
     
     return 0;
 }
@@ -522,13 +529,24 @@ int             JsonBufferSize
     
     SMsgAVIoctrlGetCapacityResp * hRQ = (SMsgAVIoctrlGetCapacityResp *)Msg;
     
-    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%d\"}",
-            "devType",hRQ->devType,
-            "version",hRQ->version,
-            "odm",hRQ->odmID,
-            "model",hRQ->model,
-            "language",hRQ->language
-            );
+    sprintf(JsonBuffer,"{"
+		"\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%d\","
+		"\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\","
+		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\","
+		"\"%s\":\"%d\",\"%s\":\"%d\""
+		"}",
+        "devType",hRQ->devType,
+        "version",hRQ->version,
+        "odm",hRQ->odmID,
+        "model",hRQ->model,
+        "language",hRQ->language,
+        "supportStorage",hRQ->supportStorage,
+        "supportPTZ",hRQ->supportPTZ,
+        "supportPIR",hRQ->supportPIR,
+        "supportRemoveAlarm",hRQ->supportRemoveAlarm,
+        "supportAudioIn",hRQ->supportAudioIn,
+        "supportAudioOut",hRQ->supportAudioOut
+        );
     
     return 0;
 }

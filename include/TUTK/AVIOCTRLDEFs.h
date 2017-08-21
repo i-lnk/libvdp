@@ -409,9 +409,12 @@ typedef struct{
 	unsigned char	MotionEnable;			
 	unsigned char	MotionLevel;
 	unsigned char	MotionAudioOutput;	// Áª¶¯ÉùÒôÊä³ö: 1Îª¿ªÆô,0¹Ø±Õ
-	unsigned char	MotionRecord;	// Áª¶¯Â¼Ïñ
-	unsigned char	MotionNotify;	// Áª¶¯ÏûÏ¢ÍÆËÍ
-	unsigned char	Resrver[12];	// ±£Áô
+	unsigned char	MotionRecord;		// Áª¶¯Â¼Ïñ
+	unsigned char	MotionNotify;		// Áª¶¯ÏûÏ¢ÍÆËÍ
+	unsigned char 	EnablePir;			// Ê¹ÄÜÈËÌå¸ĞÓ¦
+	unsigned char	EnableRemoveAlarm;	// Ê¹ÄÜ·À²ğ±¨¾¯
+	
+	unsigned char	Resrver[10];	// ±£Áô
 	unsigned char	MotionAlarmFrequency;;		// ÒÆ¶¯Õì²âÆµÂÊ£¬µ¥Î»Ãë:0Îª¹Ì¶¨Ä¬ÈÏ,·ñÔòÖ¸¶¨µÄÃëÊı
 
 	unsigned char	MotionStartHour;		
@@ -511,7 +514,7 @@ enum{
 #pragma pack(push,1)
 
 typedef struct{
-	int	status;	//sd â—ŠÂ¥ÃƒÂ¨
+	int	status;	//sd 
 	int size; 	//sd Â»â€ºÂ¡Ã¸
 	int free;	//sd Â Â£â€â€¡Ã¸â€™Âºâ€°
 	int progress;
@@ -536,14 +539,16 @@ typedef struct{
     unsigned int 	audioSampleRate;	// éŸ³é¢‘é‡‡æ ·: 8000,16000
     unsigned int 	audioChannelNum;	// éŸ³é¢‘é€šé“: 1-å•é€š, 2-åŒé€šé“
     unsigned int 	audioBitsPerSample;	// éŸ³é¢‘bits: 8, 16
-    unsigned char 	suportPTZ;			// æ”¯æŒptzæ§åˆ¶: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
-    unsigned char 	suportAudioIn;		// æ”¯æŒéŸ³é¢‘é‡‡é›†: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
-    unsigned char 	suportAudioOut;		// æ”¯æŒå£°éŸ³æ’­æ”¾: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
-    unsigned char 	suportStorage;		// æ”¯æŒå­˜å‚¨: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
+    unsigned char 	supportPTZ;			// æ”¯æŒptzæ§åˆ¶: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
+    unsigned char 	supportAudioIn;		// æ”¯æŒéŸ³é¢‘é‡‡é›†: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
+    unsigned char 	supportAudioOut;		// æ”¯æŒå£°éŸ³æ’­æ”¾: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
+    unsigned char 	supportStorage;		// æ”¯æŒå­˜å‚¨: æ”¯æŒä¸º1,ä¸æ”¯æŒä¸º0
     unsigned int 	panoramaMode;		// å…¨æ™¯å®‰è£…æ¨¡å¼: 0-å¸é¡¶å¼,1-å£æŒ‚å¼
     char 			version[16];		// ç‰ˆæœ¬å·:  é‡‡ç”¨ç¼–è¯‘æ—¥æœŸ201612121816(å¹´æœˆæ—¥æ—¶åˆ†)
     char 			model[16];			// äº§å“è§„æ ¼å‹å·
-    char 			reserve2[48];		// ä¿ç•™2
+    char			supportPIR;
+	char			supportRemoveAlarm;
+    char 			reserve2[46];		// ä¿ç•™2
 }SMsgAVIoctrlGetCapacityResp;
 
 typedef struct

@@ -39,6 +39,7 @@ public:
 
 	int GetAudioStatus(char * szDID);
 	int SetAudioStatus(char * szDID,int AudioStatus);
+	int SetVideoStatus(char * szDID,int VideoStatus);
 
     int PPPPSetSystemParams(char *szDID, int type, char *msg, int len);
 

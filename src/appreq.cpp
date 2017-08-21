@@ -561,6 +561,8 @@ static int SetMotionScheduleEx(
 	char sMotionAudioOutput[8] = {0};
 	char sMotionNotify[8] = {0};
 	char sMotionRecord[8] = {0};
+	char sEnablePir[8] = {0};
+	char sEnableRemoveAlarm[8] = {0};
 
 	char sMotionStartHour[8] = {0};
 	char sMotionCloseHour[8] = {0};
@@ -573,6 +575,8 @@ static int SetMotionScheduleEx(
 	GetCgiParam(sMotionNotify,Cgi,sizeof(sMotionNotify),"notify=","&");
 	GetCgiParam(sMotionRecord,Cgi,sizeof(sMotionRecord),"record=","&");
 	GetCgiParam(sMotionAudioOutput,Cgi,sizeof(sMotionAudioOutput),"audio=","&");
+	GetCgiParam(sEnablePir,Cgi,sizeof(sEnablePir),"enablePir=","&");
+	GetCgiParam(sEnableRemoveAlarm,Cgi,sizeof(sEnableRemoveAlarm),"removeAlarm=","&");
 	GetCgiParam(sMotionStartHour,Cgi,sizeof(sMotionStartHour),"startHour=","&");
 	GetCgiParam(sMotionCloseHour,Cgi,sizeof(sMotionCloseHour),"closeHour=","&");
 	GetCgiParam(sMotionStartMins,Cgi,sizeof(sMotionStartMins),"startMins=","&");
@@ -586,6 +590,8 @@ static int SetMotionScheduleEx(
 	sMsg.MotionLevel = atoi(sMotionSensitivity) * 20;
 	sMsg.MotionNotify = atoi(sMotionNotify);
 	sMsg.MotionRecord = atoi(sMotionRecord);
+	sMsg.EnablePir = atoi(sEnablePir);
+	sMsg.EnableRemoveAlarm = atoi(sEnableRemoveAlarm);
 	sMsg.MotionAudioOutput = atoi(sMotionAudioOutput);
 	sMsg.MotionStartHour = atoi(sMotionStartHour);
 	sMsg.MotionStartMins = atoi(sMotionStartMins);

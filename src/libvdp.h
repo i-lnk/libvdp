@@ -220,12 +220,23 @@ JNIEXPORT int  JNICALL SendCtrlCommand(JNIEnv *, jobject, jstring, jint, jstring
 // return value: (bit:0 audio play enable, bit1:audio capture enable)
 JNIEXPORT int  JNICALL SetAudioStatus(JNIEnv *, jobject, jstring, jint);
 
+// set current video status:
+// parameters:
+// 3. device id
+// 4. value (0: close video play 1: start video play)
+
+// return value: (0: success. other: failed.)
+JNIEXPORT int  JNICALL SetVideoStatus(JNIEnv *, jobject, jstring, jint);
+
+
 // get current audio status:
 // parameters:
 // 3. device id
 
 // return value: (bit:0 audio play enable, bit1:audio capture enable)
 JNIEXPORT int  JNICALL GetAudioStatus(JNIEnv *, jobject, jstring);
+
+JNIEXPORT int  JNICALL WakeUp(JNIEnv, jobject, jstring);
 
 #ifdef __cplusplus
 }

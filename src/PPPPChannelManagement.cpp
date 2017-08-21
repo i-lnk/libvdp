@@ -226,8 +226,20 @@ int CPPPPChannelManagement::SetAudioStatus(char * szDID,int AudioStatus){
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            m_PPPPChannel[i].pPPPPChannel->audioEnabled = (AudioStatus & 0x1);
-			m_PPPPChannel[i].pPPPPChannel->voiceEnabled = (AudioStatus & 0x2) >> 1;
+            int audioEnable = (AudioStatus & 0x1);
+			int voiceEnable = (AudioStatus & 0x2) >> 1;
+
+			if(voiceEnable){
+				m_PPPPChannel[i].pPPPPChannel->MicphoneStart();
+			}else{
+				m_PPPPChannel[i].pPPPPChannel->MicphoneClose();
+			}
+
+			if(audioEnable){
+				m_PPPPChannel[i].pPPPPChannel->SpeakingStart();
+			}else{
+				m_PPPPChannel[i].pPPPPChannel->SpeakingClose();
+			}
 
 			Log3("SET ----> AUDIO PLAY:[%d] AUDIO TALK:[%d].",
 				m_PPPPChannel[i].pPPPPChannel->audioEnabled,
@@ -237,7 +249,7 @@ int CPPPPChannelManagement::SetAudioStatus(char * szDID,int AudioStatus){
 			PUT_LOCK( &AudioLock );
 			PUT_LOCK( &PPPPChannelLock );
 			
-            return AudioStatus;
+            return (m_PPPPChannel[i].pPPPPChannel->audioEnabled | m_PPPPChannel[i].pPPPPChannel->voiceEnabled << 1) & 0x3;
         }
     }  
 
@@ -245,6 +257,31 @@ int CPPPPChannelManagement::SetAudioStatus(char * szDID,int AudioStatus){
 	PUT_LOCK( &PPPPChannelLock );
    
     return 0;
+}
+
+int CPPPPChannelManagement::SetVideoStatus(char * szDID,int VideoStatus){
+	if(szDID == NULL) return 0;
+
+	int ret = 0;
+	
+	GET_LOCK( &PPPPChannelLock );
+	int i;
+    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0){
+			if(VideoStatus){
+				ret = m_PPPPChannel[i].pPPPPChannel->LiveplayStart();
+			}else{
+				ret = m_PPPPChannel[i].pPPPPChannel->LiveplayClose();
+			}
+
+			goto jumperr;
+		}
+    }
+
+jumperr:
+	PUT_LOCK( &PPPPChannelLock );
+
+	return ret;
 }
 
 int CPPPPChannelManagement::StartRecorderByDID(char * szDID,char * filepath){
@@ -258,7 +295,7 @@ int CPPPPChannelManagement::StartRecorderByDID(char * szDID,char * filepath){
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            int ret = m_PPPPChannel[i].pPPPPChannel->StartRecorder(0,0,15,filepath);
+            int ret = m_PPPPChannel[i].pPPPPChannel->RecorderStart(0,0,15,filepath);
 			PUT_LOCK( &PPPPChannelLock );
             return ret;
         }
@@ -280,7 +317,7 @@ int CPPPPChannelManagement::CloseRecorderByDID(char * szDID)
     {
         if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
         {
-            m_PPPPChannel[i].pPPPPChannel->CloseRecorder();
+            m_PPPPChannel[i].pPPPPChannel->RecorderClose();
 			PUT_LOCK( &PPPPChannelLock );
             return 1;
         }

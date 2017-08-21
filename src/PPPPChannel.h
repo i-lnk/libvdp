@@ -111,6 +111,32 @@ public:
 
     int  Start(char * usr,char * pwd,char * server);
 	void Close();
+
+	int  SleepingClose();
+	int  SleepingStart();
+	int  LiveplayClose();
+	int  LiveplayStart();
+	int  MicphoneClose();
+	int  MicphoneStart();
+	int  SpeakingClose();
+	int  SpeakingStart();
+
+	int  RecorderStart(
+		int 			W,				//
+		int 			H,				// 
+		int 			FPS,			// 
+		char *			SavePath	
+	);
+
+	int  RecorderWrite(
+		const char * 	FrameData,
+		int				FrameSize,
+		int				FrameCode, 		// audio or video codec [0|1]
+		int				FrameType,		// keyframe or not [0|1]
+		long long		Timestamp
+	);
+	
+	int  RecorderClose();
 	
 	int StartMediaStreams(
 		const char * url,
@@ -160,7 +186,6 @@ public:
 	int					rpIdx;			// for vidoe replay
 	
 	unsigned int		deviceType;		//
-    int                 deviceStandby;
 	int					connectionStatus;	//
 	
 	int					startSession;	//
@@ -226,22 +251,6 @@ public:
 	
 	CCircleBuffer *		hIOCmdBuffer;	// 
 	
-	int StartRecorder(
-		int 			W,				//
-		int 			H,				// 
-		int 			FPS,			// 
-		char *			SavePath	
-	);
-
-	int WriteRecorder(
-		const char * 	FrameData,
-		int				FrameSize,
-		int				FrameCode, 		// audio or video codec [0|1]
-		int				FrameType,		// keyframe or not [0|1]
-		long long		Timestamp
-	);
-	
-	int CloseRecorder();
 };
 
 #endif

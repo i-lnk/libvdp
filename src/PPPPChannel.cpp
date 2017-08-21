@@ -249,7 +249,7 @@ void * IOCmdSendProcess(
 						break;
 					}
 
-//					Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
+					Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
 
 					if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
 						usleep(1000); 
@@ -266,7 +266,7 @@ void * IOCmdSendProcess(
 		usleep(1000);
     }
 	
-	Log3("[X:%s]=====>IOCmdSendProcess Exit.",hPC->szDID);
+	Log3("[X:%s]=====>iocmd send proc exit.",hPC->szDID);
 
 	return NULL;
 }
@@ -349,7 +349,6 @@ void * IOCmdRecvProcess(
 					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
 					if(hRQ->result == 0){
 						hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
-						hPC->deviceStandby = 1;
 						Log3("[X:%s]=====>device sleeping now.\n",hPC->szDID);
 					}else{
 						Log3("[X:%s]=====>device sleeping failed,still keep online.\n",hPC->szDID);
@@ -628,8 +627,6 @@ static void * VideoRecvProcess(void * hVoid){
 			}
 			continue;
 		}
-
-//		Log3("video frame number is:[%d].",hFrm->frameno);
 
 		if(frameInfo.flags == IPC_FRAME_FLAG_IFRAME){
 			firstKeyFrameComming = 1;
@@ -963,7 +960,7 @@ wait_next:
 	if(hPC->mediaLinking == 0) return NULL;
 
 	if(hPC->spIdx < 0){
-		Log3("tutk start audio send process with error:[%d] try again.",hPC->spIdx);
+//		Log3("tutk start audio send process with error:[%d] try again.",hPC->spIdx);
 		sleep(1);
 		goto wait_next;
 	}
@@ -1021,6 +1018,7 @@ wait_next:
 			}
 			goto wait_next;	// wait next audio receiver from device
 		}
+
 
 		int captureLens = hPC->hAudioGetList->Used();
 		int speakerLens = hPC->hAudioPutList->Used();
@@ -1110,13 +1108,12 @@ wait_next:
 
 		ret = avSendAudioData(hPC->spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
 
-//		Log3("avSendAudioData with lens:[%d].",ret);
-
 		switch(ret){
 			case AV_ER_NoERROR:
 				break;
 			case AV_ER_EXCEED_MAX_SIZE:
-				avServResetBuffer(hPC->spIdx,RESET_AUDIO,0);
+//				avServResetBuffer(hPC->spIdx,RESET_AUDIO,0);
+				Log3("tutk av server send audio buffer full.");
 				break;
 			default:
 				Log3("tutk av server send audio data failed.err:[%d].", ret);
@@ -1221,7 +1218,7 @@ void * RecordingProcess(void * Ptr){
 					nBytesRead = hPC->hVideoBuffer->Get(pVFrm->d,pVFrm->len);
 				}
 
-				hPC->WriteRecorder(
+				hPC->RecorderWrite(
 					pVFrm->d,pVFrm->len,
 					1,
 					pVFrm->type == IPC_FRAME_FLAG_IFRAME ? 1: 0,
@@ -1238,7 +1235,7 @@ void * RecordingProcess(void * Ptr){
 				Log3("recording fps:[%d] lost frame count:[%d] auto fix.\n",fps,fix);
 
 				for(int i = 0;i < fix;i++){
-					hPC->WriteRecorder(
+					hPC->RecorderWrite(
 						pVFrm->d,128,
 						1,
 						0,
@@ -1267,10 +1264,10 @@ void * RecordingProcess(void * Ptr){
 			
 			if(aBytesHave > pAFrm->len){
 				nBytesRead = hPC->hAudioBuffer->Get(pAFrm->d,pAFrm->len);
-				hPC->WriteRecorder(pAFrm->d,nBytesRead,0,0,ts);
+				hPC->RecorderWrite(pAFrm->d,nBytesRead,0,0,ts);
 			}else{
 				memset(pAFrm->d,0,pAFrm->len);
-				hPC->WriteRecorder(pAFrm->d,pAFrm->len,0,0,ts);
+				hPC->RecorderWrite(pAFrm->d,pAFrm->len,0,0,ts);
 			}
 #endif
 		}
@@ -1318,12 +1315,16 @@ void * MeidaCoreProcess(
 
 	int resend = 0;
     int status = 0;
-	int wakeup_times = 7;
 	int Err = 0;
 
 	hPC->startSession = 0;
 
 connect:
+	if(hPC->mediaLinking == 0){
+		Log3("[0:%s]=====>close connection process by flag.",hPC->szDID);
+		return NULL;
+	}
+	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
 	
 	Log3("[1:%s]=====>start get free session id for client connection.",
@@ -1334,8 +1335,7 @@ connect:
 		Log3("[1:%s]=====>IOTC_Get_SessionID error code [%d]\n",
              hPC->szDID,
              hPC->sessionID);
-		sleep(3); 
-		goto connect;
+		goto jumperr;
 	}
 
 	Log3("[2:%s]=====>start connection by uid parallel.",hPC->szDID);
@@ -1354,26 +1354,17 @@ connect:
 				status = PPPP_STATUS_EXCEED_SESSION;
 				goto jumperr;
             case IOTC_ER_DEVICE_IS_SLEEP:
-				
-                if(wakeup_times-- && hPC->deviceStandby){
-                    Log3("[2:%s]=====>device is in sleep mode.try to wakeup device.",hPC->szDID);
-                    if(IOTC_WakeUp_WakeDevice(hPC->szDID) < 0){
-                        Log3("[2:%s]=====>device not support wakeup function.\n",hPC->szDID);
-                    }else{
-                        IOTC_Session_Close(hPC->sessionID);
-                        goto connect;
-                    }
-                }
-
-				Log3("[2:%s]=====>device standby is:%d.",hPC->szDID,hPC->deviceStandby);
-				
+				Log3("[2:%s]=====>device in sleep mode.",hPC->szDID);
                 status = PPPP_STATUS_DEVICE_SLEEP;
-                hPC->deviceStandby = 1;
-				
+				if(TRY_LOCK(&hPC->PlayingLock) != 0){
+					sleep(2);
+					goto connect;
+				}
+				PUT_LOCK(&hPC->PlayingLock);
                 goto jumperr;
             case IOTC_ER_CAN_NOT_FIND_DEVICE:
 			case IOTC_ER_DEVICE_OFFLINE:
-                Log3("[2:%s]=====>device not online,ask again.\n",hPC->szDID);
+                Log3("[2:%s]=====>device not online,ask again.",hPC->szDID);
 			case IOTC_ER_DEVICE_NOT_LISTENING:
 				status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
                 IOTC_Session_Close(hPC->sessionID);
@@ -1383,8 +1374,6 @@ connect:
 				goto jumperr;
 		}
 	}
-    
-    hPC->deviceStandby = 0; // wakeup successful.
 
 	Log3("[3:%s]=====>start av client service with user:[%s] pass:[%s].\n", hPC->szDID, hPC->szUsr, hPC->szPwd);
 
@@ -1427,7 +1416,7 @@ connect:
 				goto jumperr;
 		}
 	
-		sleep(3);
+		sleep(1);
 		goto connect;
 	}
 
@@ -1438,8 +1427,6 @@ connect:
 		hPC->szDID,
 		resend
 		);
-    
-    hPC->mediaLinking = 1;
 
 	hPC->iocmdSending = 1;
     hPC->iocmdRecving = 1;
@@ -1466,7 +1453,7 @@ connect:
 		Log3("create audio recv process failed.");
 		goto jumperr;
 	}
-	
+
 	Err = pthread_create(&hPC->audioSendThread,NULL,AudioSendProcess,(void*)hPC);
 	if(Err != 0){
 		Log3("create audio send process failed.");
@@ -1491,12 +1478,24 @@ connect:
 		struct st_SInfo sInfo;
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
 		if(ret < 0){
-			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_FAILED);
-//			Log3("[7:%s]=====>stop old media process start.\n",hPC->szDID);
-//			hPC->mediaLinking = 0;
-//			hPC->PPPPClose();
-//    	    hPC->CloseWholeThreads();
-//			Log3("[7:%s]=====>stop old media process close.\n",hPC->szDID);
+			hPC->mediaLinking = 0;
+			Log3("IOTC_Session_Check failed with error:[%d]",ret);
+			
+			switch(ret){
+				case IOTC_ER_DEVICE_OFFLINE:
+					status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
+					break;
+				case IOTC_ER_DEVICE_IS_SLEEP:
+					status = PPPP_STATUS_DEVICE_SLEEP;
+					break;
+				default:
+					if(hPC->connectionStatus != PPPP_STATUS_DEVICE_SLEEP){
+						status = PPPP_STATUS_CONNECT_FAILED;
+					}else{
+						status = PPPP_STATUS_DEVICE_SLEEP;
+					}
+					break;
+			}
 			break;
 		}
 
@@ -1670,17 +1669,15 @@ int CPPPPChannel::PPPPClose()
 
 	IOTC_Connect_Stop_BySID(sessionID);
 
-	if(SID >= 0 || avIdx >= 0 || spIdx >= 0){
-		Log3("close connection with session:[%d] avIdx:[%d] did:[%s].",SID,avIdx,szDID);
-				
-		avClientExit(SID,avIdx);
-		avClientStop(avIdx);	// stop audio and video recv from device
-		avServExit(SID,spIdx);	// for avServStart block
-		avServStop(spIdx);		// stop audio and video send to device
-		IOTC_Session_Close(sessionID); // close client session handle
+	if(SID >= 0){
+		avClientExit(SID,0);
+		avServExit(SID,speakerChannel);	// for avServStart block
+		IOTC_Session_Close(SID); 		// close client session handle
 	}
 	
-	avIdx = spIdx = speakerChannel = SID = -1;
+	avIdx = spIdx = -1;
+	SID = -1;
+	sessionID = -1;
 
 	return 0;
 }
@@ -1702,6 +1699,8 @@ int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
     memset(szSvr, 0, sizeof(szSvr));
     strcpy(szSvr, svr);
 
+	mediaLinking = 1;
+
 	Log3("start pppp connection to device with uuid:[%s].",szDID);
 	pthread_create(&mediaCoreThread,NULL,MeidaCoreProcess,(void*)this);
 
@@ -1720,8 +1719,8 @@ void CPPPPChannel::Close()
 		}
         
         IOTC_Connect_Stop_BySID(sessionID);
-        avClientExit(SID,avIdx);
-        
+        avClientExit(SID,0);
+		
         mediaLinking = 0;
 		
 		Log3("waiting for core media process exit.");
@@ -1731,7 +1730,32 @@ void CPPPPChannel::Close()
 	PUT_LOCK(&SessionLock);
 }
 
-int CPPPPChannel::SendAVAPIStartIOCtrl(){
+int CPPPPChannel::SleepingStart(){	
+	char avMsg[128] = {0};
+	int  avErr = 0;
+	
+	SMsgAVIoctrlAVStream * pMsg = (SMsgAVIoctrlAVStream *)avMsg;
+
+	avErr = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_DEVICESLEEP_REQ, 
+		(char *)avMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+
+	if(avErr < 0){
+		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",avErr,avIdx);
+		return -1;
+	}
+
+	return 0;
+}
+
+int CPPPPChannel::SleepingClose(){
+	IOTC_WakeUp_WakeDevice(szDID);
+}
+
+int CPPPPChannel::LiveplayStart(){
 	char avMsg[1024] = {0};
 	int  avErr = 0;
 
@@ -1756,7 +1780,7 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 		avErr = avSendIOCtrlEx(
 			avIdx, 
 			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL, 
-			(char *)&avMsg, 
+			(char *)avMsg, 
 			sizeof(SMsgAVIoctrlPlayRecord)
 			);
 
@@ -1789,7 +1813,7 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 		avErr = avSendIOCtrlEx(
 			avIdx, 
 			IOTYPE_USER_IPCAM_START, 
-			(char *)&avMsg, 
+			(char *)avMsg, 
 			sizeof(SMsgAVIoctrlAVStream)
 			);
 
@@ -1798,52 +1822,11 @@ int CPPPPChannel::SendAVAPIStartIOCtrl(){
 			return -1;
 		}
 	}
-
-	SMsgAVIoctrlAVStream * pMsg = (SMsgAVIoctrlAVStream *)avMsg;
-
-	avErr = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_AUDIOSTART, 
-		(char *)&avMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-
-	if(avErr != AV_ER_NoERROR){
-		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
-		return -1;
-	}
-
-    speakerChannel = IOTC_Session_Get_Free_Channel(SID);
-    if(speakerChannel < 0){
-        Log3("tutk get channel for audio send failed:[%d].",speakerChannel);
-        return -1;
-    }
-    
-	pMsg->channel = speakerChannel;
-
-	avErr = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_SPEAKERSTART,
-		(char *)&avMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-	
-	if(avErr != AV_ER_NoERROR){
-		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
-		return -1;
-	}
-    
-    Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
-    spIdx = avServStart(SID, NULL, NULL,  0, 0, speakerChannel);
-    if(spIdx < 0){
-        return -1;
-    }
 	
 	return 0;
 }
 
-int CPPPPChannel::SendAVAPICloseIOCtrl(){
-
+int CPPPPChannel::LiveplayClose(){
 	char avMsg[1024] = {0};
 	int  avErr = 0;
 
@@ -1854,7 +1837,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 		avErr = avSendIOCtrlEx(
 			avIdx, 
 			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL, 
-			(char *)&avMsg, 
+			(char *)avMsg, 
 			sizeof(SMsgAVIoctrlPlayRecord)
 			);
 
@@ -1865,7 +1848,7 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 		avErr = avSendIOCtrlEx(
 			avIdx, 
 			IOTYPE_USER_IPCAM_STOP, 
-			(char *)&avMsg, 
+			(char *)avMsg, 
 			sizeof(SMsgAVIoctrlAVStream)
 			);
 	}
@@ -1875,12 +1858,40 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 		return -1;
 	}
 
+	return 0;
+}
+
+int CPPPPChannel::SpeakingStart(){
+	
+	char avMsg[128] = {0};
+	SMsgAVIoctrlAVStream * pMsg = (SMsgAVIoctrlAVStream *)avMsg;
+	
+	int avErr = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_AUDIOSTART, 
+		(char *)avMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+
+	if(avErr != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
+		return -1;
+	}
+
+	speakEnabled = 1;
+
+	return 0;
+}
+
+int CPPPPChannel::SpeakingClose(){
+	
+	char avMsg[128] = {0};
 	SMsgAVIoctrlAVStream * pMsg = (SMsgAVIoctrlAVStream *)avMsg;
 
-	avErr = avSendIOCtrlEx(
+	int avErr = avSendIOCtrlEx(
 		avIdx, 
 		IOTYPE_USER_IPCAM_AUDIOSTOP, 
-		(char *)&avMsg, 
+		(char *)avMsg, 
 		sizeof(SMsgAVIoctrlAVStream)
 		);
 
@@ -1889,32 +1900,72 @@ int CPPPPChannel::SendAVAPICloseIOCtrl(){
 		return -1;
 	}
 
-	pMsg->channel = speakerChannel;
+	speakEnabled = 0;
 
-	avErr = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_SPEAKERSTOP, 
-		(char *)&avMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
+	return 0;
+}
 
-	if(avErr < 0){
-		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",avErr,avIdx);
-		return -1;
-	}
-
-	avErr = avSendIOCtrlEx(
-		avIdx, 
-		IOTYPE_USER_IPCAM_DEVICESLEEP_REQ, 
-		(char *)&avMsg, 
-		sizeof(SMsgAVIoctrlAVStream)
-		);
-
-	if(avErr < 0){
-		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",avErr,avIdx);
-		return -1;
+int CPPPPChannel::MicphoneStart(){
+	if(spIdx >= 0){
+		Log3("tutk audio send server already start.");
+		return 0;
 	}
 	
+	speakerChannel = IOTC_Session_Get_Free_Channel(SID);
+	
+    if(speakerChannel < 0){
+        Log3("tutk get channel for audio send failed:[%d].",speakerChannel);
+        return -1;
+    }
+
+	char avMsg[128] = {0};
+	SMsgAVIoctrlAVStream * pMsg = (SMsgAVIoctrlAVStream *)avMsg;
+    
+	pMsg->channel = speakerChannel;
+
+	int avErr = avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_SPEAKERSTART,
+		(char *)avMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+	
+	if(avErr != AV_ER_NoERROR){
+		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
+		return -1;
+	}
+    
+    Log3("tutk start audio send process by speaker channel:[%d].",speakerChannel);
+    spIdx = avServStart(SID, NULL, NULL,  3, 0, speakerChannel);
+    if(spIdx < 0){
+		Log3("tutk start audio send server failed with error:[%d].",spIdx);
+        return -1;
+    }
+
+	voiceEnabled = 1;
+
+	return 0;
+}
+
+int CPPPPChannel::MicphoneClose(){
+	char avMsg[128] = {0};
+	SMsgAVIoctrlAVStream * pMsg = (SMsgAVIoctrlAVStream *)avMsg;
+	
+	pMsg->channel = speakerChannel;
+
+	avSendIOCtrlEx(
+		avIdx, 
+		IOTYPE_USER_IPCAM_SPEAKERSTOP, 
+		(char *)avMsg, 
+		sizeof(SMsgAVIoctrlAVStream)
+		);
+
+	if(spIdx > 0) avServStop(spIdx);
+	if(speakerChannel > 0) avServExit(SID,speakerChannel);
+	
+	voiceEnabled = 0;
+	spIdx = -1;
+
 	return 0;
 }
 
@@ -1942,7 +1993,7 @@ int CPPPPChannel::CloseWholeThreads()
   	if(audioSendThread != (pthread_t)-1) pthread_join(audioSendThread,NULL);
 
 	Log3("stop recording process.");
-	CloseRecorder();
+	RecorderClose();
 
 	iocmdRecvThread = (pthread_t)-1;
 	iocmdSendThread = (pthread_t)-1;
@@ -1965,8 +2016,13 @@ int CPPPPChannel::CloseMediaStreams(
 		return -1;
 	}
 
-	SendAVAPICloseIOCtrl();
-
+	LiveplayClose(); // 关闭视频发送
+	MicphoneClose(); // 关闭音频发送
+	SpeakingClose(); // 关闭音频接收
+	RecorderClose(); // 关闭本地录像
+	
+	SleepingStart(); // 打开设备休眠
+	
 	videoPlaying = 0;
 	audioPlaying = 0;
 
@@ -1987,7 +2043,6 @@ int CPPPPChannel::CloseMediaStreams(
 
 	spIdx = -1;
 
-	CloseRecorder();
 	Log3("close media stream success ... ");
 
 	PUT_LOCK(&PlayingLock);
@@ -2075,7 +2130,7 @@ int CPPPPChannel::StartMediaStreams(
 		memcpy(szURL,url,strlen(url));
 	}
 
-    ret = SendAVAPIStartIOCtrl();
+    ret = LiveplayStart();
 	
 	PUT_LOCK(&DestoryLock);
 
@@ -2124,7 +2179,7 @@ void CPPPPChannel::AlarmNotifyDoorBell(JNIEnv* hEnv,char *did, char *type, char 
 
 */
 
-int CPPPPChannel::StartRecorder(
+int CPPPPChannel::RecorderStart(
 	int 		W,			// \BF\ED\B6\C8
 	int 		H,			// \B8脽露\C8
 	int 		FPS,		// 脰隆\C2\CA
@@ -2176,7 +2231,7 @@ jumperr:
 	return -1;
 }
 
-int CPPPPChannel::WriteRecorder(
+int CPPPPChannel::RecorderWrite(
 	const char * 	FrameData,
 	int				FrameSize,
 	int				FrameCode, 	// audio or video codec [0|1]
@@ -2187,7 +2242,7 @@ int CPPPPChannel::WriteRecorder(
 	return WriteRecordingFrames((void*)FrameData,FrameSize,FrameCode,FrameType,Timestamp);
 }
 
-int CPPPPChannel::CloseRecorder(){
+int CPPPPChannel::RecorderClose(){
 
 	GET_LOCK(&CaptureLock);
 	
