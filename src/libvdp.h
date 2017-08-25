@@ -236,7 +236,7 @@ JNIEXPORT int  JNICALL SetVideoStatus(JNIEnv *, jobject, jstring, jint);
 // return value: (bit:0 audio play enable, bit1:audio capture enable)
 JNIEXPORT int  JNICALL GetAudioStatus(JNIEnv *, jobject, jstring);
 
-JNIEXPORT int  JNICALL WakeUp(JNIEnv, jobject, jstring);
+JNIEXPORT int  JNICALL Wake(JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus
 }

@@ -1753,6 +1753,8 @@ int CPPPPChannel::SleepingStart(){
 
 int CPPPPChannel::SleepingClose(){
 	IOTC_WakeUp_WakeDevice(szDID);
+    
+    return 0;
 }
 
 int CPPPPChannel::LiveplayStart(){
