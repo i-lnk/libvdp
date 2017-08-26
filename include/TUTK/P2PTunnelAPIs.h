@@ -498,6 +498,7 @@ TUNNEL_API int P2PTunnelAgent_Connect_Parallel(const char *cszUID, const int SID
  * \brief Disconnect to a tunnel server
  *
  * \details This function used by a tunnel agent to disconnect to a tunnel server
+ *          gracefully
  *
  * \param nSessionID [in] Which session ID of the P2PTunnel session to be disconnect
  *
@@ -505,6 +506,20 @@ TUNNEL_API int P2PTunnelAgent_Connect_Parallel(const char *cszUID, const int SID
  *			- #TUNNEL_ER_INVALID_ARG The session ID is not in valid range.
  */
 TUNNEL_API int P2PTunnelAgent_Disconnect(int nSessionID);
+    
+
+/**
+ * \brief Abort the connection with a tunnel server
+ *
+ * \details This function used by a tunnel agent to disconnect to a tunnel server
+ *          directly
+ *
+ * \param nSessionID [in] Which session ID of the P2PTunnel session to be disconnect
+ *
+ * \return - #TUNNEL_ER_NoERROR if connect successfully
+ *			- #TUNNEL_ER_INVALID_ARG The session ID is not in valid range.
+ */
+TUNNEL_API int P2PTunnelAgent_Abort(int nSessionID);
 
 
 /**

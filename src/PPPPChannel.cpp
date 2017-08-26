@@ -187,6 +187,14 @@ static void playerCallback(char * data, int lens, void *context){
 
 #endif
 
+void CheckServHandler(
+	int result, 
+	void * userData
+){
+	int * pErr = (int *)userData;
+	*pErr = result;
+}
+
 void * IOCmdSendProcess(
 	void * hVoid
 ){
@@ -1326,9 +1334,30 @@ connect:
 	}
 	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
+
+#if 0
+	Err = -1000;
+
+	IOTC_Check_Device_On_Line(hPC->szDID, 30000, CheckServHandler, &Err);
+
+	while(Err == -1000){
+		Log3("[0:%s]=====>wait for device status:[%d] return.",hPC->szDID,Err);
+		sleep(1);
+	}
 	
-	Log3("[1:%s]=====>start get free session id for client connection.",
-         hPC->szDID);
+	Log3("[1:%s]=====>device status is:[%d].",hPC->szDID, Err);
+
+	switch(Err){
+		case IOTC_ER_NoERROR: // No error happens during the checking flow and the Device is on line.
+			break;
+		case IOTC_ER_TIMEOUT:
+		case IOTC_ER_DEVICE_OFFLINE: // The device is not on line.
+			status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
+			goto jumperr;
+		default:
+			goto connect;
+	}
+#endif	
 
 	hPC->sessionID = IOTC_Get_SessionID();
 	if(hPC->sessionID < 0){
@@ -1338,8 +1367,6 @@ connect:
 		goto jumperr;
 	}
 
-	Log3("[2:%s]=====>start connection by uid parallel.",hPC->szDID);
-	
 	hPC->SID = IOTC_Connect_ByUID_Parallel(hPC->szDID,hPC->sessionID);
 	if(hPC->SID < 0){
 		Log3("[2:%s]=====>start connection failed with error [%d] with device:[%s]\n",
@@ -1371,7 +1398,7 @@ connect:
 				goto jumperr;
 			default:
 				status = PPPP_STATUS_CONNECT_FAILED;
-				goto jumperr;
+				goto connect;
 		}
 	}
 
@@ -1402,21 +1429,14 @@ connect:
 		IOTC_Connect_Stop_BySID(hPC->SID);
 		
 		switch(hPC->avIdx){
-			case AV_ER_INVALID_SID:
-			case AV_ER_TIMEOUT:
-			case AV_ER_REMOTE_TIMEOUT_DISCONNECT:
-//				hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECT_TIMEOUT);
-				break;
 			case AV_ER_WRONG_VIEWACCorPWD:
 			case AV_ER_NO_PERMISSION:
 				status = PPPP_STATUS_INVALID_USER_PWD;
 				goto jumperr;
 			default:
-				status = PPPP_STATUS_CONNECT_FAILED;
-				goto jumperr;
+				break;
 		}
 	
-		sleep(1);
 		goto connect;
 	}
 
@@ -1477,10 +1497,9 @@ connect:
 	while(hPC->mediaLinking){
 		struct st_SInfo sInfo;
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
+		
 		if(ret < 0){
-			hPC->mediaLinking = 0;
-			Log3("IOTC_Session_Check failed with error:[%d]",ret);
-			
+			Log3("IOTC_Session_Check failed with error:[%d]",ret);	
 			switch(ret){
 				case IOTC_ER_DEVICE_OFFLINE:
 					status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
@@ -1489,12 +1508,11 @@ connect:
 					status = PPPP_STATUS_DEVICE_SLEEP;
 					break;
 				default:
-					if(hPC->connectionStatus != PPPP_STATUS_DEVICE_SLEEP){
-						status = PPPP_STATUS_CONNECT_FAILED;
-					}else{
-						status = PPPP_STATUS_DEVICE_SLEEP;
-					}
-					break;
+					hPC->mediaLinking = 0;
+					hPC->PPPPClose();
+					hPC->CloseWholeThreads();
+					hPC->mediaLinking = 1;
+					goto connect;
 			}
 			break;
 		}
@@ -1504,7 +1522,7 @@ connect:
 			hPC->startSession = 0;
 		}
 		
-		sleep(5);
+		sleep(3);
 	}
 
 jumperr:	
