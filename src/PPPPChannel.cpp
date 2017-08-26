@@ -1330,7 +1330,7 @@ void * MeidaCoreProcess(
 connect:
 	if(hPC->mediaLinking == 0){
 		Log3("[0:%s]=====>close connection process by flag.",hPC->szDID);
-		return NULL;
+		goto jumperr;
 	}
 	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
