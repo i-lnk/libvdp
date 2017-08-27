@@ -169,6 +169,7 @@ public:
 	// 
 	CCircleBuffer *		hAudioGetList;
 	CCircleBuffer *		hAudioPutList;
+	OPENXL_STREAM *     hOSL;
 
 	char 				szURL[256];		//
 

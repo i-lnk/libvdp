@@ -105,6 +105,7 @@ unsigned int CCircleBuffer::Put(char * buffer, unsigned int len)
 	unsigned int l;
 
 	GetLock();
+	
 	len = _min(len, size - wp + rp);
 	/* first put the data starting from fifo->in to buffer end */
 	l = _min(len, size - (wp & (size - 1)));
@@ -138,17 +139,6 @@ unsigned int CCircleBuffer::Get(char * buffer, unsigned int len)
 	len = _min(len, wp - rp); 
 	/* first get the data from fifo->out until the end of the buffer */
 	l = _min(len, size - (rp & (size - 1))); 
-
-#if 0
-	if(dmsg){
-		Log3("1.memcpy to [%p] from [%p] lens [%d]",
-			buffer,d + (rp & (size - 1)),l
-			);
-		Log3("2.memcpy to [%p] from [%p] lens [%d]",
-			buffer + l,d,len - l
-			);
-	}
-#endif
 	
 	memcpy(buffer, d + (rp & (size - 1)), l); 
 	/* then get the rest (if any) from the beginning of the buffer */

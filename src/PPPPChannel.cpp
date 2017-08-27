@@ -24,11 +24,12 @@
 #include "apprsp.h"
 
 #define ENABLE_AEC
-#define ENABLE_AGC
+//#define ENABLE_AGC
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
 
 //#define ENABLE_VAD
+
 #define ENABLE_AUDIO_RECORD
 
 #ifdef PLATFORM_ANDROID
@@ -792,6 +793,13 @@ jump_rst:
 				);
 			continue;
 		}
+
+		int numAudioFrameCount = avCheckAudioBuf(avIdx);
+
+		if(numAudioFrameCount == 0){
+			usleep(10000);
+			continue;
+		}
 		
 		ret = avRecvAudioData(
 			avIdx, 
@@ -938,9 +946,6 @@ jump_rst:
 		sleep(1);
 		goto jump_rst;
 	}
-    
-    Log3("audio send process run with codec:%02x.",hPC->AudioSendFormat);
-
 
 #ifdef ENABLE_AEC
 	hAEC = audio_echo_cancellation_init(3,hPC->AudioSampleRate);
@@ -977,34 +982,6 @@ wait_next:
 		hPC->speakerChannel,
 		hPC->spIdx);
 
-	if(hPC->hAudioPutList) delete hPC->hAudioPutList;
-	if(hPC->hAudioGetList) delete hPC->hAudioGetList;
-
-	hPC->hAudioPutList = new CCircleBuffer(32,hPC->Audio10msLength,0);
-	hPC->hAudioGetList = new CCircleBuffer(32,hPC->Audio10msLength,0);
-	
-	if(hPC->hAudioPutList == NULL || hPC->hAudioGetList == NULL){
-		Log2("audio data list init failed.");
-		hPC->audioPlaying = 0;
-	}
-
-	Log3("=====> opensl init start.\n");
-	
-	hOSL = InitOpenXLStream(
-		hPC->AudioSampleRate,
-		hPC->AudioChannel,
-		hPC->AudioChannel,
-		hVoid,
-		recordCallback,
-		playerCallback
-		);
-
-	Log3("=====> opensl init close.\n");
-	
-	if(!hOSL){
-		Log3("opensl init failed.");
-	}
-
 	char hFrame[2*960] = {0};
 	char hCodecFrame[2*960] = {0};
 
@@ -1020,13 +997,8 @@ wait_next:
 	while(hPC->mediaLinking){
 
 		if(hPC->audioPlaying == 0){
-			if(hOSL){ 
-				FreeOpenXLStream(hOSL);
-				hOSL = NULL;
-			}
 			goto wait_next;	// wait next audio receiver from device
 		}
-
 
 		int captureLens = hPC->hAudioGetList->Used();
 		int speakerLens = hPC->hAudioPutList->Used();
@@ -1132,10 +1104,6 @@ wait_next:
 		WritePtr = hAV->d;
 	}
 
-	Log2("free opensl audio stream.");
-	FreeOpenXLStream(hOSL);
-	hOSL = NULL;
-
 	audio_enc_free(hCodec);
 #ifdef ENABLE_AEC
 	audio_echo_cancellation_free(hAEC);
@@ -1149,12 +1117,6 @@ wait_next:
 #ifdef ENABLE_DEBUG
 	if(hOut) fclose(hOut); hOut = NULL;
 #endif
-	
-	if(hPC->hAudioPutList) delete hPC->hAudioPutList;
-	if(hPC->hAudioGetList) delete hPC->hAudioGetList;
-
-	hPC->hAudioPutList = NULL;
-	hPC->hAudioGetList = NULL;
 
 	Log3("audio send proc exit.");
 
@@ -1383,12 +1345,8 @@ connect:
             case IOTC_ER_DEVICE_IS_SLEEP:
 				Log3("[2:%s]=====>device in sleep mode.",hPC->szDID);
                 status = PPPP_STATUS_DEVICE_SLEEP;
-				if(TRY_LOCK(&hPC->PlayingLock) != 0){
-					sleep(2);
-					goto connect;
-				}
-				PUT_LOCK(&hPC->PlayingLock);
                 goto jumperr;
+			case IOTC_ER_FAIL_SETUP_RELAY:
             case IOTC_ER_CAN_NOT_FIND_DEVICE:
 			case IOTC_ER_DEVICE_OFFLINE:
                 Log3("[2:%s]=====>device not online,ask again.",hPC->szDID);
@@ -1533,6 +1491,10 @@ jumperr:
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
     hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status == 0 ? PPPP_STATUS_CONNECT_FAILED : status);
 
+	Log3("[OPENXL] FREE RESOURCE BY MEDIA CORE PROCESS.");
+	if(hPC->hOSL) FreeOpenXLStream(hPC->hOSL);
+	hPC->hOSL = NULL;
+
 	PUT_LOCK(&hPC->DestoryLock);
 	PUT_LOCK(&hPC->SessionLock);
     
@@ -1582,7 +1544,7 @@ CPPPPChannel::CPPPPChannel(
 	recordingThread = (pthread_t)-1;
 
 	deviceType = -1;
-	connectionStatus = -1;
+	connectionStatus = PPPP_STATUS_CONNECTING;
 
 	recordingExit = 0;
 	avIdx = spIdx = rpIdx = sessionID = -1;
@@ -1595,7 +1557,7 @@ CPPPPChannel::CPPPPChannel(
 	hRecordFile = NULL;
 
 	AudioSaveLength = 0;
-	Audio10msLength = 0;
+	Audio10msLength = 160;
 
 	MW = 1920;
 	MH = 1080;
@@ -1605,13 +1567,14 @@ CPPPPChannel::CPPPPChannel(
 	
 	YUVSize = (MW * MH) + (MW * MH)/2;
 
-	hAudioBuffer = new CCircleBuffer( 128 * 1024);
-	hSoundBuffer = new CCircleBuffer( 128 * 1024);
+	hAudioBuffer = new CCircleBuffer(   8 * 1024);
+	hSoundBuffer = new CCircleBuffer(   8 * 1024);
 	hVideoBuffer = new CCircleBuffer(4096 * 1024);
 	hIOCmdBuffer = new CCircleBuffer(COMMAND_BUFFER_SIZE);
 
-	hAudioPutList = NULL;
-	hAudioGetList = NULL;
+	hAudioPutList = new CCircleBuffer(8 * 1024);
+	hAudioGetList = new CCircleBuffer(8 * 1024);
+	hOSL = NULL;
 	
 //	hVideoBuffer->Debug(1);
     
@@ -1644,6 +1607,9 @@ CPPPPChannel::~CPPPPChannel()
 	delete(hVideoBuffer);
 	delete(hSoundBuffer);
 	delete(hIOCmdBuffer);
+	
+	delete(hAudioPutList);
+	delete(hAudioGetList);
 
 //	hIOCmdBuffer = 
 //	hAudioBuffer = 
@@ -1702,10 +1668,12 @@ int CPPPPChannel::PPPPClose()
 
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
+	int statusGetTimes = 10;
+
 	if(TRY_LOCK(&SessionLock) != 0){
-		Log3("pppp connection with uuid:[%s] still running",szDID);
+		Log3("start pppp connection with uuid:[%s] still running",szDID);
 		startSession = 1;
-		return -1;
+		return 0;
 	}
 
 	memset(szUsr, 0, sizeof(szUsr));
@@ -1720,11 +1688,35 @@ int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 	mediaLinking = 1;
 
 	Log3("start pppp connection to device with uuid:[%s].",szDID);
-	pthread_create(&mediaCoreThread,NULL,MeidaCoreProcess,(void*)this);
+	int ret = pthread_create(&mediaCoreThread,NULL,MeidaCoreProcess,(void*)this);
+	if(ret != 0){
+		Log3("start pppp connection create thread failed.");
+		PUT_LOCK(&SessionLock);
+		return -1;
+	}
 
 	PUT_LOCK(&SessionLock);
+
+	while(statusGetTimes--){
+		GET_LOCK( &g_CallbackContextLock );
+		int status = connectionStatus;
+		PUT_LOCK( &g_CallbackContextLock );
+
+		switch(status){
+			case PPPP_STATUS_CONNECTING:
+				Log3("start pppp connection block, status not change.");
+				sleep(1);
+				continue;
+			case PPPP_STATUS_ON_LINE:
+				Log3("start pppp connection success.");
+				return  0;
+			default:
+				Log3("start pppp connection error:[%d].",status);
+				return -1;
+		}
+	}
 	
-    return 0;
+    return -1;
 }
 
 void CPPPPChannel::Close()
@@ -2044,6 +2036,10 @@ int CPPPPChannel::CloseMediaStreams(
 	videoPlaying = 0;
 	audioPlaying = 0;
 
+	Log3("[OPENXL] FREE RESOURCE BY CLOSE MEDIA STREAM.");
+	if(hOSL) FreeOpenXLStream(hOSL);
+	hOSL = NULL;
+
 	if(playrecChannel >= 0){
 		Log3("close replay client.");
 		avClientExit(SID,playrecChannel);
@@ -2080,7 +2076,6 @@ int CPPPPChannel::StartMediaStreams(
 ){    
     //F_LOG;	
 	int ret = 0;
-	int status = 0;
      
     if(SID < 0) return -1;
 
@@ -2093,24 +2088,6 @@ int CPPPPChannel::StartMediaStreams(
 		Log3("media stream will be destory.");
 		PUT_LOCK(&PlayingLock);
 		return -1;
-	}
-
-	while(1){
-		GET_LOCK( &g_CallbackContextLock );
-		status = connectionStatus;
-		PUT_LOCK( &g_CallbackContextLock );
-
-		if(status == PPPP_STATUS_ON_LINE){
-			break;
-		}else if(status == PPPP_STATUS_CONNECTING){
-			Log3("media stream connecting, wait for a moment.");
-			sleep(1); continue;
-		}else{
-			Log3("media stream already destory.");
-			PUT_LOCK(&PlayingLock);
-			PUT_LOCK(&DestoryLock);
-			return -1;
-		}
 	}
 
 	Log3("media stream start here.");
@@ -2146,6 +2123,27 @@ int CPPPPChannel::StartMediaStreams(
 
 	if(url != NULL){
 		memcpy(szURL,url,strlen(url));
+	}
+
+	hAudioGetList->Clear();
+	hAudioPutList->Clear();
+
+	Log3("[OPENXL] INIT RESOURCE GET:[%d] PUT:[%d].",
+		hAudioGetList->Used(),
+		hAudioPutList->Used()
+		);
+	
+	hOSL = InitOpenXLStream(
+		AudioSampleRate,
+		AudioChannel,
+		AudioChannel,
+		this,
+		recordCallback,
+		playerCallback
+		);
+	
+	if(!hOSL){
+		Log3("opensl init failed.");
 	}
 
     ret = LiveplayStart();

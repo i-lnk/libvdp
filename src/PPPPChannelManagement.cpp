@@ -14,106 +14,95 @@
 
 CPPPPChannelManagement::CPPPPChannelManagement()
 {
-    memset(&m_PPPPChannel,0,sizeof(m_PPPPChannel));
+	int i = 0;
+	for(i;i<MAX_PPPP_CHANNEL_NUM;i++){
+		memset(&sessionList[i],0,sizeof(T_SESSION));
+		INT_LOCK(&sessionList[i].lock);
+	}
 
-	INT_LOCK( &PPPPChannelLock );
-	INT_LOCK( &AudioLock );
-    
-    InitOpenXL();
+	InitOpenXL();
 }
 
 CPPPPChannelManagement::~CPPPPChannelManagement()
 {    
-    CloseAll();
-
-	DEL_LOCK( &PPPPChannelLock );
-	DEL_LOCK( &AudioLock );
+	CloseAll();
+	int i = 0;
+	for(i;i<MAX_PPPP_CHANNEL_NUM;i++){
+		DEL_LOCK(&sessionList[i].lock);
+	}
 }
 
 int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * server,char * connectionType)
 {
 	if(szDID == NULL) return 0;
 
-    //F_LOG;
-	GET_LOCK( &PPPPChannelLock );
-
 	int r = 1;
     int i = 0;
 	
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {
-            r = m_PPPPChannel[i].pPPPPChannel->Start(user, pwd, server);
-            goto jumpout;
-        }
-    }
-
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 0)
-        {
-            m_PPPPChannel[i].bValid = 1;            
-            strcpy(m_PPPPChannel[i].szDID, szDID);      
-            m_PPPPChannel[i].pPPPPChannel = new CPPPPChannel(szDID, user, pwd, server, connectionType);
-            r = m_PPPPChannel[i].pPPPPChannel->Start(user, pwd, server);
+    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+        if(strcmp(sessionList[i].deviceID,szDID) == 0){
 			goto jumpout;
         }
+		PUT_LOCK(&sessionList[i].lock);
     }
 
-	PUT_LOCK( &PPPPChannelLock );
+    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(sessionList[i].deviceID[0] == 0){
+			strcpy(sessionList[i].deviceID,szDID);
+			sessionList[i].session = new CPPPPChannel(szDID,user,pwd,server,connectionType);
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+    }
 
 	return -1;
 
 jumpout:
+	r = sessionList[i].session->Start(user, pwd, server);
+	
+    PUT_LOCK(&sessionList[i].lock);
 
-	PUT_LOCK( &PPPPChannelLock );
-    
-    return  r;
+	return r;
 }
 
 int CPPPPChannelManagement::Close(char * szDID)
 {
 	if(szDID == NULL) return 0;
 
-	GET_LOCK( &PPPPChannelLock );
-
     int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {            
-            memset(m_PPPPChannel[i].szDID, 0, sizeof(m_PPPPChannel[i].szDID));
-            SAFE_DELETE(m_PPPPChannel[i].pPPPPChannel);       
-            m_PPPPChannel[i].bValid = 0;
-			PUT_LOCK( &PPPPChannelLock );
-            
+    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+    	GET_LOCK(&sessionList[i].lock);
+        if(strcmp(sessionList[i].deviceID,szDID) == 0){            
+            sessionList[i].deviceID[0] = 0;
+			if(sessionList[i].session){
+				delete(sessionList[i].session);
+				sessionList[i].session = NULL;
+			}
+			PUT_LOCK(&sessionList[i].lock);
             return 1;
         }
+		PUT_LOCK(&sessionList[i].lock);
     }
-
-	PUT_LOCK( &PPPPChannelLock );
     
     return 0;
 }
 
 void CPPPPChannelManagement::CloseAll(){
-	
-    GET_LOCK( &PPPPChannelLock );
-
     int i;
     
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1)
-        {
-            memset(m_PPPPChannel[i].szDID, 0, sizeof(m_PPPPChannel[i].szDID));
-            SAFE_DELETE(m_PPPPChannel[i].pPPPPChannel);           
-            m_PPPPChannel[i].bValid = 0;
+    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+    	GET_LOCK(&sessionList[i].lock);
+        if(sessionList[i].deviceID[0]){
+			if(sessionList[i].session){
+				delete(sessionList[i].session);
+				sessionList[i].session = NULL;
+			}
+			sessionList[i].deviceID[0] = 0;
         }
+		PUT_LOCK(&sessionList[i].lock);
     } 
-
-	PUT_LOCK( &PPPPChannelLock );
 }
 
 int CPPPPChannelManagement::StartPPPPLivestream(
@@ -129,17 +118,22 @@ int CPPPPChannelManagement::StartPPPPLivestream(
 ){
   	if(szDID == NULL) return 0;
 
-	int ret  = -1;
-	
-	GET_LOCK( &PPPPChannelLock );
-
     int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {
-        	Log3("start connection with did:[%s].",szDID);
-            ret = m_PPPPChannel[i].pPPPPChannel->StartMediaStreams(
+	int e;
+	
+    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+    	GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+        }
+		PUT_LOCK(&sessionList[i].lock);
+    }
+    
+    return -1;
+
+jumpout:
+
+	e = sessionList[i].session->StartMediaStreams(
 					szURL,
 					audio_sample_rate,
 					audio_channel,
@@ -149,210 +143,216 @@ int CPPPPChannelManagement::StartPPPPLivestream(
 					video_w_crop,
 					video_h_crop
 					);
-			
-			break;
-        }
-    }
 
-	PUT_LOCK( &PPPPChannelLock );
-    
-    return ret;
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
 
 int CPPPPChannelManagement::ClosePPPPLivestream(char * szDID){
-
 	if(szDID == NULL) return 0;
 
-   	int ret  = -1;
+	int i;
+	int e;
+	
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+	}
+	
+	return -1;
 
-	GET_LOCK( &PPPPChannelLock );
+jumpout:
 
-    int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {
-           	ret = m_PPPPChannel[i].pPPPPChannel->CloseMediaStreams();
-            break;
-        }
-    }  
+	e = sessionList[i].session->CloseMediaStreams();
 
-	PUT_LOCK( &PPPPChannelLock );
-    
-    return ret;
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
 
 int CPPPPChannelManagement::GetAudioStatus(char * szDID){
 
 	if(szDID == NULL) return 0;
 
-	GET_LOCK( &PPPPChannelLock );
-	GET_LOCK( &AudioLock );
+	int i = 0;
+	int e = 0;
 
-    int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-    	if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {
-			Log3("GET ----> AUDIO PLAY:[%d] AUDIO TALK:[%d].",
-				m_PPPPChannel[i].pPPPPChannel->audioEnabled,
-				m_PPPPChannel[i].pPPPPChannel->voiceEnabled
-				);
-
-			int val = (m_PPPPChannel[i].pPPPPChannel->audioEnabled | m_PPPPChannel[i].pPPPPChannel->voiceEnabled << 1) & 0x3;
-
-			PUT_LOCK( &AudioLock );
-			PUT_LOCK( &PPPPChannelLock );
-		
-        	return val;
-    	}
-    }
-
-	PUT_LOCK( &AudioLock );
-	PUT_LOCK( &PPPPChannelLock );
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+	}
 
 	return 0;
+
+jumpout:
+
+	Log3("GET ----> AUDIO PLAY:[%d] AUDIO TALK:[%d].",
+				sessionList[i].session->audioEnabled,
+				sessionList[i].session->voiceEnabled
+				);
+
+	e = (sessionList[i].session->audioEnabled | sessionList[i].session->voiceEnabled << 1) & 0x3;
+
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
 
 int CPPPPChannelManagement::SetAudioStatus(char * szDID,int AudioStatus){
 
 	if(szDID == NULL) return 0;
+	
+	int i = 0;
+	int e = 0;
 
-	GET_LOCK( &PPPPChannelLock );
-	GET_LOCK( &AudioLock );
+	int audioEnable = (AudioStatus & 0x1);
+	int voiceEnable = (AudioStatus & 0x2) >> 1;
 
-    int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {
-            int audioEnable = (AudioStatus & 0x1);
-			int voiceEnable = (AudioStatus & 0x2) >> 1;
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+	}
 
-			if(voiceEnable){
-				m_PPPPChannel[i].pPPPPChannel->MicphoneStart();
-			}else{
-				m_PPPPChannel[i].pPPPPChannel->MicphoneClose();
-			}
+	return 0;
 
-			if(audioEnable){
-				m_PPPPChannel[i].pPPPPChannel->SpeakingStart();
-			}else{
-				m_PPPPChannel[i].pPPPPChannel->SpeakingClose();
-			}
+jumpout:
 
-			Log3("SET ----> AUDIO PLAY:[%d] AUDIO TALK:[%d].",
-				m_PPPPChannel[i].pPPPPChannel->audioEnabled,
-				m_PPPPChannel[i].pPPPPChannel->voiceEnabled
-				);
+	if(voiceEnable){
+		sessionList[i].session->MicphoneStart();
+	}else{
+		sessionList[i].session->MicphoneClose();
+	}
 
-			PUT_LOCK( &AudioLock );
-			PUT_LOCK( &PPPPChannelLock );
-			
-            return (m_PPPPChannel[i].pPPPPChannel->audioEnabled | m_PPPPChannel[i].pPPPPChannel->voiceEnabled << 1) & 0x3;
-        }
-    }  
+	if(audioEnable){
+		sessionList[i].session->SpeakingStart();
+	}else{
+		sessionList[i].session->SpeakingClose();
+	}
 
-	PUT_LOCK( &AudioLock );
-	PUT_LOCK( &PPPPChannelLock );
-   
-    return 0;
+	Log3("SET ----> AUDIO PLAY:[%d] AUDIO TALK:[%d].",
+		sessionList[i].session->audioEnabled,
+		sessionList[i].session->voiceEnabled
+		);
+
+	e = (sessionList[i].session->audioEnabled | sessionList[i].session->voiceEnabled << 1) & 0x3;
+
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
 
 int CPPPPChannelManagement::SetVideoStatus(char * szDID,int VideoStatus){
 	if(szDID == NULL) return 0;
 
-	int ret = 0;
-	
-	GET_LOCK( &PPPPChannelLock );
-	int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
-		if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0){
-			if(VideoStatus){
-				ret = m_PPPPChannel[i].pPPPPChannel->LiveplayStart();
-			}else{
-				ret = m_PPPPChannel[i].pPPPPChannel->LiveplayClose();
-			}
+	int i = 0;
+	int e = 0;
 
-			goto jumperr;
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
 		}
-    }
+		PUT_LOCK(&sessionList[i].lock);
+	}
 
-jumperr:
-	PUT_LOCK( &PPPPChannelLock );
+	return 0;
 
-	return ret;
+jumpout:
+
+	if(VideoStatus){
+		e = sessionList[i].session->LiveplayStart();
+	}else{
+		e = sessionList[i].session->LiveplayClose();
+	}
+
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
 
 int CPPPPChannelManagement::StartRecorderByDID(char * szDID,char * filepath){
-	
-    if(szDID == NULL) return 0;
+	if(szDID == NULL) return 0;
 
-	GET_LOCK( &PPPPChannelLock );
+	int i = 0;
+	int e = 0;
 
-    int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {
-            int ret = m_PPPPChannel[i].pPPPPChannel->RecorderStart(0,0,15,filepath);
-			PUT_LOCK( &PPPPChannelLock );
-            return ret;
-        }
-    }  
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+	}
 
-	PUT_LOCK( &PPPPChannelLock );
-   
-    return 0;
+	return 0;
+
+jumpout:
+
+	e = sessionList[i].session->RecorderStart(0,0,15,filepath);
+
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
 
 int CPPPPChannelManagement::CloseRecorderByDID(char * szDID)
 {
-    if(szDID == NULL) return 0;
+	if(szDID == NULL) return 0;
 
-	GET_LOCK( &PPPPChannelLock );
+	int i = 0;
+	int e = 0;
 
-    int i;
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++)
-    {
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0)
-        {
-            m_PPPPChannel[i].pPPPPChannel->RecorderClose();
-			PUT_LOCK( &PPPPChannelLock );
-            return 1;
-        }
-    }  
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+	}
 
-	PUT_LOCK( &PPPPChannelLock );
-   
-    return 0;
+	return 0;
+
+jumpout:
+
+	e = sessionList[i].session->RecorderClose();
+
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
 
 int CPPPPChannelManagement::PPPPSetSystemParams(char * szDID,int type,char * msg,int len)
 {   
-	if(szDID == NULL){
-		Log3("Invalid uuid for application layer caller");
-		return 0;
-	}
-  
-	GET_LOCK( &PPPPChannelLock );
+	if(szDID == NULL) return 0;
 
-	int r = 0;
-    int i;
-	
-    for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
-        if(m_PPPPChannel[i].bValid == 1 && strcmp(m_PPPPChannel[i].szDID, szDID) == 0){
-            if(1 == m_PPPPChannel[i].pPPPPChannel->SetSystemParams(type, msg, len)){
-            	r = 1; goto jumpout;
-            }else{
-            	r = 0; goto jumpout;
-            }
-        }
-    }
+	int i = 0;
+	int e = 0;
+
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+	}
+
+	return 0;
 
 jumpout:
-    
-    PUT_LOCK( &PPPPChannelLock );
-    
-    return r;
+
+	e = sessionList[i].session->SetSystemParams(type, msg, len);
+
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
 }
