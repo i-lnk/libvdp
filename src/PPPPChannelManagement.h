@@ -6,12 +6,11 @@
 #define MAX_DID_LENGTH 64
 #define MAX_PPPP_CHANNEL_NUM 64
 
-typedef struct _PPPP_CHANNEL
-{
-    char szDID[MAX_DID_LENGTH] ;
-    CPPPPChannel *pPPPPChannel;
-    int bValid;    
-}PPPP_CHANNEL, *PPPPPCHANNEL;
+typedef struct T_SESSION{
+    char 			deviceID[MAX_DID_LENGTH] ;
+    CPPPPChannel * 	session;
+   	COMMO_LOCK 		lock;
+}T_SESSION, *PT_SESSION;
 
 class CPPPPChannelManagement
 {
@@ -47,10 +46,7 @@ public:
 	int CloseRecorderByDID(char * szDID);
 	
 private:
-    PPPP_CHANNEL m_PPPPChannel[MAX_PPPP_CHANNEL_NUM];
-
-	COMMO_LOCK PPPPChannelLock;
-	COMMO_LOCK AudioLock;
+    T_SESSION sessionList[MAX_PPPP_CHANNEL_NUM];
 };
 
 #endif

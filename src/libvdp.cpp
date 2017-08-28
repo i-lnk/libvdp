@@ -212,7 +212,7 @@ JNIEXPORT void JNICALL PPPPInitialize(JNIEnv *env ,jobject obj, jstring svr)
     
     IOTC_Setup_DetectNetwork_Timeout(5000);
     IOTC_Setup_LANConnection_Timeout(300);
-    IOTC_Setup_P2PConnection_Timeout(900);
+    IOTC_Setup_P2PConnection_Timeout(500);
     
     avInitialize(32);
     unsigned int iotcVer;

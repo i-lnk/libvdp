@@ -9,52 +9,6 @@ Revision Table
 
 Version     | Name             |Date           |Description
 ------------|------------------|---------------|-------------------
- 0.1        |Charlie           |2010-11-15     |Trial Version
- 0.2        |Charlie           |2010-12-28     |IOTC_Get_Version(), Session Alive
- 0.2.1      |Charlie           |2011-02-28     |Header structure --> Flag, IOTC_Connect return IOTC_ER_DEVICE_NOT_LISTENING, if Target device is not listening
- 0.3        |Charlie           |2011-03-02     |Support LAN Mode.
- 0.4        |Kevin             |2011-04-22     |Support ASIX110/220 8051 platform
- 0.4.0.1    |Charlie           |2011-04-28     |Fix bug of LanSearch
- 0.4.0.2    |Kevin             |2011-04-28     |Fix bug of gBuf multi-thread access currently.
- 0.4.0.3    |Charlie           |2011-05-06     |Fix ReadBuf bug because multi-thread read/write competition
- 0.4.0.4    |Charlie           |2011-05-10     |Hope 312 can't support fopen, so undefined ShowVersionInfoinLogFile() for Hope' _ARC_COMPILER
- 0.5.0.0    |Charlie/Kevin     |2011-06-30     |A major revision change of IOTCAPIs, lead-in multi-channel mechanism and including using IOTC protocol 0.2
- 1.0.0.0    |Kevin             |2011-07-12     |Formal version, stability testing
- 1.0.1.0    |Kevin             |2011-07-25     |Fix Bug : __Search_DeviceInfo() and __Search_VPGServerList(), add threshold
- 1.0.2.0    |Kevin             |2011-07-27     |Fix Bug : _Check_P2P_Possible(), improve _Check_Nat_Type(), Modify IOTC_TIME_OUT_SECOND_P2P_REQUEST 60->10
- 1.1.0.0    |Kevin             |2011-07-29     |Fix Bug : Before login reset nat check status, client query device got unlicensed respond not return error code IOTC_ER_UNLICENSE. Modify : judge precheck respond last login time 300->120, Got MSG_LAN_SEARCH_R start with _IOTC_Send_Knock() procedure. Add API : IOTC_Search_Device_XXX() and IOTC_Search_Stop()
- 1.1.1.0    |Kevin             |2011-08-01     |Fix Bug : _IOTC_Check_Master() and _IOTC_Check_Server(), check one server once -> check all server once. Modify : IOTC_TIME_OUT_SECOND_P2P_REQUEST 10->6
- 1.1.2.0    |Kevin             |2011-08-08     |Fix Bug : 1.Linux thread not reclaim so must detach thread 2.when only do search device done not release session index. Modify : not wait resolve master result until call IOTC_Device_Login() or IOTC_Connect_XXX(), it will improve LAN mode performance
- 1.2.0.0    |Kevin             |2011-08-29     |Improve : Alloc read buffer dynamically instead of declare static memory Fix Bug : 1.IOTC_Session_Channel_OFF() not clean read buffer 2.SessionInfo member HeaderPacketCount not separate with channel
- 1.2.1.0    |Kevin             |2011-09-08     |Add : 1.IOTC_Initialize() setup p2p socket buffer size 2.judge UID if valid function. Modify : remove query time threshold of __Search_DeviceInfo() and __Search_VPGServerList(). Fix Bug : in IOTC_Device_Login() give wrong argument when call _IOTC_SendQuryServerList() to query third and fourth master. Custom : reduce static memory usage for ARC
- 1.3.0.0    |Kevin             |2011-11-15     |Fix Bug : 1.ASIX not convert NAT and version of login info from little endian to big endian. 2.iPhone and Win32 Lan search 3.use wrong VPG info to login. 4.Lan search send ARP to query will cause AP crash, send x.x.x.255 instead. Add : 1.use UID to bind lan search port. 2.UID toupper. 3.Network flow mechanism to know response and packet lost rate. Custom : replace malloc and tutk_platform_free with p2p_malloc and p2p_free for ARC. Improve : 1.IOTC_DeInitialize() to use pthread_join like function to wait thread exit. 2. IOTC_Device_Login() return IOTC_ER_NoERROR when master address is "127.0.0.1" for only use LAN mode. Private : 1.search all device on LAN 2.force relay mode to connect.
- 1.3.1.0    |Kevin             |2011-11-24     |Fix Bug : _IOTC_SendAlive() via relay always give RLYSessionID 0 Improve : 1.When call IOTC_DeInitialize() to close all session. 2.When receive remote session close or keep alive timeout not clean read buf until user call IOTC_Session_Close().
- 1.3.2.0    |Kevin             |2011-12-21     |Fix Bug : 1. IOTC_Connect_ByUID() duplicate call at the same time will return wrong SID. 2.IOTC_Connect_ByName() return IOTC_ER_UNLICENSE error and Lan search error. 3.IOTC_Connect_ByUID() use wrong VPG to send query to third and fourth Master. Add : 1.IOTC_Set_Max_Session_Number() to setup session number for control memory usage. 2._IOTC_thread_Device_Login also watch a alive timeout counter for avoiding _IOTC_thread_Session_Alive crash. Modify : int IOTC_Get_Login_Info(), if return > 0 means login failure count.
- 1.4.0.0    |Kevin             |2012-02-02     |Fix Bug : Mutex lock use error on WIN32 platform. Add : 1.IOTC_sListen() and IOTC_sConnect() create AES encryption session. 2.Big-endian SOC support: device and client and AES encryption.
- 1.4.1.0    |Kevin             |2012-02-22     |Fix Bug : IOTC_Connect_ByName() not work.
- 1.4.2.0    |Kevin             |2012-03-05     |Fix Bug : Relay mode session close Mutex dead lock.
- 1.5.0.0    |Kevin             |2012-03-21     |Fix Bug : 1.When use wifi and ethernet not disable will cause crash on WIN32 platform. 2.Secure session cant use when RLY mode. 3.Secure session will cause packet content wrong when encode and decode currently. Add : 1.Lan search all to get device name and password information. 2.IOTC_Session_Get_Free_Channel() to get a available channel. 3.IOTC_IsDeviceSecureMode() for client to know if device is secure mode. 4.LAN mode in session info. Modify : login period 60->40 for avoiding router flush routing table. Improve : 1.When IOTC_Initialize() give IP can skip resolve domain name. 2.Use getsockname() to get local IP instead of resolving domain name.
- 1.6.0.0    |Kevin             |2012-06-13     |Fix Bug : 1.Lan search setup connection. 2.IOTC_Device_Login() failed when Internet available. Add : IOTC_Listen_Exit() to force exit IOTC_Listen().
- 1.7.0.0    |Kevin             |2012-08-16     |+ Add APIs to support both non-secure and secure mode: IOTC_Listen2(), IOTC_Connect_ByUID2() and IOTC_Connect_ByName2() <br> + Add a mechanism to get login status by callback: IOTC_Get_Login_Info_ByCallBackFn() <br> + Add error code IOTC_ER_NOT_INITIALIZED returned by IOTC_DeInitialize()<br> o Improve device login and client connection time more quickly <br> o Return IOTC_ER_NETWORK_UNREACHABLE in IOTC_Device_Login() when network is unavailable<br> o Change the error code IOTC_ER_UNKNOWN_DEVICE returned by IOTC_Connect_ByUID() to IOTC_ER_SERVER_NOT_RESPONSE for clarification purpose <br> o Change the error code IOTC_ER_TIMEOUT returned by IOTC_Connect_ByXXX() to IOTC_ER_FAIL_SETUP_RELAY for clarification purpose<br> o Fix memory leak caused by IOTC_Device_Login() fails<br> - Remove error codes: IOTC_ER_SENDTO_FAILED, IOTC_ER_DEVICE_NOT_LOGIN, IOTC_ER_DEVICE_NOT_SECURE_LISTEN
- 1.8.5.0    |Kevin             |2012-11-15     |+ Support TCP80 <br> + Support iOS6 <br> + Add error codes for blacklist and whitelist mechanism <br> + Add a mechanism to check session status by callback: IOTC_Session_Check_ByCallBackFn <br> + Add error code IOTC_ER_FAIL_CREATE_SOCKET, IOTC_ER_FAIL_SOCKET_OPT, IOTC_ER_FAIL_SOCKET_BIND, IOTC_ER_NOT_SUPPORT_RELAY returned by IOTC_Connect_ByUID(), IOTC_Connect_ByUID2(), IOTC_Connect_ByName() and IOTC_Connect_ByName2() <br> + Support Mips_Realtek8196C_3.4.6 <br> + Support Mips_Realtek8196D_4.4.5 <br> + Support Mips_RalinkRTF5350_3.4.2 <br> + Support ARM9_GM8126_4.4.7 <br> + Support ARM9_N32905U1DN_4.2.1 <br> - Delete ARM9_GM8126_3.4.6 <br> - Delete MIPS_RalinkRT5350_4.3.3 <br> - Remove error code IOTC_ER_FAIL_CREATE_SOCKET, IOTC_ER_FAIL_SOCKET_OPT, IOTC_ER_FAIL_SOCKET_BIND from IOTC_Initialize() and IOTC_Initialize2() <br> o Fix IOTC_Connect_ByUID() issue in multi-thread usage <br> o Fix connection issue for second time IOTC_Initialize() after IOTC_DeInitialize() <br> o Change the algorithm of random port generation <br> o Improve LAN search successful rate <br> o Improve the speed of detection whether network is reachable <br> o Modify relay not to be established again with already connected UID <br> o Add const modifier for input parameters in function prototype.
- 1.9.1.0    |Kevin, Harry      |2013-03-04     |+ Add IOTC_Lan_Search().<br> + Add error code #IOTC_ER_NO_SERVER_LIST for IOTC_Connect_ByUID() and IOTC_Connect_ByUID2().<br> + Add error code #IOTC_ER_DEVICE_MULTI_LOGIN for IOTC_Connect_ByUID() and IOTC_Connect_ByUID2().<br> + Add error code #IOTC_ER_INVALID_ARG for IOTC_Lan_Search().<br> + Support Arm9_Hi3531_4.4.1 platform.<br> + Support Mips_RalinkRT3352_3.4.2 platform.<br> o Fix bug for getting local ip address.<br> o Fix continue notify when login status changed.<br> o Change IOTC_ER_NO_TCP_SUPPORT to #IOTC_ER_NO_PERMISSION for advance UID identification.<br> - Remove IOTC_Connect_ByName and IOTC_Connect_ByName2 APIs.
- 1.9.2.0    |Han-Lin, Harry    |2013-03-28     |+ Add IOTC_Set_Log_Path() to set log file name, path and maximum size.<br> + Log error codes in specified file.<br> o Fix incorrect returning IOTC_ER_NO_SERVER_LIST when Master is shutdown for a long time.
- 1.9.3.0    |Kevin, Harry      |2013-04-03     |o Fix TCP connection to IOTC server confirmation error.<br> o Fix return precise TCP connection error code.
- 1.9.4.0    |Kevin, Han-Lin    |2013-04-09     |o Fix IOTC_Device_Login() blocking bug.<br> o Fix TCP receive data error.<br> o Fix packers handling bug.
- 1.9.5.0    |Kevin, Han-Lin    |2013-04-18     |o Fix IOTC_Device_Login() blocking bug.<br> o Fix relay connection unstable when use UDP and TCP in different side.<br> o Fix TCP receive data error.<br> o Fix IOTC_Session_Close() keeps VPG information on device side.
- 1.10.0.0   |Kevin             |2013-04-30     |+ Add IOTC_Connect_ByUID_Parallel() and IOTC_Get_SessionID() to support connecting to device concurrently.<br> + Add IOTC_Connect_Stop_BySID() to stop a specific session connecting to device.
- 1.10.1.0   |Hanlin, Harry     |2013-05-07     |o Fix log function cannot be disabled.<br> o Fix the handle of TCP packets with header magic error.
- 1.10.2.0   |Kevin, Han-Lin    |2013-05-16     |+ Add critical section for uCOSII.<br> o Fix log function blocks.<br> o Fix for storing session number by better variable type .
- 1.10.3.0   |Kevin, Han-Lin    |2013-06-25     |o Fix algorithm for NAT type checking function may not called on type 1.<br> o Fix error handling algorithm when receive EAGAIN in TCP connection.<br> o Fix algorithm to avoid returning IOTC_ER_DEVICE_NOT_LISTENING.<br> o Fix bug when data size near max buffer size.<br> o Fix algorithm to process P2P packet correctly when device is not listening .
- 1.10.4.0   |TUTK RD team      |2013-07-26     |o Fix IOTC_Connect may blocked.<br> o Fix relay disconnected issue.<br> o Fix inconsistency connection mode between device and client, and cause -42 error code.<br> o Fix memory leak issue.<br> o Fix incorrect network detection when WAN port of router is disconnected.<br> o Fix multiple calling of connect_byUID() return -19 error.<br> o Fix IOTC_Session_Write performance and returns -16 issue.<br> o Fix IOTC_Connect_ByUID may blocked.
- 1.10.5.0   |TUTK RD team      |2013-07-26     |o Fix incorrect connection packages when connection and disconnection in a short period.<br> o Fix keep alive packages transmission mechanism.
- 1.10.6.0   |TUTK RD team      |2013-08-28     |o Fix connecting to multi-device may return -19 error code.<br> * Fix UDP socket receive buffer size to avoid loss packets.<br> * Fix IOTC_Device_Login() will occupy a session ID temporary.<br> + Add IOTC_Set_Partial_Encryption() to control encryption length.<br> o Fix NAT type check error to prevent from become RELAY mode after first connection.<br> o Fix TCP socket management and error code handling to increase TCP relay stability.<br> o Fix variable initialize to prevent from Win32 crashes.<br> o Fix network detection return -41 issue.<br> * Fix crashes when checking session status.<br> o Fix IOTC_Session_Read() data handling in timeout status.
- 1.10.6.4   |TUTK RD team      |2013-10-28     |o Fix error detection in Win32.<br> o Fix critical session in uCOSII.<br> o Fix Winsock issues in win32 static link.<br> o Fix compiler warnings in some arm9 platform.<br> + Support Lite UID.<br> o Fix LAN connection timeout extends to 1.5s.<br> o Fix bugs in receiving data.
- 1.10.7.0   |TUTK RD team      |2013-11-19     |o Fix socket bind error.<br> o Fix variables conflict error.
- 1.10.8.0   |TUTK RD team      |2014-02-17     |o Fix big endian bug.<br> o Add memory information in uCOSII.<br> o Fix udp port error.<br> o Improve connecting mechanism in uCOSII.<br> o Fix race condition bug in MAC OS.<br> o Improve NAT Type detection.<br> + Support different functional UID.<br> + Add new api IOTC_Set_Device_Name() to set Device Name.<br> + Add new api IOTC_Lan_Search2() to know Device Name in Lan.
- 1.11.0.0   |TUTK RD team      |2014-08-28     |o Fix crash bug on Win32.<br> o Fix misjudge NAT type3.<br> o Fix re-connection error when do it frequently.<br> o Fix choose a not workable Server on TCP mode.<br> o Improve connection performance a little bit.<br> o Fix login failed when re-query Master failed.<br> + Add support class A/B/C LAN search.<br> + Add IOTC_Setup_LANConnection_Timeout() for setup time to try LAN connection.<br> + Add IOTC_TCPRelayOnly_TurnOn() for setup connection only via TCP relay mode.<br> - Remove include platform_config.h
- 1.12.0.0   |TUTK RD team      |2014-09-22     |+ Add 64-bit library.
- 1.13.0.0   |TUTK RD team      |2014-10-15     |o Fix session ID increase leak in some situations.<br> Improve device can handle concurrent connection from client.<br> o Improve P2P connection stability.
  */
 
 #ifndef _IOTCAPIs_H_
@@ -136,7 +90,6 @@ extern "C" {
 #define	IOTC_ER_NoERROR								0
 
 /** IOTC servers have no response, probably caused by many types of Internet connection issues. */
-// See [Troubleshooting](..\Troubleshooting\index.htm#IOTC_ER_SERVER_NOT_RESPONSE)
 #define	IOTC_ER_SERVER_NOT_RESPONSE					-1
 
 /** IOTC masters cannot be resolved their domain name, probably caused
@@ -1713,7 +1666,7 @@ P2PAPI_API int IOTC_Session_Channel_OFF(int nIOTCSessionID, unsigned char nIOTCC
  *          IOTC channel to be checked
  * \param nIOTCChannelID [in] The channel ID of the IOTC channel to be checked
  *
- * \return 1 for channel ON
+ * \return 1 for channel ON return 0 for channel OFF
  * \return Error code if return value < 0
  *          - #IOTC_ER_NOT_INITIALIZED The IOTC module is not initialized yet
  *          - #IOTC_ER_INVALID_SID The specified IOTC session ID is not valid
@@ -1721,7 +1674,7 @@ P2PAPI_API int IOTC_Session_Channel_OFF(int nIOTCSessionID, unsigned char nIOTCC
  *              session ID has been closed by remote site
  *          - #IOTC_ER_REMOTE_TIMEOUT_DISCONNECT The timeout defined by #IOTC_SESSION_ALIVE_TIMEOUT
  *              expires because remote site has no response
- *          - #IOTC_ER_CH_NOT_ON The specified IOTC channel ID is not valid
+ *          - #IOTC_ER_INVALID_ARG The specified IOTC channel ID is not valid
  *
  */
 P2PAPI_API int IOTC_Session_Channel_Check_ON_OFF(int nIOTCSessionID, unsigned char nIOTCChannelID);

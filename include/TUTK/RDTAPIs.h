@@ -35,6 +35,7 @@ Version     | Name             |Date           |Description
  1.7.0.0    |TUTK RD team      |2014-09-22     |o Fix RDT_Abort() not release channel resource.<br> + Add 64-bit library.
  1.7.2.0    |TUTK RD team      |2014-10-17     |o Fix process rarely dead lock.<br> o Improve call RDT_Abort() can let RDT_Read() to exit before reach timeout.
  1.8.1.1    |TUTK RD team      |2015-05-20     |o Add SetMaxRecvBuff and Reduce CPU loading .
+ 2.1.3.1    |Terry, Liu        |2015-10-21     |+ Add RDT_Set_Max_Pending_ACK_Number for performance tuning
  */
 
 #ifndef _RDTAPIs_H_
@@ -364,23 +365,51 @@ RDTAPI_API	int RDT_Abort(int nRDTChannelID);
 
 
 /**
-* \brief Set Max Send Buffer Size , when buffer is full RDT_Write will return aaaaaaaaaaaaaa of log file
+* \brief Set max send queue buffer size 
 *
-* \details Set the absolute path of log file
+* \details Limit the send queue buffer size, when the buffer is full RDT_Write will return RDT_ER_SEND_BUFFER_FULL
 *
-* \param path [in] The path of log file, NULL = disable Log
+* \param nRDTChannelID [in] The channel ID of the RDT channel
 *
-* \param nMaxSize [in] The maximum size of log file in Bytes, 0 = unlimit
+* \param nMaxSendBufferSize [in] The maximum size of send queue buffer
 *
 */
 RDTAPI_API	int RDT_Set_Max_SendBuffer_Size(int nRDTChannelID, int nMaxSendBufferSize);
 
 
 /**
+ * \brief Flush data in an RDT channel
+ *
+ * \details Called by a RDT server or a RDT client to flush data in the buffer,
+ *          otherwise RDT may wait until data can fill out the whole packet
+ *
+ * \param nRDTChannelID [in] The channel ID of the RDT channel to write data
+ *
+ * \return RDT_ER_NoERROR if flush successfully
+ * \return Error code if return value < 0
+ *          - #RDT_ER_NOT_INITIALIZED RDT module is not initialized yet
+ *          - #RDT_ER_INVALID_RDT_ID The specified RDT channel ID is not valid
+ *          - #RDT_ER_RDT_DESTROYED RDT module has been destroyed, probably caused
+ *              by disconnection from remote site
+ *          - #IOTC_ER_NOT_INITIALIZED The IOTC module is not initialized yet
+ *          - #IOTC_ER_INVALID_SID The specified IOTC session ID is not valid
+ *          - #IOTC_ER_SESSION_CLOSE_BY_REMOTE The IOTC session of specified
+ *              session ID has been closed by remote site
+ *          - #IOTC_ER_REMOTE_TIMEOUT_DISCONNECT The timeout defined by #IOTC_SESSION_ALIVE_TIMEOUT
+ *              expires because remote site has no response
+ *          - #RDT_ER_REMOTE_ABORT Remote site abort this RDT channel connection
+ *          - #RDT_ER_LOCAL_ABORT Local site abort this RDT channel connection
+ *
+ */
+RDTAPI_API  int RDT_Flush(int nRDTChannelID);
+
+/**
  * \brief Write data through a RDT channel
  *
  * \details Called by a RDT server or a RDT client to write data through
- *			a specified RDT channel to the other.
+ *			a specified RDT channel to the other. RDT_Write might not send
+ *			small size data directly, if you need to write small size data 
+ *			directly you can call RDT_Flush after RDT_Write
  *
  * \param nRDTChannelID [in] The channel ID of the RDT channel to write data
  * \param cabBuf [in] The array of byte buffer containing the data to write
@@ -400,8 +429,10 @@ RDTAPI_API	int RDT_Set_Max_SendBuffer_Size(int nRDTChannelID, int nMaxSendBuffer
  *				expires because	remote site has no response
  *			- #RDT_ER_REMOTE_ABORT Remote site abort this RDT channel connection
  *			- #RDT_ER_LOCAL_ABORT Local site abort this RDT channel connection
+ *			- #RDT_ER_SEND_BUFFER_FULL the buffer size is full, the max buffer size is set by 
+ *				RDT_Set_Max_SendBuffer_Size()
  *
- * \see RDT_Read()
+ * \see RDT_Read() RDT_Set_Max_SendBuffer_Size()
  *
  * \attention This function will need 5088 bytes stack size.
  *
@@ -470,6 +501,31 @@ RDTAPI_API	int RDT_Status_Check(int nRDTChannelID, struct st_RDT_Status *psRDT_S
  *
  */
 RDTAPI_API	void RDT_Set_Log_Path(const char *path, int nMaxSize);
+
+
+/**
+* \brief Set the max number of pending ACKs of the RDT channel
+*
+* \details This function is related to the frequency of sending RDT ACK, set 0 to
+*       nMaxNumber if you want to force RDT to send ACK immediately, it might
+*       consume more CPU resource and network bandwidth, but it might improve
+*       the performance of RDT data transmission; 0 is the default value
+*       of nMaxNumber, we suggest not to use the number bigger than 80
+*
+* \param nRDTChannelID [in] The channel ID of the RDT channel to get status
+* \param nMaxNumber [in] The max pending number of RDT ACK of the RDT channel
+*
+* \return #RDT_ER_NoERROR if getting the RDT status successfully
+* \return Error code if return value < 0
+*			- #RDT_ER_NOT_INITIALIZED RDT module is not initialized yet
+*			- #RDT_ER_INVALID_RDT_ID The specified RDT channel ID is not valid
+*
+* \attention Please invoke this function after RDT channel is created. This
+*           function will work only when the remote RDT version is equal
+*           or bigger than 2.1.0
+*
+*/
+RDTAPI_API	int RDT_Set_Max_Pending_ACK_Number(int nRDTChannelID, unsigned int nMaxNumber);
 
 
 
