@@ -743,8 +743,11 @@ static int audioUnitDestroyEngine(OPENXL_STREAM * p){
     if(!p) return -1;
     
     AudioComponentInstance * hInst = (AudioComponentInstance *)p->hAUInst;
-    AudioOutputUnitStop(*hInst);
-    AudioComponentInstanceDispose(*hInst);
+    
+    if(hInst){
+        AudioOutputUnitStop(*hInst);
+        AudioComponentInstanceDispose(*hInst);
+    }
     
 //  if(p->outputBuffer) free(p->outputBuffer);
 //  if(p->recordBuffer) free(p->recordBuffer);

@@ -1313,7 +1313,8 @@ connect:
 		case IOTC_ER_NoERROR: // No error happens during the checking flow and the Device is on line.
 			break;
 		case IOTC_ER_TIMEOUT:
-		case IOTC_ER_DEVICE_OFFLINE: // The device is not on line.
+		case IOTC_ER_DEVICE_OFFLINE: // The device is not on line.
+
 			status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
 			goto jumperr;
 		default:
@@ -2026,10 +2027,16 @@ int CPPPPChannel::CloseWholeThreads()
 int CPPPPChannel::CloseMediaStreams(
 ){
 	if(TRY_LOCK(&PlayingLock) == 0){
-		Log3("stream not in playing");
+		Log3("CloseMediaStreams:[stream not in playing.]");
 		PUT_LOCK(&PlayingLock);
 		return -1;
 	}
+    
+    if(TRY_LOCK(&DestoryLock) != 0){
+        Log3("CloseMediaStreams:[media stream will be destory.]");
+        PUT_LOCK(&PlayingLock);
+        return -1;
+    }
 
 	LiveplayClose(); // 关闭视频发送
 	MicphoneClose(); // 关闭音频发送
@@ -2085,12 +2092,12 @@ int CPPPPChannel::StartMediaStreams(
     if(SID < 0) return -1;
 
 	if(TRY_LOCK(&PlayingLock) != 0){
-		Log3("media stream already start. waiting for close");
+		Log3("StartMediaStreams:[media stream already start.]");
 		return -1;
 	}
 
 	if(TRY_LOCK(&DestoryLock) != 0){
-		Log3("media stream will be destory.");
+		Log3("StartMediaStreams:[media stream will be destory.]");
 		PUT_LOCK(&PlayingLock);
 		return -1;
 	}
