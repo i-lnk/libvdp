@@ -60,9 +60,9 @@ int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * s
 	return -1;
 
 jumpout:
-	r = sessionList[i].session->Start(user, pwd, server);
-	
     PUT_LOCK(&sessionList[i].lock);
+
+	r = sessionList[i].session->Start(user, pwd, server);
 
 	return r;
 }

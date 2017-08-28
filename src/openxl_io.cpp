@@ -851,15 +851,14 @@ void FreeOpenXLStream(OPENXL_STREAM *p){
     if (p == NULL)
     return;
 
-	PUT_LOCK(&OpenSLLock);
-
 #ifdef PLATFORM_ANDROID
     openSLDestroyEngine(p);
 #else
     audioUnitDestroyEngine(p);
 #endif
-
     free(p);
+
+	PUT_LOCK(&OpenSLLock);
 }
 
 
