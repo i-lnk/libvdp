@@ -1669,11 +1669,12 @@ int CPPPPChannel::PPPPClose()
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
 	int statusGetTimes = 10;
+	int ret = -1;
 
 	if(TRY_LOCK(&SessionLock) != 0){
 		Log3("start pppp connection with uuid:[%s] still running",szDID);
 		startSession = 1;
-		return 0;
+		goto check_connection;
 	}
 
 	memset(szUsr, 0, sizeof(szUsr));
@@ -1688,7 +1689,7 @@ int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 	mediaLinking = 1;
 
 	Log3("start pppp connection to device with uuid:[%s].",szDID);
-	int ret = pthread_create(&mediaCoreThread,NULL,MeidaCoreProcess,(void*)this);
+	ret = pthread_create(&mediaCoreThread,NULL,MeidaCoreProcess,(void*)this);
 	if(ret != 0){
 		Log3("start pppp connection create thread failed.");
 		PUT_LOCK(&SessionLock);
@@ -1696,6 +1697,8 @@ int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 	}
 
 	PUT_LOCK(&SessionLock);
+
+check_connection:
 
 	while(statusGetTimes--){
 		GET_LOCK( &g_CallbackContextLock );
