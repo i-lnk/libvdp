@@ -1472,6 +1472,7 @@ jumperr:
 	hPC->hOSL = NULL;
 
 	PUT_LOCK(&hPC->DestoryLock);
+	PUT_LOCK(&hPC->PlayingLock);
 	PUT_LOCK(&hPC->SessionLock);
     
     Log3("MediaCoreProcess Exit By Status:[%d].",status);
@@ -1480,7 +1481,7 @@ jumperr:
 	if(isAttached) g_JavaVM->DetachCurrentThread();
 #endif
 
-	return NULL;	
+	return NULL;
 }
 
 CPPPPChannel::CPPPPChannel(
@@ -2047,6 +2048,7 @@ int CPPPPChannel::CloseMediaStreams(
 	Log3("close media stream success ... ");
 
 	PUT_LOCK(&DestoryLock);
+	PUT_LOCK(&PlayingLock);
 
 	return 0;
 }
@@ -2066,13 +2068,22 @@ int CPPPPChannel::StartMediaStreams(
      
     if(SID < 0) return -1;
 
+	GET_LOCK( &g_CallbackContextLock );
+	int status = connectionStatus;
+	PUT_LOCK( &g_CallbackContextLock );
+
+	if(status != PPPP_STATUS_ON_LINE){
+		Log3("StartMediaStreams:[device not online.]");
+		return -1;
+	}
+
 	if(TRY_LOCK(&PlayingLock) != 0){
 		Log3("StartMediaStreams:[media stream already start.]");
 		return -1;
 	}
 
 	if(TRY_LOCK(&DestoryLock) != 0){
-		Log3("StartMediaStreams:[media stream will be destory.]");
+		Log3("StartMediaStreams:[media stream closing.]");
 		PUT_LOCK(&PlayingLock);
 		return -1;
 	}
