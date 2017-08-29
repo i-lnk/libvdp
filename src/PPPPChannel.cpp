@@ -1297,31 +1297,6 @@ connect:
 	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
 
-#if 0
-	Err = -1000;
-
-	IOTC_Check_Device_On_Line(hPC->szDID, 30000, CheckServHandler, &Err);
-
-	while(Err == -1000){
-		Log3("[0:%s]=====>wait for device status:[%d] return.",hPC->szDID,Err);
-		sleep(1);
-	}
-	
-	Log3("[1:%s]=====>device status is:[%d].",hPC->szDID, Err);
-
-	switch(Err){
-		case IOTC_ER_NoERROR: // No error happens during the checking flow and the Device is on line.
-			break;
-		case IOTC_ER_TIMEOUT:
-		case IOTC_ER_DEVICE_OFFLINE: // The device is not on line.
-
-			status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
-			goto jumperr;
-		default:
-			goto connect;
-	}
-#endif	
-
 	hPC->sessionID = IOTC_Get_SessionID();
 	if(hPC->sessionID < 0){
 		Log3("[1:%s]=====>IOTC_Get_SessionID error code [%d]\n",
@@ -2071,7 +2046,7 @@ int CPPPPChannel::CloseMediaStreams(
 
 	Log3("close media stream success ... ");
 
-	PUT_LOCK(&PlayingLock);
+	PUT_LOCK(&DestoryLock);
 
 	return 0;
 }
