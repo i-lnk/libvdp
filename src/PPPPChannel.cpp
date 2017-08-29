@@ -1692,7 +1692,7 @@ check_connection:
 				return  0;
 			default:
 				Log3("start pppp connection error:[%d].",status);
-				return -1;
+				return status;
 		}
 	}
 	
