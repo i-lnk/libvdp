@@ -40,7 +40,7 @@ public:
 	int SetAudioStatus(char * szDID,int AudioStatus);
 	int SetVideoStatus(char * szDID,int VideoStatus);
 
-    int PPPPSetSystemParams(char *szDID, int type, char *msg, int len);
+    int PPPPIOCmdSend(char *szDID, int type, char *msg, int len);
 
 	int StartRecorderByDID(char * szDID,char * filepath);
 	int CloseRecorderByDID(char * szDID);

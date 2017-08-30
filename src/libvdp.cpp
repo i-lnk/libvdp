@@ -491,7 +491,7 @@ JNIEXPORT int JNICALL SendBytes(
 	int MsgType = msgtype;
 	int MsgLens = msglens;
 
-	g_pPPPPChannelMgt->PPPPSetSystemParams(
+	g_pPPPPChannelMgt->PPPPIOCmdSend(
 		szDID,MsgType,(char*)dat,MsgLens
 		);
 
@@ -517,7 +517,7 @@ JNIEXPORT int JNICALL SendCtrlCommand(
 	int MsgType = msgtype;
 	int MsgLens = msglens;
 
-	int Ret = g_pPPPPChannelMgt->PPPPSetSystemParams(
+	int Ret = g_pPPPPChannelMgt->PPPPIOCmdSend(
 		szDID,MsgType,szMsg,MsgLens
 		);
 

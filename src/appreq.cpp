@@ -1279,5 +1279,5 @@ int SendCmds(
 		}
 	}
 
-	return -1;
+	return avSendIOCtrl(Idx,MsgType,(const char *)Cgi,CgiLens);
 }

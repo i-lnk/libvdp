@@ -331,7 +331,7 @@ jumpout:
 	return e;
 }
 
-int CPPPPChannelManagement::PPPPSetSystemParams(char * szDID,int type,char * msg,int len)
+int CPPPPChannelManagement::PPPPIOCmdSend(char * szDID,int type,char * msg,int len)
 {   
 	if(szDID == NULL) return 0;
 
@@ -350,7 +350,7 @@ int CPPPPChannelManagement::PPPPSetSystemParams(char * szDID,int type,char * msg
 
 jumpout:
 
-	e = sessionList[i].session->SetSystemParams(type, msg, len);
+	e = sessionList[i].session->IOCmdSend(type, msg, len);
 
 	PUT_LOCK(&sessionList[i].lock);
 
