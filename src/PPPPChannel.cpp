@@ -1636,7 +1636,7 @@ int CPPPPChannel::PPPPClose()
 
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
-	int statusGetTimes = 10;
+	int statusGetTimes = 3;
 	int ret = -1;
 
 	if(TRY_LOCK(&SessionLock) != 0){
@@ -1686,6 +1686,8 @@ check_connection:
 				return status;
 		}
 	}
+    
+    IOTC_Connect_Stop_BySID(sessionID);
 	
     return -1;
 }
