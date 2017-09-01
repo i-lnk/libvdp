@@ -238,7 +238,7 @@ static int SetPushData(
 	GetCgiParam(sMsg.AppKey,szCgi,sizeof(sMsg.AppKey),"AppKey=","&");
 	GetCgiParam(sMsg.Master,szCgi,sizeof(sMsg.Master),"Master=","&");
 	GetCgiParam(sMsg.FCMKey,szCgi,sizeof(sMsg.FCMKey),"FCMKey=","&");
-	GetCgiParam(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
+	GetCgiParam(sMsg.Groups,szCgi,sizeof(sMsg.Groups),"Alias=" ,"&");
 	
 	GetCgiParam(szApnsTestEnable,szCgi,sizeof(szApnsTestEnable),"ApnsTestEnabale=","&");
 	GetCgiParam(szType,szCgi,sizeof(szType),"Type=","&");
@@ -264,7 +264,7 @@ static int DelPushData(
 	
 	GetCgiParam(sMsg.AppKey,szCgi,sizeof(sMsg.AppKey),"AppKey=","&");
 	GetCgiParam(sMsg.Master,szCgi,sizeof(sMsg.Master),"Master=","&");
-	GetCgiParam(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
+	GetCgiParam(sMsg.Groups,szCgi,sizeof(sMsg.Groups),"Alias=" ,"&");
 	
 	GetCgiParam(szType,szCgi,sizeof(szType),"Type=","&");
 	sMsg.Type = atoi(szType);
