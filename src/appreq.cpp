@@ -231,6 +231,7 @@ static int SetPushData(
 	SMsgAVIoctrlSetPushReq sMsg;
 
 	char szType[8] = {0};
+	char szApnsTestEnable[8] = {0};
 
 	memset(&sMsg,0,sizeof(sMsg));
 	
@@ -239,8 +240,11 @@ static int SetPushData(
 	GetCgiParam(sMsg.FCMKey,szCgi,sizeof(sMsg.FCMKey),"FCMKey=","&");
 	GetCgiParam(sMsg.Alias, szCgi,sizeof(sMsg.Alias ),"Alias=" ,"&");
 	
+	GetCgiParam(szApnsTestEnable,szCgi,sizeof(szApnsTestEnable),"ApnsTestEnabale=","&");
 	GetCgiParam(szType,szCgi,sizeof(szType),"Type=","&");
+	
 	sMsg.Type = atoi(szType);
+	sMsg.ApnsTestEnable = atoi(szApnsTestEnable);
 
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }

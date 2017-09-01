@@ -388,15 +388,17 @@ typedef struct{
  SMsgAVIoctrlSetGPIOReq,SMsgAVIoctrlSetGPIOResp;
 
 //
-// 潞麓蟺鈥毰撍毰撀⒚曗垎脌脮鈼娐⑩墹路聽蟺鈥濃垰碌茠聽藵忙鈥何┞废�蟺
+// 极光消息推送注册使用的数据结构
 //
 typedef struct{
 	char	AppKey[64];
 	char	Master[64];
-	char	Alias [64];
+	char	Groups[64];
 	int		Type;
-	char 	FCMKey[64];	// for google msg push
+	char 	FCMKey[64];
+	int		ApnsTestEnable;	// for jpush apns test mode
 }SMsgAVIoctrlSetPushReq,SMsgAVIoctrlDelPushReq;
+
 
 //NEW ADD 东舜开发的移动侦测报警联动结构体
 /**
