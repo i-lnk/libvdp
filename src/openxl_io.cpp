@@ -602,6 +602,11 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
     NSError * error = nil;
     bool done = false;
     
+    LogX("AVAudioSession sample is:[%0.0f] duration set is:[%f]",
+         [sesInstance sampleRate],
+         [sesInstance IOBufferDuration]
+         );
+    
     // we are going to play and record so we pick that categor
     [sesInstance setCategory:AVAudioSessionCategoryPlayAndRecord withOptions:AVAudioSessionCategoryOptionDefaultToSpeaker error:&error];
 //  [sesInstance setCategory:AVAudioSessionCategoryPlayback error:&error];
@@ -618,7 +623,8 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         Log3("AVAudioSession get fucking error:[%ld]",(long)error.code);
         return -1;
     }
-    
+
+#if 1
     done = [sesInstance setPreferredIOBufferDuration:0.008 error:&error];
     done = [sesInstance setPreferredSampleRate:p->sr error:&error];
     
@@ -627,8 +633,9 @@ static int audioUnitSessionInit(OPENXL_STREAM * p){
         Log3("AVAudioSession get fucking error:[%ld]",(long)error.code);
         return -1;
     }
+#endif
     
-    Log3("AVAudioSession sample is:[%0.0f] duration set is:[%f]",
+    LogX("AVAudioSession sample is:[%0.0f] duration set is:[%f]",
          [sesInstance sampleRate],
          [sesInstance IOBufferDuration]
          );
@@ -666,22 +673,6 @@ static int audioUnitCreateEngine(OPENXL_STREAM * p){
     desc.componentManufacturer  = kAudioUnitManufacturer_Apple;
     
     AudioComponent inputComponent = AudioComponentFindNext(NULL, &desc);
-
-    /*
-	int lentgh_10ms = (format.mBytesPerFrame * format.mSampleRate / 1000) * 10;
-    
-    p->outputBuffer = (short*)malloc(lentgh_10ms*3);
-    if(p->outputBuffer == NULL){
-        Log3("audio unit initialize output buffer failed.");
-        goto jumperr;
-    }
-    
-    p->recordBuffer = (short*)malloc(lentgh_10ms*3);
-    if(p->recordBuffer == NULL){
-        Log3("audio unit initialize output buffer failed.");
-        goto jumperr;
-    }
-    */
     
     static char buffers[2][960] = {0};
     
@@ -770,6 +761,9 @@ void InitOpenXL(){
 #ifdef PLATFORM_ANDROID
     
 #else
+    NSError * error = nil;
+    bool done = false;
+    
     AVAudioSession *session = [AVAudioSession sharedInstance];
     [session setCategory:AVAudioSessionCategoryPlayback error:nil];
     [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];

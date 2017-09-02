@@ -78,8 +78,9 @@ typedef	pthread_t		PROCESS_HANDLE;
 #else
 #define Log(...)
 #define Log2(fmt, ...)
-// #define Log3(fmt, ...) NSLog((@"P2PLIB FUNC:[%s],LINE:[%s]:" @fmt @"\n"),__PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
-#define Log3(fmt, args...) \
+//#define Log3(fmt, ...) NSLog((@"P2PLIB FUNC:[%s],LINE:[%s]:" @fmt @"\n"),__PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#define Log3(fmt, args...)
+#define LogX(fmt, args...) \
     fprintf(stderr,"P2PLIB FILE:[%s],LINE:[%4d]:" fmt "\n",strrchr(__FILE__,'/'), __LINE__, ##args);
 #endif
 

@@ -43,7 +43,7 @@ extern JavaVM * g_JavaVM;
 
 #else
 
-static inline int gettid(){ return 0;}
+static inline long gettid(){ return (long)pthread_self();}
 
 #endif
 
@@ -348,7 +348,6 @@ void * IOCmdRecvProcess(
 			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	
 					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
 					if(hRQ->result == 0){
-						hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_DEVICE_SLEEP);
 						Log3("[X:%s]=====>device sleeping now.\n",hPC->szDID);
 					}else{
 						Log3("[X:%s]=====>device sleeping failed,still keep online.\n",hPC->szDID);
@@ -1247,14 +1246,9 @@ void * MeidaCoreProcess(
 ){
 	SET_THREAD_NAME("MeidaCoreProcess");
 	
-	Log3("current thread id is:[%d].",gettid());
+	LogX("[%d]:current thread id.",gettid());
 
 	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
-
-	if(TRY_LOCK(&hPC->SessionLock) != 0){
-		Log3("media core process still running.");
-		return NULL;
-	}
 
 	JNIEnv * hEnv = NULL;
 	
@@ -1323,6 +1317,7 @@ connect:
 				goto jumperr;
 			default:
 				status = PPPP_STATUS_CONNECT_FAILED;
+                IOTC_Session_Close(hPC->sessionID);
 				goto connect;
 		}
 	}
@@ -1443,11 +1438,11 @@ connect:
 		}
 
 		if(hPC->startSession){	// for reconnect, we just refresh status for ui layer
-			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_ON_LINE);
+//			hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_ON_LINE);
 			hPC->startSession = 0;
 		}
 		
-		sleep(3);
+		sleep(1);
 	}
 
 jumperr:	
@@ -1466,7 +1461,7 @@ jumperr:
 	PUT_LOCK(&hPC->PlayingLock);
 	PUT_LOCK(&hPC->SessionLock);
     
-    Log3("MediaCoreProcess Exit By Status:[%d].",status);
+    LogX("[%d]:MediaCoreProcess Exit By Status:[%d].",gettid(),status);
 
 #ifdef PLATFORM_ANDROID
 	if(isAttached) g_JavaVM->DetachCurrentThread();
@@ -1636,7 +1631,7 @@ int CPPPPChannel::PPPPClose()
 
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
-	int statusGetTimes = 3;
+	int statusGetTimes = 2;
 	int ret = -1;
 
 	if(TRY_LOCK(&SessionLock) != 0){
@@ -1656,15 +1651,13 @@ int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 
 	mediaLinking = 1;
 
-	Log3("start pppp connection to device with uuid:[%s].",szDID);
+	LogX("[%d]:start pppp connection to device with uuid:[%s].",gettid(),szDID);
 	ret = pthread_create(&mediaCoreThread,NULL,MeidaCoreProcess,(void*)this);
 	if(ret != 0){
 		Log3("start pppp connection create thread failed.");
 		PUT_LOCK(&SessionLock);
 		return -1;
 	}
-
-	PUT_LOCK(&SessionLock);
 
 check_connection:
 
@@ -1840,6 +1833,20 @@ int CPPPPChannel::LiveplayClose(){
 }
 
 int CPPPPChannel::SpeakingStart(){
+    
+    if(hOSL == NULL){
+        hOSL = InitOpenXLStream(
+                                AudioSampleRate,
+                                AudioChannel,
+                                AudioChannel,
+                                this,
+                                recordCallback,
+                                playerCallback
+                                );
+        if(!hOSL){
+            Log3("opensl init failed.");
+        }
+    }
 	
 	char avMsg[128] = {0};
 	SMsgAVIoctrlAVStream * pMsg = (SMsgAVIoctrlAVStream *)avMsg;
@@ -1912,6 +1919,20 @@ int CPPPPChannel::MicphoneStart(){
     if(spIdx < 0){
 		Log3("tutk start audio send server failed with error:[%d].",spIdx);
         return -1;
+    }
+    
+    if(hOSL == NULL){
+        hOSL = InitOpenXLStream(
+                                AudioSampleRate,
+                                AudioChannel,
+                                AudioChannel,
+                                this,
+                                recordCallback,
+                                playerCallback
+                                );
+        if(!hOSL){
+            Log3("opensl init failed.");
+        }
     }
 
 	voiceEnabled = 1;
@@ -2108,19 +2129,6 @@ int CPPPPChannel::StartMediaStreams(
 		hAudioGetList->Used(),
 		hAudioPutList->Used()
 		);
-	
-	hOSL = InitOpenXLStream(
-		AudioSampleRate,
-		AudioChannel,
-		AudioChannel,
-		this,
-		recordCallback,
-		playerCallback
-		);
-	
-	if(!hOSL){
-		Log3("opensl init failed.");
-	}
 
     ret = LiveplayStart();
 	

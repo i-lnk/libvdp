@@ -4,7 +4,7 @@
 #include "PPPPChannel.h"
 
 #define MAX_DID_LENGTH 64
-#define MAX_PPPP_CHANNEL_NUM 64
+#define MAX_PPPP_CHANNEL_NUM 4
 
 typedef struct T_SESSION{
     char 			deviceID[MAX_DID_LENGTH] ;

@@ -41,6 +41,7 @@ int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * s
 	
     for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
 		GET_LOCK(&sessionList[i].lock);
+        LogX("session index:[%d] uuid:[%s] cmp with:[%s].",i,sessionList[i].deviceID,szDID);
         if(strcmp(sessionList[i].deviceID,szDID) == 0){
 			goto jumpout;
         }
@@ -62,6 +63,8 @@ int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * s
 jumpout:
     PUT_LOCK(&sessionList[i].lock);
 
+    LogX("start session with list index:[%d].",i);
+    
 	r = sessionList[i].session->Start(user, pwd, server);
 
 	return r;
@@ -74,6 +77,7 @@ int CPPPPChannelManagement::Close(char * szDID)
     int i;
     for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
     	GET_LOCK(&sessionList[i].lock);
+        LogX("close session with uuid:[%s] cmp:[%s] list index:[%d].",sessionList[i].deviceID,szDID,i);
         if(strcmp(sessionList[i].deviceID,szDID) == 0){            
             sessionList[i].deviceID[0] = 0;
 			if(sessionList[i].session){
