@@ -24,7 +24,10 @@
 #include "apprsp.h"
 
 #define ENABLE_AEC
-//#define ENABLE_AGC
+#ifdef PLATFORM_ANDROID
+#else
+#define ENABLE_AGC
+#endif
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
 
@@ -784,11 +787,11 @@ jump_rst:
 			continue;
 		}
 
-		int numAudioFrameCount = avCheckAudioBuf(avIdx);
-
-		if(numAudioFrameCount == 0){
+		if(avCheckAudioBuf(avIdx) < 5){
 			usleep(10000);
 			continue;
+		}else if(avCheckAudioBuf(avIdx) > 20){
+			avClientCleanAudioBuf(avIdx);
 		}
 		
 		ret = avRecvAudioData(
