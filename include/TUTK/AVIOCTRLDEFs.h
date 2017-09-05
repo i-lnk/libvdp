@@ -497,10 +497,13 @@ typedef enum{
 
 typedef struct
 {
-	int  power_ctrl;	// 0x1: reboot 0x3: reset
-	int  lang;
-	char datetime[32];
-	unsigned char reserved[4];
+	int 	power_ctrl;	// 0x1: reboot 0x3: reset
+	int  	lang;
+	char 	datetime[24];
+	char	reserved[12];
+	int		enablePreviewUnlock;	
+	int		enableAutomicUpdate;
+	int		enableRingingButton;
 }SMsgAVIoctrlSetSystemReq,SMsgAVIoctrlSetSystemResp,
 SMsgAVIoctrlGetSystemReq,SMsgAVIoctrlGetSystemResp;
 

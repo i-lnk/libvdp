@@ -482,14 +482,23 @@ static int SetSystem(
 ){
 	char szPower[8] = {0};
 	char szLanguage[8] = {0};
+	char szEnableAutomicUpdate[8] = {0};
+	char szEnablePreviewUnlock[8] = {0};
+	char szEnableRingingButton[8] = {0};
 
 	GetCgiParam(szPower,szCgi,sizeof(szPower),"power=","&");
 	GetCgiParam(szLanguage,szCgi,sizeof(szLanguage),"language=","&");
+	GetCgiParam(szEnableAutomicUpdate,szCgi,sizeof(szEnableAutomicUpdate),"enableAutomicUpdate=","&");
+	GetCgiParam(szEnablePreviewUnlock,szCgi,sizeof(szEnablePreviewUnlock),"enablePreviewUnlock=","&");
+	GetCgiParam(szEnableRingingButton,szCgi,sizeof(szEnableRingingButton),"enableRingingButton=","&");
 
 	SMsgAVIoctrlSetSystemReq sMsg;
 
 	sMsg.power_ctrl = atoi(szPower);
 	sMsg.lang = atoi(szLanguage);
+	sMsg.enableAutomicUpdate = atoi(szEnableAutomicUpdate);
+	sMsg.enablePreviewUnlock = atoi(szEnablePreviewUnlock);
+	sMsg.enableRingingButton = atoi(szEnableRingingButton);
 
 	GetCgiParam(sMsg.datetime,szCgi,sizeof(sMsg.datetime),"datetime=","&");
 		

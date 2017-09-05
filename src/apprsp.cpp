@@ -331,8 +331,12 @@ int             JsonBufferSize
     
     SMsgAVIoctrlGetSystemResp * hRQ = (SMsgAVIoctrlGetSystemResp *)Msg;
     
-    sprintf(JsonBuffer,"{\"%s\":\"%d\"}",
-            "language",hRQ->lang
+    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+            "language",hRQ->lang,
+            "datetime",hRQ->datetime,
+            "enableAutomicUpdate",hRQ->enableAutomicUpdate,
+            "enablePreviewUnlock",hRQ->enablePreviewUnlock,
+            "enableRingingButton",hRQ->enableRingingButton
             );
     
     return 0;
