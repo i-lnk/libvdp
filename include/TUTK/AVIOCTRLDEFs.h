@@ -1452,9 +1452,9 @@ unsigned char reserved[3];
 
 //IOTYPE_XM_CALL_IND
 typedef struct{   
-unsigned  char  index; //门索引号，0：Door1,1:Door2   
-unsigned  char  type; //类型，0：有用户呼叫,1:有其他用户应答   
-STimeDay stTime; //事件时间   
+unsigned  char  index; 	//门索引号，0：Door1,1:Door2   
+unsigned  char  type; 	//类型，0：有用户呼叫,1:有其他用户应答   
+STimeDay stTime;		 //事件时间   
 unsigned  char reserved[3];
 }__attribute__((packed))SMsgAVIoctrlCallInd;
 
