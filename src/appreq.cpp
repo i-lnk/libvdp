@@ -494,6 +494,8 @@ static int SetSystem(
 
 	SMsgAVIoctrlSetSystemReq sMsg;
 
+	memset(&sMsg,0,sizeof(sMsg));
+
 	sMsg.power_ctrl = atoi(szPower);
 	sMsg.lang = atoi(szLanguage);
 	sMsg.enableAutomicUpdate = atoi(szEnableAutomicUpdate);
