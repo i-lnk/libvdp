@@ -6,11 +6,11 @@
 #define MAX_DID_LENGTH 64
 #define MAX_PPPP_CHANNEL_NUM 4
 
-typedef struct T_SESSION{
+typedef struct T_CLIENT_SESSION{
     char 			deviceID[MAX_DID_LENGTH] ;
     CPPPPChannel * 	session;
    	COMMO_LOCK 		lock;
-}T_SESSION, *PT_SESSION;
+}T_CLIENT_SESSION, *PT_CLIENT_SESSION;
 
 class CPPPPChannelManagement
 {
@@ -46,7 +46,8 @@ public:
 	int CloseRecorderByDID(char * szDID);
 	
 private:
-    T_SESSION sessionList[MAX_PPPP_CHANNEL_NUM];
+	COMMO_LOCK sessionCreateLock;
+	T_CLIENT_SESSION sessionList[MAX_PPPP_CHANNEL_NUM];
 };
 
 #endif

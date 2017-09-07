@@ -16,9 +16,11 @@ CPPPPChannelManagement::CPPPPChannelManagement()
 {
 	int i = 0;
 	for(i;i<MAX_PPPP_CHANNEL_NUM;i++){
-		memset(&sessionList[i],0,sizeof(T_SESSION));
+		memset(&sessionList[i],0,sizeof(T_CLIENT_SESSION));
 		INT_LOCK(&sessionList[i].lock);
 	}
+
+	INT_LOCK(&sessionCreateLock);
 
 	InitOpenXL();
 }
@@ -30,6 +32,8 @@ CPPPPChannelManagement::~CPPPPChannelManagement()
 	for(i;i<MAX_PPPP_CHANNEL_NUM;i++){
 		DEL_LOCK(&sessionList[i].lock);
 	}
+
+	DEL_LOCK(&sessionCreateLock);
 }
 
 int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * server,char * connectionType)
@@ -38,10 +42,11 @@ int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * s
 
 	int r = 1;
     int i = 0;
+
+	GET_LOCK(&sessionCreateLock);
 	
     for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
 		GET_LOCK(&sessionList[i].lock);
-        LogX("session index:[%d] uuid:[%s] cmp with:[%s].",i,sessionList[i].deviceID,szDID);
         if(strcmp(sessionList[i].deviceID,szDID) == 0){
 			goto jumpout;
         }
@@ -58,10 +63,13 @@ int CPPPPChannelManagement::Start(char * szDID, char * user, char * pwd,char * s
 		PUT_LOCK(&sessionList[i].lock);
     }
 
+	PUT_LOCK(&sessionCreateLock);
+
 	return -1;
 
 jumpout:
     PUT_LOCK(&sessionList[i].lock);
+	PUT_LOCK(&sessionCreateLock);
 
     LogX("start session with list index:[%d].",i);
     
@@ -79,11 +87,11 @@ int CPPPPChannelManagement::Close(char * szDID)
     	GET_LOCK(&sessionList[i].lock);
         LogX("close session with uuid:[%s] cmp:[%s] list index:[%d].",sessionList[i].deviceID,szDID,i);
         if(strcmp(sessionList[i].deviceID,szDID) == 0){            
-            sessionList[i].deviceID[0] = 0;
 			if(sessionList[i].session){
 				delete(sessionList[i].session);
 				sessionList[i].session = NULL;
 			}
+			sessionList[i].deviceID[0] = 0;
 			PUT_LOCK(&sessionList[i].lock);
             return 1;
         }
