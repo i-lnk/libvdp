@@ -200,8 +200,7 @@ public:
 	int					mediaLinking;	
 	int 				videoPlaying;	
 	int 				audioPlaying;		
-	int 				iocmdRecving;	
-	int					iocmdSending;
+	int 				iocmdRecving;
 
 	int					AudioSampleRate;	// audio samplerate
 	int					AudioChannel;		// audio channel mode
@@ -215,7 +214,6 @@ public:
 	pthread_t			mediaCoreThread;
 
 	pthread_t 			iocmdRecvThread;
-	pthread_t			iocmdSendThread;
 
 	pthread_t 			videoPlayThread;
 	pthread_t			videoRecvThread;
@@ -248,10 +246,7 @@ public:
 	// for avi proc
 	CCircleBuffer *		hVideoBuffer;	// 
 	CCircleBuffer *		hAudioBuffer;	// 
-	CCircleBuffer *		hSoundBuffer;	// 
-	
-	CCircleBuffer *		hIOCmdBuffer;	// 
-	
+	CCircleBuffer *		hSoundBuffer;	//
 };
 
 #endif

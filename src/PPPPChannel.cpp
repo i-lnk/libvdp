@@ -199,81 +199,6 @@ void CheckServHandler(
 	*pErr = result;
 }
 
-void * IOCmdSendProcess(
-	void * hVoid
-){
-    SET_THREAD_NAME("IOCmdSendProcess");
-
-	CPPPPChannel * hPC = (CPPPPChannel*)hVoid;
-	
-	char Cmds[8192] = {0};
-	APP_CMD_HEAD * hCmds = (APP_CMD_HEAD*)Cmds;
-
-	int nBytesRead = 0;
-	int ret = 0;
-
-	hPC->hIOCmdBuffer->Clear();
-
-    while(hPC->iocmdSending){
-		if(hPC->hIOCmdBuffer == NULL){
-			Log3("[X:%s]=====>Invalid hIOCmdBuffer.",hPC->szDID);
-			sleep(2);
-			continue;
-		}
-
-		if(hPC->hIOCmdBuffer->Used() >= (int)sizeof(APP_CMD_HEAD)){
-			
-			nBytesRead = hPC->hIOCmdBuffer->Get((char*)hCmds,sizeof(APP_CMD_HEAD));
-			if(nBytesRead == sizeof(APP_CMD_HEAD)){
-                if(hCmds->Magic != 0x78787878
-                || hCmds->CgiLens > sizeof(Cmds)
-                || hCmds->CgiLens < 0
-                ){
-                    Log3("[X:%s]=====>invalid IOCTRL cmds from application. M:[%08X] L:[%d].\n",
-                         hPC->szDID,
-                         hCmds->Magic,
-                         hCmds->CgiLens
-                         );
-                    
-                    hPC->hIOCmdBuffer->Clear();
-                }
-
-				nBytesRead = 0;
-				while(nBytesRead != hCmds->CgiLens){
-					nBytesRead = hPC->hIOCmdBuffer->Get(hCmds->CgiData,hCmds->CgiLens);
-					Log3("[X:%s]=====>data not ready.\n",hPC->szDID);
-					usleep(1000);
-				}
-				
-				while(hPC->iocmdSending){
-
-					ret = SendCmds(hPC->avIdx,hCmds->AppType,hCmds->CgiData,hCmds->CgiLens,hPC);
-					if(ret == 0){
-						break;
-					}
-
-					Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",hPC->szDID,ret);
-
-					if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
-						usleep(1000); 
-						continue;
-					}else if(ret == -1){
-						Log3("[X:%s]=====>unsupport cmd type:[%d].\n",hPC->szDID,hCmds->AppType);
-						break;
-					}else{
-						break;
-					}
-				}
-			}
-		}
-		usleep(1000);
-    }
-	
-	Log3("[X:%s]=====>iocmd send proc exit.",hPC->szDID);
-
-	return NULL;
-}
-
 void * IOCmdRecvProcess(
 	void * hVoid
 ){
@@ -1287,7 +1212,7 @@ connect:
 
 	hPC->sessionID = IOTC_Get_SessionID();
 	if(hPC->sessionID < 0){
-		Log3("[1:%s]=====>IOTC_Get_SessionID error code [%d]\n",
+		LogX("[1:%s]=====>IOTC_Get_SessionID error code [%d]\n",
              hPC->szDID,
              hPC->sessionID);
 		goto jumperr;
@@ -1295,7 +1220,7 @@ connect:
 
 	hPC->SID = IOTC_Connect_ByUID_Parallel(hPC->szDID,hPC->sessionID);
 	if(hPC->SID < 0){
-		Log3("[2:%s]=====>start connection failed with error [%d] with device:[%s]\n",
+		LogX("[2:%s]=====>start connection failed with error [%d] with device:[%s]\n",
              hPC->szDID, hPC->SID, hPC->szDID);
 		
 		switch(hPC->SID){
@@ -1371,19 +1296,12 @@ connect:
 		resend
 		);
 
-	hPC->iocmdSending = 1;
     hPC->iocmdRecving = 1;
 	hPC->audioPlaying = 1;
 	hPC->videoPlaying = 1;
 	
 	hPC->audioEnabled = 1;
 	hPC->voiceEnabled = 1;
-	
-	Err = pthread_create(&hPC->iocmdSendThread,NULL,IOCmdSendProcess,(void*)hPC);
-	if(Err != 0){
-		Log3("create iocmd send process failed.");
-		goto jumperr;
-	}
 	
     Err = pthread_create(&hPC->iocmdRecvThread,NULL,IOCmdRecvProcess,(void*)hPC);
 	if(Err != 0){
@@ -1501,7 +1419,6 @@ CPPPPChannel::CPPPPChannel(
 	speakEnabled = 1;
     
 	mediaCoreThread = (pthread_t)-1;
-	iocmdSendThread = (pthread_t)-1;
 	iocmdRecvThread = (pthread_t)-1;
 	videoPlayThread = (pthread_t)-1;
 	videoRecvThread = (pthread_t)-1;
@@ -1536,7 +1453,6 @@ CPPPPChannel::CPPPPChannel(
 	hAudioBuffer = new CCircleBuffer(   8 * 1024);
 	hSoundBuffer = new CCircleBuffer(   8 * 1024);
 	hVideoBuffer = new CCircleBuffer(4096 * 1024);
-	hIOCmdBuffer = new CCircleBuffer(COMMAND_BUFFER_SIZE);
 
 	hAudioPutList = new CCircleBuffer(8 * 1024);
 	hAudioGetList = new CCircleBuffer(8 * 1024);
@@ -1564,15 +1480,9 @@ CPPPPChannel::~CPPPPChannel()
     
     Log3("start free class pppp channel:[2] free buffer.");
 
-//	hAudioBuffer->Release();
-//	hVideoBuffer->Release();
-//	hSoundBuffer->Release();
-//	hIOCmdBuffer->Release();
-
 	delete(hAudioBuffer);
 	delete(hVideoBuffer);
 	delete(hSoundBuffer);
-	delete(hIOCmdBuffer);
 	
 	delete(hAudioPutList);
 	delete(hAudioGetList);
@@ -1965,8 +1875,6 @@ int CPPPPChannel::MicphoneClose(){
 
 int CPPPPChannel::CloseWholeThreads()
 {
-    //F_LOG;
-	iocmdSending = 0;
     iocmdRecving = 0;
     audioPlaying = 0;
 	videoPlaying = 0;
@@ -1974,9 +1882,7 @@ int CPPPPChannel::CloseWholeThreads()
 	recordingExit = 0;
 
 	Log3("stop iocmd process.");
-    if(iocmdSendThread != (pthread_t)-1) pthread_join(iocmdSendThread,NULL);
 	if(iocmdRecvThread != (pthread_t)-1) pthread_join(iocmdRecvThread,NULL);
-	iocmdRecvThread = (pthread_t)-1;
 
 	Log3("stop video process.");
     if(videoRecvThread != (pthread_t)-1) pthread_join(videoRecvThread,NULL);
@@ -1990,7 +1896,6 @@ int CPPPPChannel::CloseWholeThreads()
 	RecorderClose();
 
 	iocmdRecvThread = (pthread_t)-1;
-	iocmdSendThread = (pthread_t)-1;
 	videoRecvThread = (pthread_t)-1;
 	videoPlayThread = (pthread_t)-1;
 	audioRecvThread = (pthread_t)-1;
@@ -2144,17 +2049,26 @@ int CPPPPChannel::StartMediaStreams(
 
 int CPPPPChannel::IOCmdSend(int type,char * msg,int len)
 {
-	char AppCmds[2048] = {0};
-	
-	APP_CMD_HEAD * hCmds = (APP_CMD_HEAD*)AppCmds;
-
-    hCmds->Magic = 0x78787878;
-	hCmds->AppType = type;
-	hCmds->CgiLens = len > 0 ? len : (int)strlen(msg);
-	
-	memcpy(hCmds->CgiData,msg,hCmds->CgiLens);
-
-	return hIOCmdBuffer->Put(AppCmds,sizeof(APP_CMD_HEAD) + hCmds->CgiLens);
+    while(1){
+        int ret = SendCmds(avIdx,type,msg,len,this);
+        
+        LogX("[DEV:%s]=====>send IOCTRL cmd:[0x%04x].",szDID,type);
+        
+        if(ret == 0){
+            return ret;
+        }
+    
+        LogX("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",szDID,ret);
+    
+        if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
+            usleep(1000);
+            continue;
+        }else{
+            return ret;
+        }
+    }
+    
+    return 0;
 }
 
 void CPPPPChannel::AlarmNotifyDoorBell(JNIEnv* hEnv,char *did, char *type, char *time )
