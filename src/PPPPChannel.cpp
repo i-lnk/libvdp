@@ -1272,9 +1272,10 @@ connect:
 		);
 	
 	if(hPC->avIdx < 0){
-		Log3("[3:%s]=====>avclient start failed:[%d] \n",
+		LogX("[3:%s]=====>avclient start failed:[%d] \n",
              hPC->szDID, hPC->avIdx);
-		IOTC_Connect_Stop_BySID(hPC->SID);
+        
+        IOTC_Session_Close(hPC->SID);
 		
 		switch(hPC->avIdx){
 			case AV_ER_WRONG_VIEWACCorPWD:
