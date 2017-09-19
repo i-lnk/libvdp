@@ -213,8 +213,6 @@ JNIEXPORT void JNICALL PPPPInitialize(JNIEnv *env ,jobject obj, jstring svr)
     IOTC_Setup_DetectNetwork_Timeout(5000);
     IOTC_Setup_LANConnection_Timeout(300);
     IOTC_Setup_P2PConnection_Timeout(500);
-
-	IOTC_WakeUp_Setup_Auto_WakeUp(1);
 	
     avInitialize(32);
     unsigned int iotcVer;
@@ -582,8 +580,22 @@ JNIEXPORT int JNICALL Wake(
 		env->ReleaseStringUTFChars(did,szDID);
 		return 0;
 	}
-	
+
+//	IOTC_Initialize2(0);
 	IOTC_WakeUp_WakeDevice(szDID);
+	int SID = IOTC_Get_SessionID();
+	if(SID < 0){
+		return -1;
+	}
+
+	int CID = IOTC_Connect_ByUID_Parallel(szDID,SID);
+	while(1){
+		if(IOTC_WakeUp_WakeDevice(szDID) == 0) break;		
+		usleep(50000);
+	}
+
+	IOTC_Session_Close(SID);
+//	IOTC_DeInitialize();
 
 	env->ReleaseStringUTFChars(did,szDID);
 
