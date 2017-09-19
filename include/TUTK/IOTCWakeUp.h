@@ -87,6 +87,8 @@ P2PAPI_API int IOTC_WakeUp_Get_KeepAlivePacket(IOTC_WakeUpData **pData, unsigned
  */
 P2PAPI_API void IOTC_WakeUp_DeInit(IOTC_WakeUpData *pData);
 
+P2PAPI_API void IOTC_WakeUp_Setup_Auto_WakeUp(int enable);
+
 
 /**
  * \brief Send IOTC WakeUp request to wake device up
