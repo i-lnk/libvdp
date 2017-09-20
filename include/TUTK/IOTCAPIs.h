@@ -156,10 +156,6 @@ extern "C" {
  * disconnection from the device or that device does not login yet. */
 #define IOTC_ER_CAN_NOT_FIND_DEVICE                 -19
 
-/** The client is already connecting to a device currently
- * so it is prohibited to invoke connection again at this moment. */
-#define IOTC_ER_CONNECT_IS_CALLING                  -20
-
 /** The remote site already closes this IOTC session.
  * Please call IOTC_Session_Close() to release IOTC session resource in locate site. */
 #define IOTC_ER_SESSION_CLOSE_BY_REMOTE             -22
@@ -275,7 +271,7 @@ extern "C" {
 /** Out of memory*/
 #define IOTC_ER_NOT_ENOUGH_MEMORY                   -58
 
-/** The device is banned and locked*/
+/** The device is banned and locked, this error code is no longer being used*/
 #define IOTC_ER_DEVICE_IS_BANNED					-59
 
 /** IOTC master servers have no response, probably caused by many types of Internet connection issues. */
@@ -494,6 +490,7 @@ struct st_ConnectOption
 {
     char IsParallel; //!< 0: Turn off parallel connection. 1: Turn on parallel connection.
 	char IsLowConnectionBandwidth; //!< 0: Normal connection mode 1: Low bandwidth mode (This mode might reduce the P2P traversal rate)
+	char IsP2PRequestRoundRobin; //!< 0: Normal connection mode 1: P2P Request round robin mode (This mode might reduce the P2P traversal rate)
 };
 
 typedef struct st_ConnectOption st_ConnectOption_t;
@@ -571,7 +568,6 @@ typedef void (*loginStateHandler)(IOTCDeviceLoginState state, int errCode, void*
  *        errCode [out] The error code represents what the problems it during the connect. To be noted,
  *        This value is meaningful when state is IOTC_CONNECT_UID_ST_FAILED.
  *			- #IOTC_ER_NOT_INITIALIZED The IOTC module is not initialized yet
- *			- #IOTC_ER_CONNECT_IS_CALLING The client is already connecting to a device
  *			- #IOTC_ER_UNLICENSE The specified UID of that device is not licensed or expired
  *			- #IOTC_ER_EXCEED_MAX_SESSION The number of IOTC sessions has reached maximum in client side
  *			- #IOTC_ER_DEVICE_NOT_LISTENING The device is not listening for connection now
@@ -973,7 +969,6 @@ P2PAPI_API int IOTC_Get_Device_Status(struct st_DeviceStInfo * pDevStInfo);
  *			- #IOTC_ER_LISTEN_ALREADY_CALLED The device is already in listen process
  *			- #IOTC_ER_TIMEOUT No connection is established from clients before timeout expires
  *			- #IOTC_ER_EXIT_LISTEN The device stops listening for connections from clients.
- *			- #IOTC_ER_DEVICE_IS_BANNED The device might be banned if another device has already logined on servers
  *
  * \attention (1) This function is a block process, waiting for following two
  *				conditions happens before executing	sequential instructions
@@ -1012,7 +1007,6 @@ P2PAPI_API void IOTC_Listen_Exit(void);
  *			- IOTC_ER_INVALID_ARG   Invalid input argument.
  *			- IOTC_ER_NOT_INITIALIZED     The module has not bee initialized.
  *			- IOTC_ER_EXCEED_MAX_SESSION     It reaches the max session number.
- *			- IOTC_ER_DEVICE_IS_BANNED     The device is banned.
  */
 
 P2PAPI_API int  IOTC_Accept(int *SID);
@@ -1073,7 +1067,6 @@ P2PAPI_API int  IOTC_Listen2(unsigned int nTimeout, const char *cszAESKey, IOTCS
  * \return IOTC session ID if return value >= 0
  * \return Error code if return value < 0
  *			- #IOTC_ER_NOT_INITIALIZED The IOTC module is not initialized yet
- *			- #IOTC_ER_CONNECT_IS_CALLING The client is already connecting to a device
  *			- #IOTC_ER_UNLICENSE The specified UID of that device is not licensed or expired
  *			- #IOTC_ER_EXCEED_MAX_SESSION The number of IOTC sessions has reached maximum in client side
  *			- #IOTC_ER_DEVICE_NOT_LISTENING The device is not listening for connection now
@@ -1122,7 +1115,6 @@ P2PAPI_API int  IOTC_Connect_ByUID(const char *cszUID);
  * \return IOTC session ID if return value >= 0
  * \return Error code if return value < 0
  *			- #IOTC_ER_NOT_INITIALIZED The IOTC module is not initialized yet
- *			- #IOTC_ER_CONNECT_IS_CALLING The client is already connecting to a device
  *			- #IOTC_ER_UNLICENSE The specified UID of that device is not licensed or expired
  *			- #IOTC_ER_EXCEED_MAX_SESSION The number of IOTC sessions has reached maximum in client side
  *			- #IOTC_ER_DEVICE_NOT_LISTENING The device is not listening for connection now
@@ -1280,7 +1272,6 @@ P2PAPI_API int  IOTC_Connect_ByUID_ParallelNB(const char *cszUID, int SID,
  * \return IOTC session ID if return value >= 0
  * \return Error code if return value < 0
  *			- #IOTC_ER_NOT_INITIALIZED The IOTC module is not initialized yet
- *			- #IOTC_ER_CONNECT_IS_CALLING The client is already connecting to a device
  *			- #IOTC_ER_UNLICENSE The specified UID of that device is not licensed or expired
  *			- #IOTC_ER_EXCEED_MAX_SESSION The number of IOTC sessions has reached maximum in client side
  *			- #IOTC_ER_DEVICE_NOT_LISTENING The device is not listening for connection now
@@ -1387,8 +1378,6 @@ P2PAPI_API int IOTC_Connect_Stop_BySID(int SID);
  *				expires because	remote site has no response
  *			- #IOTC_ER_TIMEOUT The timeout specified by nTimeout expires before
  *				read process is performed completely
- *			- #IOTC_ER_DEVICE_IS_BANNED The device might be banned if another device has already
- *				logined on servers
  *
  * \attention The IOTC channel of ID 0 is enabled by default when a IOTC session is established.
  *				That means nIOTCChannelID can be specified as 0 if only one IOTC channel
@@ -1494,8 +1483,6 @@ P2PAPI_API int IOTC_Session_Check_ByCallBackFn(int nIOTCSessionID, sessionStatus
  *				expires because	remote site has no response
  *			- #IOTC_ER_TIMEOUT The timeout specified by nTimeout expires before
  *				read process is performed completely
- *			- #IOTC_ER_DEVICE_IS_BANNED The device might be banned if another device has already
- *				logined on servers
  *
  * \attention (1) The IOTC channel of ID 0 is enabled by default when a IOTC session is established.
  *				That means nIOTCChannelID can be specified as 0 if only one IOTC channel
@@ -1538,8 +1525,6 @@ P2PAPI_API int  IOTC_Session_Read(int nIOTCSessionID, char *abBuf, int nMaxBufSi
  *				session ID has been closed by remote site
  *			- #IOTC_ER_REMOTE_TIMEOUT_DISCONNECT The timeout defined by #IOTC_SESSION_ALIVE_TIMEOUT
  *				expires because	remote site has no response
- *			- #IOTC_ER_DEVICE_IS_BANNED The device might be banned if another device has already
- *				logined on servers
  *			- #IOTC_ER_INVALID_ARG The buffer size is not accepted
  *			- #IOTC_ER_NO_PATH_TO_WRITE_DATA IOTC internal error, cannot find a path to send data
  *

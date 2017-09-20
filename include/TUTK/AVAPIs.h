@@ -952,6 +952,19 @@ AVAPI_API int avClientCleanBuf(int nAVChannelID);
 AVAPI_API int avClientCleanVideoBuf(int nAVChannelID);
 
 /**
+ * \brief Clean the video buffer(both in client and device) Non-Blocking Function
+ *
+ * \details A client with multiple device connection application should call
+ *			this function to clean video buffer while switch to another devices.
+ *
+ * \param nAVChannelID [in] The channel ID of the AV channel to clean buffer
+ *
+ * \return Error code if return value < 0
+ *			- #AV_ER_INVALID_ARG The AV channel ID is not valid or frame data is null
+ */
+AVAPI_API int avClientCleanVideoBuf_NB(int nAVChannelID);
+
+/**
 * \brief Clean the local video and audio buffer of the client
 *
 * \details This function is used to clean the video and audio buffer that the client

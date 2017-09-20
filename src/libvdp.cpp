@@ -581,21 +581,8 @@ JNIEXPORT int JNICALL Wake(
 		return 0;
 	}
 
-//	IOTC_Initialize2(0);
+	IOTC_WakeUp_Setup_Auto_WakeUp(1);
 	IOTC_WakeUp_WakeDevice(szDID);
-	int SID = IOTC_Get_SessionID();
-	if(SID < 0){
-		return -1;
-	}
-
-	int CID = IOTC_Connect_ByUID_Parallel(szDID,SID);
-	while(1){
-		if(IOTC_WakeUp_WakeDevice(szDID) == 0) break;		
-		usleep(50000);
-	}
-
-	IOTC_Session_Close(SID);
-//	IOTC_DeInitialize();
 
 	env->ReleaseStringUTFChars(did,szDID);
 

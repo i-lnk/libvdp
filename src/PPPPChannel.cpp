@@ -1289,6 +1289,8 @@ connect:
 		goto connect;
 	}
 
+	IOTC_WakeUp_Setup_Auto_WakeUp(0);
+
 	Log3("[4:%s]=====>session:[%d] idx:[%d] did:[%s] resend:[%d].",
         hPC->szDID,
 		hPC->SID,
