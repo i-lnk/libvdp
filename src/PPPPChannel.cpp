@@ -1278,6 +1278,9 @@ connect:
         IOTC_Session_Close(hPC->SID);
 		
 		switch(hPC->avIdx){
+            case AV_ER_EXCEED_MAX_CHANNEL:
+                status = PPPP_STATUS_EXCEED_SESSION;
+                goto jumperr;
 			case AV_ER_WRONG_VIEWACCorPWD:
 			case AV_ER_NO_PERMISSION:
 				status = PPPP_STATUS_INVALID_USER_PWD;
@@ -1531,7 +1534,9 @@ int CPPPPChannel::PPPPClose()
 	Log3("close connection by did:[%s] called.",szDID);
 
 	IOTC_Connect_Stop_BySID(sessionID);
-
+    
+    avClientStop(avIdx); // free channel
+    
 	if(SID >= 0){
 		avClientExit(SID,0);
 		avServExit(SID,speakerChannel);	// for avServStart block
@@ -1612,7 +1617,7 @@ void CPPPPChannel::Close()
         
         IOTC_Connect_Stop_BySID(sessionID);
         avClientExit(SID,0);
-		
+        
         mediaLinking = 0;
 		
 		Log3("waiting for core media process exit.");
