@@ -1647,7 +1647,6 @@ int CPPPPChannel::SleepingStart(){
 
 int CPPPPChannel::SleepingClose(){
 	IOTC_WakeUp_WakeDevice(szDID);
-    
     return 0;
 }
 
@@ -1672,6 +1671,8 @@ int CPPPPChannel::LiveplayStart(){
 		pMsg->stTimeDay.wday = 0;
 
 		Log3("start replay by url:[%s].",szURL);
+
+		playrecChannel = -1;
 
 		avErr = IOCmdSend(
 			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,
@@ -1735,6 +1736,7 @@ int CPPPPChannel::LiveplayClose(){
 
 		avClientStop(rpIdx); 
 		rpIdx = -1;
+		playrecChannel = -1;
 		
 	}else{
 		avErr = IOCmdSend(
