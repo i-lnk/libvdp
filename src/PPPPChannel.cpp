@@ -1677,7 +1677,10 @@ int CPPPPChannel::LiveplayStart(){
 
 		Log3("start replay by url:[%s].",szURL);
 
-		playrecChannel = -1;
+		if(playrecChannel >= 0){
+			avClientStop(playrecChannel);
+			playrecChannel = -1;
+		}
 
 		avErr = IOCmdSend(
 			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,
@@ -1708,6 +1711,7 @@ int CPPPPChannel::LiveplayStart(){
 
 		if(rpIdx < 0){
 			Log3("avClientStart2 for replay failed:[%d].",rpIdx);
+			avClientStop(playrecChannel);
 			return -1;
 		}
 	}else{
