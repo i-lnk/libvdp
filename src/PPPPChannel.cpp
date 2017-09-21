@@ -267,12 +267,17 @@ void * IOCmdRecvProcess(
 				break;
 			case IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP:{
 					SMsgAVIoctrlPlayRecordResp * hRQ = (SMsgAVIoctrlPlayRecordResp *)hCCH->d;
+					/*
 					if(hRQ->command == AVIOCTRL_RECORD_PLAY_START){
 						hPC->playrecChannel = hRQ->result;
 						continue;
 					}
+					*/
+					hPC->playrecChannel = hRQ->result >= 0 ? hRQ->result : -1;
+					Log3("hPC->playrecChannel:%d hRQ->command:%d",
+						hPC->playrecChannel,hRQ->result);
 				}
-				break;
+				continue;
 			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	
 					SMsgAVIoctrlSetDeviceSleepResp * hRQ = (SMsgAVIoctrlSetDeviceSleepResp *)hCCH->d;
 					if(hRQ->result == 0){
