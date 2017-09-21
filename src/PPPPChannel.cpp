@@ -1532,20 +1532,18 @@ void CPPPPChannel::MsgNotify(
 int CPPPPChannel::PPPPClose()
 {
 	Log3("close connection by did:[%s] called.",szDID);
-
-	IOTC_Connect_Stop_BySID(sessionID);
     
     avClientStop(avIdx); // free channel
     
 	if(SID >= 0){
-		avClientExit(SID,0);
 		avServExit(SID,speakerChannel);	// for avServStart block
 		IOTC_Session_Close(SID); 		// close client session handle
 	}
 	
-	avIdx = spIdx = -1;
-	SID = -1;
+	avIdx = -1;
+	spIdx = -1;
 	sessionID = -1;
+	SID = -1;
 
 	return 0;
 }
@@ -1615,8 +1613,8 @@ void CPPPPChannel::Close()
 			break;
 		}
         
-        IOTC_Connect_Stop_BySID(sessionID);
-        avClientExit(SID,0);
+        if(sessionID >= 0) IOTC_Connect_Stop_BySID(sessionID);
+        if(SID >= 0) avClientExit(SID,0);
         
         mediaLinking = 0;
 		
