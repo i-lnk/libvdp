@@ -155,7 +155,7 @@ public:
 	int SendAVAPIStartIOCtrl();
 	int SendAVAPICloseIOCtrl();
 	
-	int IOCmdSend(int type, char *msg, int len);
+	int IOCmdSend(int type, char *msg, int len, int raw);
 	
     void MsgNotify(JNIEnv * hEnv,int MsgType, int Param);
 

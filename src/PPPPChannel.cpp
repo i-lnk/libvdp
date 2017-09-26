@@ -267,15 +267,8 @@ void * IOCmdRecvProcess(
 				break;
 			case IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP:{
 					SMsgAVIoctrlPlayRecordResp * hRQ = (SMsgAVIoctrlPlayRecordResp *)hCCH->d;
-					/*
-					if(hRQ->command == AVIOCTRL_RECORD_PLAY_START){
-						hPC->playrecChannel = hRQ->result;
-						continue;
-					}
-					*/
-					hPC->playrecChannel = hRQ->result >= 0 ? hRQ->result : -1;
-					Log3("hPC->playrecChannel:%d hRQ->command:%d",
-						hPC->playrecChannel,hRQ->result);
+					hPC->playrecChannel = hRQ->result;
+					Log3("hPC->playrecChannel:[%d] hRQ->command:[%d]",hPC->playrecChannel,hRQ->command);
 				}
 				continue;
 			case IOTYPE_USER_IPCAM_DEVICESLEEP_RESP:{	
@@ -515,7 +508,7 @@ static void * VideoRecvProcess(void * hVoid){
 	while(hPC->mediaLinking)
 	{
 		if(hPC->videoPlaying == 0){
-//			Log3("video recv process paused...");
+			Log3("video recv process paused...");
 			avClientCleanVideoBuf(avIdx);
 			avIdx = -1;
 			sleep(1); 
@@ -524,11 +517,18 @@ static void * VideoRecvProcess(void * hVoid){
 
 		// set play index
 		if(avIdx < 0){
-			avIdx = hPC->rpIdx >= 0 ? hPC->rpIdx : hPC->avIdx;
+            
+            if(hPC->szURL[0]){
+                avIdx = hPC->rpIdx;
+            }else{
+                avIdx = hPC->avIdx;
+            }
+            
 			Log3("video playing start with idx:[%d] mode:[%s]",
 				avIdx,
-				hPC->rpIdx >= 0 ? "replay" : "livestream"
+				hPC->rpIdx > 0 ? "replay" : "livestream"
 				);
+            
 			continue;
 		}
 	
@@ -697,7 +697,7 @@ jump_rst:
 	while(hPC->mediaLinking){
 
 		if(hPC->audioPlaying == 0){
-//			Log3("audio recv process paused...");
+			Log3("audio recv process paused...");
 			avClientCleanAudioBuf(avIdx);
 			hPC->hAudioBuffer->Clear();
 			hPC->hSoundBuffer->Clear();
@@ -1215,7 +1215,9 @@ connect:
 	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
 
+    hPC->playrecChannel = -1;
 	hPC->sessionID = IOTC_Get_SessionID();
+    
 	if(hPC->sessionID < 0){
 		LogX("[1:%s]=====>IOTC_Get_SessionID error code [%d]\n",
              hPC->szDID,
@@ -1308,8 +1310,9 @@ connect:
 		);
 
     hPC->iocmdRecving = 1;
-	hPC->audioPlaying = 1;
-	hPC->videoPlaying = 1;
+    
+	hPC->audioPlaying = 0;
+	hPC->videoPlaying = 0;
 	
 	hPC->audioEnabled = 1;
 	hPC->voiceEnabled = 1;
@@ -1420,6 +1423,8 @@ CPPPPChannel::CPPPPChannel(
 
     memset(szSvr, 0, sizeof(szSvr));
     strcpy(szSvr, svr);
+    
+    memset(szURL, 0, sizeof(szURL));
     
     iocmdRecving = 0;
     videoPlaying = 0;
@@ -1639,7 +1644,7 @@ int CPPPPChannel::SleepingStart(){
 	avErr = IOCmdSend(
 		IOTYPE_USER_IPCAM_DEVICESLEEP_REQ,
 		avMsg,
-		sizeof(SMsgAVIoctrlAVStream)
+		sizeof(SMsgAVIoctrlAVStream),1
 		);
 	
 	if(avErr < 0){
@@ -1662,30 +1667,33 @@ int CPPPPChannel::LiveplayStart(){
 	if(szURL[0]){
 		SMsgAVIoctrlPlayRecord * pMsg = (SMsgAVIoctrlPlayRecord *)avMsg;
 
+        pMsg->channel = 0;
 		pMsg->command = AVIOCTRL_RECORD_PLAY_START;
+        pMsg->stTimeDay.wday = 0;
 
 		sscanf(szURL,"%d-%d-%d %d:%d:%d",
-			&pMsg->stTimeDay.year,
-			&pMsg->stTimeDay.month,
-			&pMsg->stTimeDay.day,
-			&pMsg->stTimeDay.hour,
-			&pMsg->stTimeDay.minute,
-			&pMsg->stTimeDay.second
+			(int*)&pMsg->stTimeDay.year,
+			(int*)&pMsg->stTimeDay.month,
+			(int*)&pMsg->stTimeDay.day,
+			(int*)&pMsg->stTimeDay.hour,
+			(int*)&pMsg->stTimeDay.minute,
+			(int*)&pMsg->stTimeDay.second
 		);
-		
-		pMsg->stTimeDay.wday = 0;
 
-		Log3("start replay by url:[%s].",szURL);
-
-		if(playrecChannel >= 0){
-			avClientStop(playrecChannel);
-			playrecChannel = -1;
-		}
+        Log3("start replay by time:[%d-%d-%d %d:%d:%d].",
+             pMsg->stTimeDay.year,
+             pMsg->stTimeDay.month,
+             pMsg->stTimeDay.day,
+             pMsg->stTimeDay.hour,
+             pMsg->stTimeDay.minute,
+             pMsg->stTimeDay.second);
+        
+        playrecChannel = 0x3721;
 
 		avErr = IOCmdSend(
 			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,
 			avMsg,
-			sizeof(SMsgAVIoctrlPlayRecord)
+			sizeof(SMsgAVIoctrlPlayRecord),1
 			);
 
 		if(avErr < AV_ER_NoERROR){
@@ -1694,31 +1702,29 @@ int CPPPPChannel::LiveplayStart(){
 		}
 
 		int times = 10;
-		while(times-- && playrecChannel < 0){
+		while(times-- && playrecChannel == 0x3721){
 			Log3("waiting for replay channel.");
 			sleep(1);
 		}
 
-		if(playrecChannel < 0){
+		if(playrecChannel <= 0){
 			Log3("get replay channel failed with error:[%d].",playrecChannel);
 			return -1;
 		}
-
+        
 		unsigned int svrType = 0;
 		int svrRsnd = 1;
 
-		rpIdx = avClientStart2(SID, szUsr, szPwd, 7, &svrType, playrecChannel, &svrRsnd);
-
-		if(rpIdx < 0){
-			Log3("avClientStart2 for replay failed:[%d].",rpIdx);
-			avClientStop(playrecChannel);
-			return -1;
+		rpIdx = avClientStart2(SID, szUsr, szPwd, 5, &svrType, playrecChannel, &svrRsnd);
+        if(rpIdx < 0){
+            Log3("avClientStart2 for replay failed:[%d].",rpIdx);
+            return -1;
 		}
 	}else{
 		avErr = IOCmdSend(
 			IOTYPE_USER_IPCAM_START,
 			avMsg,
-			sizeof(SMsgAVIoctrlAVStream)
+			sizeof(SMsgAVIoctrlAVStream),1
 			);
 
 		if(avErr < AV_ER_NoERROR){
@@ -1741,17 +1747,18 @@ int CPPPPChannel::LiveplayClose(){
 		avErr = IOCmdSend(
 			IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL,
 			avMsg,
-			sizeof(SMsgAVIoctrlPlayRecord));
+			sizeof(SMsgAVIoctrlPlayRecord),1);
 
 		avClientStop(rpIdx); 
 		rpIdx = -1;
 		playrecChannel = -1;
+        szURL[0] = 0;
 		
 	}else{
 		avErr = IOCmdSend(
 			IOTYPE_USER_IPCAM_STOP,
 			avMsg,
-			sizeof(SMsgAVIoctrlAVStream));
+			sizeof(SMsgAVIoctrlAVStream),1);
 	}
 
 	if(avErr < 0){
@@ -1784,7 +1791,7 @@ int CPPPPChannel::SpeakingStart(){
 	int avErr = IOCmdSend(
 			IOTYPE_USER_IPCAM_AUDIOSTART,
 			avMsg,
-			sizeof(SMsgAVIoctrlAVStream)
+			sizeof(SMsgAVIoctrlAVStream),1
 			);
 
 	if(avErr < AV_ER_NoERROR){
@@ -1804,7 +1811,7 @@ int CPPPPChannel::SpeakingClose(){
 	int avErr = IOCmdSend(
 		IOTYPE_USER_IPCAM_AUDIOSTOP,
 		avMsg,
-		sizeof(SMsgAVIoctrlAVStream));
+		sizeof(SMsgAVIoctrlAVStream),1);
 
 	if(avErr < 0){
 		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",avErr,avIdx);
@@ -1837,7 +1844,7 @@ int CPPPPChannel::MicphoneStart(){
 	int avErr = IOCmdSend(
 		IOTYPE_USER_IPCAM_SPEAKERSTART,
 		avMsg,
-		sizeof(SMsgAVIoctrlAVStream));
+		sizeof(SMsgAVIoctrlAVStream),1);
 	
 	if(avErr < AV_ER_NoERROR){
 		Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
@@ -1879,7 +1886,7 @@ int CPPPPChannel::MicphoneClose(){
 	IOCmdSend(
 		IOTYPE_USER_IPCAM_SPEAKERSTOP,
 		avMsg,
-		sizeof(SMsgAVIoctrlAVStream));
+		sizeof(SMsgAVIoctrlAVStream),1);
 
 	if(spIdx > 0) avServStop(spIdx);
 	if(speakerChannel > 0) avServExit(SID,speakerChannel);
@@ -2032,9 +2039,6 @@ int CPPPPChannel::StartMediaStreams(
 	MHCropSize = video_h_crop;
 	MWCropSize = video_w_crop;
 
-	videoPlaying = 1;
-	audioPlaying = 1;
-
 	Log3(
 		"audio format info:[\n"
 		"samplerate = %d\n"
@@ -2056,7 +2060,12 @@ int CPPPPChannel::StartMediaStreams(
 		);
 
     ret = LiveplayStart();
-	
+    
+    if(ret == 0){
+        videoPlaying = 1;
+        audioPlaying = 1;
+    }
+        
 	PUT_LOCK(&DestoryLock);
 
     Log3("media stream start %s.",ret == 0 ? "done" : "fail");
@@ -2064,10 +2073,15 @@ int CPPPPChannel::StartMediaStreams(
     return ret;
 }
 
-int CPPPPChannel::IOCmdSend(int type,char * msg,int len)
+int CPPPPChannel::IOCmdSend(int type,char * msg,int len,int raw)
 {
     while(1){
-        int ret = SendCmds(avIdx,type,msg,len,this);
+        int ret = -1;
+        if(raw){
+            ret = avSendIOCtrl(avIdx,type,msg,len);
+        }else{
+            ret = SendCmds(avIdx,type,msg,len,this);
+        }
         
         LogX("[DEV:%s]=====>send IOCTRL cmd:[0x%04x].",szDID,type);
         

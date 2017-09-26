@@ -997,7 +997,7 @@ static int SetPlayRecordControl(
 		AVIOCTRL_RECORD_PLAY_START			= 0x10,
 	}ENUM_PLAYCONTROL;
 */
-
+    
 	GetCgiParam(sChannel,Cgi,sizeof(sChannel),"channel=","&");
     GetCgiParam(sCommand,Cgi,sizeof(sCommand),"command=","&");
     GetCgiParam(sParam,Cgi,sizeof(sParam),"param=","&");
@@ -1008,12 +1008,12 @@ static int SetPlayRecordControl(
 	sMsg.Param = atoi(sParam);
 
 	sscanf(sEventTime,"%d-%d-%d %d:%d:%d",
-		&sMsg.stTimeDay.year,
-		&sMsg.stTimeDay.month,
-		&sMsg.stTimeDay.day,
-		&sMsg.stTimeDay.hour,
-		&sMsg.stTimeDay.minute,
-		&sMsg.stTimeDay.second
+		(int *)&sMsg.stTimeDay.year,
+		(int *)&sMsg.stTimeDay.month,
+		(int *)&sMsg.stTimeDay.day,
+		(int *)&sMsg.stTimeDay.hour,
+		(int *)&sMsg.stTimeDay.minute,
+		(int *)&sMsg.stTimeDay.second
 		);
     
     return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
@@ -1294,5 +1294,5 @@ int SendCmds(
 		}
 	}
 
-	return avSendIOCtrl(Idx,MsgType,(const char *)Cgi,CgiLens);
+    return -1;
 }

@@ -1167,7 +1167,7 @@ IOTYPE_USER_IPCAM_RECORD_PLAYCONTROL_RESP 	= 0x031B,
 typedef struct
 {
 	unsigned int command;	// Play record command. refer to ENUM_PLAYCONTROL
-	unsigned int result; 	// Depends on command
+             int result;     // Depends on command
 							// when is AVIOCTRL_RECORD_PLAY_START:
 							//	result>=0   real channel no used by device for playback
 							//	result <0	error

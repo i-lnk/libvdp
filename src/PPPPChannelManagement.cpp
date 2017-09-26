@@ -362,7 +362,7 @@ int CPPPPChannelManagement::PPPPIOCmdSend(char * szDID,int type,char * msg,int l
 
 jumpout:
 
-	e = sessionList[i].session->IOCmdSend(type, msg, len);
+	e = sessionList[i].session->IOCmdSend(type, msg, len, 0);
 
 	PUT_LOCK(&sessionList[i].lock);
 
