@@ -508,7 +508,7 @@ static void * VideoRecvProcess(void * hVoid){
 	while(hPC->mediaLinking)
 	{
 		if(hPC->videoPlaying == 0){
-			Log3("video recv process paused...");
+//            Log3("video recv process paused...");
 			avClientCleanVideoBuf(avIdx);
 			avIdx = -1;
 			sleep(1); 
