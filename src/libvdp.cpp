@@ -203,16 +203,16 @@ JNIEXPORT void JNICALL PPPPInitialize(JNIEnv *env ,jobject obj, jstring svr)
     Log3("init pppp lib.");
     IOTC_Set_Max_Session_Number(128);
     IOTC_Setup_Session_Alive_Timeout(4);
-    
-    int ret = IOTC_Initialize2(0);
-    if(ret != IOTC_ER_NoERROR){
+
+    int Err = IOTC_Initialize2(0);
+    if(Err != IOTC_ER_NoERROR){
         Log2("IOTCAPIs_Device exit...!!\n");
         exit(0);
     }
     
     IOTC_Setup_DetectNetwork_Timeout(5000);
-    IOTC_Setup_LANConnection_Timeout(300);
-    IOTC_Setup_P2PConnection_Timeout(500);
+//  IOTC_Setup_LANConnection_Timeout(300);
+//  IOTC_Setup_P2PConnection_Timeout(500);
 	
     avInitialize(32);
     unsigned int iotcVer;

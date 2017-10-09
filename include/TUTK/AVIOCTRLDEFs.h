@@ -230,17 +230,17 @@ typedef enum
 	IOTYPE_USER_IPCAM_SET_OSD_REQ				= 0x860,	// â€¦Ã‹Ã·âˆš OSD â‰ˆâ€°Ã·âˆš
 	IOTYPE_USER_IPCAM_SET_OSD_RESP				= 0x861,	// â€¦Ã‹Ã·âˆš OSD â‰ˆâ€°Ã·âˆšâ€Â¶Â¥ï£¿
 				
-	IOTYPE_USER_IPCAM_SET_433_REQ				= 0x862,	// ÉèÖÃ 433 Éè±¸	
-	IOTYPE_USER_IPCAM_SET_433_RESP				= 0x863,	// ÉèÖÃ 433 Éè±¸Ó¦´ğ	
-	IOTYPE_USER_IPCAM_GET_433_REQ				= 0x864,	// »ñÈ¡ 433 Éè±¸ÁĞ±í	
-	IOTYPE_USER_IPCAM_GET_433_RESP				= 0x865,	// »ñÈ¡ 433 Éè±¸ÁĞ±íÓ¦´ğ	
-	IOTYPE_USER_IPCAM_CFG_433_REQ				= 0x866,	// ¿ªÊ¼ 433 Åä¶Ô	
-	IOTYPE_USER_IPCAM_CFG_433_RESP				= 0x867,	// ¿ªÊ¼ 433 Åä¶ÔÓ¦´ğ	
-	IOTYPE_USER_IPCAM_DEL_433_REQ				= 0x868,	// É¾³ı 433 Éè±¸	
-	IOTYPE_USER_IPCAM_DEL_433_RESP				= 0x869,	// É¾³ı 433 Éè±¸Ó¦´ğ	
-	IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ			= 0x870,	// ÍË³ö 433 Éè±¸Åä¶Ô	
-	IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP			= 0x871,	// ÍË³ö 433 Éè±¸Åä¶ÔÓ¦´ğ
-    
+	IOTYPE_USER_IPCAM_CONFIG_RF_REQ				= 0x862,	// ÉèÖÃ RF Éè±¸	
+	IOTYPE_USER_IPCAM_CONFIG_RF_RESP			= 0x863,	// ÉèÖÃ RF Éè±¸Ó¦´ğ	
+	IOTYPE_USER_IPCAM_SELECT_RF_REQ				= 0x864,	// »ñÈ¡ RF Éè±¸ÁĞ±í	
+	IOTYPE_USER_IPCAM_SELECT_RF_RESP			= 0x865,	// »ñÈ¡ RF Éè±¸ÁĞ±íÓ¦´ğ	
+	IOTYPE_USER_IPCAM_PARING_RF_REQ				= 0x866,	// ¿ªÊ¼ RF Åä¶Ô	
+	IOTYPE_USER_IPCAM_PARING_RF_RESP			= 0x867,	// ¿ªÊ¼ RF Åä¶ÔÓ¦´ğ	
+	IOTYPE_USER_IPCAM_REMOVE_RF_REQ				= 0x868,	// É¾³ı RF Éè±¸	
+	IOTYPE_USER_IPCAM_REMOVE_RF_RESP			= 0x869,	// É¾³ı RF Éè±¸Ó¦´ğ	
+	IOTYPE_USER_IPCAM_CONFIG_RF_EXIT_REQ		= 0x870,	// ÍË³ö RF Éè±¸Åä¶Ô	
+	IOTYPE_USER_IPCAM_CONFIG_RF_EXIT_RESP		= 0x871,	// ÍË³ö RF Éè±¸Åä¶ÔÓ¦´ğ
+
     IOTYPE_USER_IPCAM_GET_CAPACITY_REQ          = 0x880,
     IOTYPE_USER_IPCAM_GET_CAPACITY_RESP         = 0x881,
 
@@ -288,27 +288,6 @@ typedef struct _T_IOT_DEV{
 	unsigned char   d[0];
 }T_IOT_DEV,*PT_IOT_DEV;
 
-//
-// 433 â‰ˆâ€°âˆ‚â€˜
-//
-
-// APP -> [IOTYPE_USER_IPCAM_CFG_433_REQ]  -> IPC
-// IPC -> [IOTYPE_USER_IPCAM_CFG_433_RESP] -> APP
-
-typedef enum{
-	AVIOCTRL_CFG_433_OK = 0,			// â‰¥â€¦Ï€Â¶
-	AVIOCTRL_CFG_433_TIMEOUT,			// â‰¥Â¨Â Â±
-	AVIOCTRL_CFG_433_MAX,				// â€¦Ã‹Â±âˆâ€¦Å“Å“ï¬
-	AVIOCTRL_CFG_433_WAITING,			// â€™Ëâ€˜â„â€”ÃŸÅ“âˆ
-	AVIOCTRL_CFG_433_EXISTS,			// â€¦Ã‹Â±âˆâ€œâ€”Â¥ÃŠâ€˜â„
-}ENUM_AVIOTC_CFG_433_RET;
-
-typedef enum{
-	DEV_433_TYPE_REMOTE_CONTROL = 10,	// â€œÂ£Ã¸Ã¿
-	DEV_433_TYPE_ALARM,					// Â±Â®Ã¦Ã˜
-	DEV_433_TYPE_OTHER,					// âˆ†â€°Ã€Ëš
-}ENUM_DEV_433_TYPE;
-
 typedef struct{
     int  updateType;                    // update type:[0:automic][1:update by url specified]
     char md5[64];                       // firmware md5 check sum
@@ -320,23 +299,6 @@ typedef struct{
     unsigned int  progress;
     int  status;
 }SMsgAVIoctrlUpdateProgReq,SMsgAVIoctrlUpdateProgResp;
-
-typedef struct{
-	int		result;			// ENUM_AVIOTC_CFG_433_RET
-	int		none;			// â€˜Â§Â¡Ã™
-}SMsgAVIoctrlGet433Req,SMsgAVIoctrlCfg433Resp,SMsgAVIoctrlSet433Resp,SMsgAVIoctrlDel433Resp,
-SMsgAVIoctrlCfg433ExitReq,SMsgAVIoctrlCfg433ExitResp;
-
-typedef struct{
-	int 	id;				// 433 Â±ÃÂ âˆ‚
-	int		type;			// 433 â€¦Ã‹Â±âˆÂ¿â€¡â€“Ã• ENUM_DEV_433_TYPE
-	char	name[64];		// â€¦Ã‹Â±âˆâˆšËšâ‰¥âˆ†		
-}SMsgAVIoctrlCfg433Req,SMsgAVIoctrlSet433Req,SMsgAVIoctrlDel433Req,S433Dev;
-
-typedef struct{
-	int		num;			// â€¦Ã‹Â±âˆÂ ËÂ¡Ã¸
-	S433Dev	dev[32];		// â€¦Ã‹Â±âˆ
-}SMsgAVIoctrlGet433Resp;
 
 //
 // OSD â€¦Ã‹Ã·âˆšâ€ÃÂªÃ’Â»Â°
@@ -1475,5 +1437,39 @@ typedef struct				//0x60B
 	unsigned char reserved[3];
 } SMsgAVIoctrlGetBatteryResp;
 
+typedef enum{
+	AVIOCTRL_CFG_RF_OK = 0,			// 
+	AVIOCTRL_CFG_RF_TIMEOUT,			// 
+	AVIOCTRL_CFG_RF_MAX,				// 
+	AVIOCTRL_CFG_RF_WAITING,			// 
+	AVIOCTRL_CFG_RF_EXISTS,			// 
+}ENUM_AVIOTC_CFG_RF_RET;
+
+typedef enum{
+	DEV_RF_TYPE_REMOTE_CONTROL = 10,	// 
+	DEV_RF_TYPE_ALARM,					// 
+	DEV_RF_TYPE_OTHER,					// 
+}ENUM_DEV_RF_TYPE;
+
+typedef struct{
+	int		result;			// ENUM_AVIOTC_CFG_RF_RET
+	int		none;			// 
+}SMsgAVIoctrlSelectRFReq,
+SMsgAVIoctrlParingRFResp,
+SMsgAVIoctrlConfigRFResp,
+SMsgAVIoctrlRemoveRFResp,
+SMsgAVIoctrlParingRFExitReq,
+SMsgAVIoctrlParingRFExitResp;
+
+typedef struct{
+	int 	id;				// RF 
+	int		type;			// RF  ENUM_DEV_RF_TYPE
+	char	name[64];		// 		
+}SMsgAVIoctrlParingRFReq,SMsgAVIoctrlConfigRFReq,SMsgAVIoctrlRemoveRFReq,SRFDev;
+
+typedef struct{
+	int		num;			// 
+	SRFDev	dev[32];		// 
+}SMsgAVIoctrlSelectRFResp;
 
 #endif

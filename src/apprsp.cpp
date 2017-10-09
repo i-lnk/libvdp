@@ -438,7 +438,7 @@ int             JsonBufferSize
     return 0;
 }
 
-static int Get433(
+static int ParingRFDev(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -448,14 +448,14 @@ int             JsonBufferSize
         return -1;
     }
     
-    SMsgAVIoctrlSet433Resp * hRQ = (SMsgAVIoctrlSet433Resp *)Msg;
+    SMsgAVIoctrlParingRFResp * hRQ = (SMsgAVIoctrlParingRFResp *)Msg;
     
     sprintf(JsonBuffer,"{\"%s\":\"%d\"}","result",hRQ->result);
     
     return 0;
 }
 
-static int Get433List(
+static int SelectRFDev(
 int             Cmd,
 void *          Msg,
 char *          JsonBuffer,
@@ -465,7 +465,7 @@ int             JsonBufferSize
         return -1;
     }
     
-    SMsgAVIoctrlGet433Resp * hRQ = (SMsgAVIoctrlGet433Resp *)Msg;
+    SMsgAVIoctrlSelectRFResp * hRQ = (SMsgAVIoctrlSelectRFResp *)Msg;
     
     int i = 0;
     int lens = 0;
@@ -714,11 +714,11 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_FORMATEXTSTORAGE_RESP,GetFormatExtStorage},
 {IOTYPE_USER_IPCAM_GET_OSD_RESP,GetOSD},
 {IOTYPE_USER_IPCAM_SET_OSD_RESP,SetOSD},
-{IOTYPE_USER_IPCAM_SET_433_RESP,Get433},
-{IOTYPE_USER_IPCAM_DEL_433_RESP,Get433},
-{IOTYPE_USER_IPCAM_CFG_433_RESP,Get433},
-{IOTYPE_USER_IPCAM_CFG_433_EXIT_RESP,Get433},
-{IOTYPE_USER_IPCAM_GET_433_RESP,Get433List},
+{IOTYPE_USER_IPCAM_PARING_RF_RESP,ParingRFDev},
+{IOTYPE_USER_IPCAM_REMOVE_RF_RESP,ParingRFDev},
+{IOTYPE_USER_IPCAM_CONFIG_RF_RESP,ParingRFDev},
+{IOTYPE_USER_IPCAM_CONFIG_RF_EXIT_RESP,ParingRFDev},
+{IOTYPE_USER_IPCAM_SELECT_RF_RESP,SelectRFDev},
 {IOTYPE_USER_IPCAM_UPDATE_RESP,GetUpdate},
 {IOTYPE_USER_IPCAM_UPDATE_PROG_RESP,GetUpdateProgress},
 {IOTYPE_USER_IPCAM_GET_CAPACITY_RESP,GetCapacity},

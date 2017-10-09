@@ -795,8 +795,7 @@ static int SetOSD(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
-// set433dev.cgi?type=%d&name=%d
-static int Set433Dev(
+static int ParingRFDevExit(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -805,7 +804,23 @@ static int Set433Dev(
 ){
 	char * Cgi = (char*)szCgi;
 
-	SMsgAVIoctrlSet433Req sMsg;
+	SMsgAVIoctrlParingRFExitReq sMsg;
+
+	memset(&sMsg,0,sizeof(sMsg));
+
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+static int ParingRFDev(
+	int				avIdx,
+	int				avMsgType,
+	const char *	szCgi,
+	int				CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+
+	SMsgAVIoctrlParingRFReq sMsg;
 
 	memset(&sMsg,0,sizeof(sMsg));
 
@@ -824,7 +839,7 @@ static int Set433Dev(
 }
 
 // get433.cgi?
-static int Get433Dev(
+static int SelectRFDev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -833,7 +848,7 @@ static int Get433Dev(
 ){
 	char * Cgi = (char*)szCgi;
 
-	SMsgAVIoctrlGet433Req sMsg;
+	SMsgAVIoctrlSelectRFReq sMsg;
 
 	memset(&sMsg,0,sizeof(sMsg));
 	
@@ -841,7 +856,7 @@ static int Get433Dev(
 }
 
 // cfg433.cgi?
-static int Cfg433Dev(
+static int ConfigRFDev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -850,7 +865,7 @@ static int Cfg433Dev(
 ){
 	char * Cgi = (char*)szCgi;
 
-	SMsgAVIoctrlCfg433Req sMsg;
+	SMsgAVIoctrlConfigRFReq sMsg;
 
 	memset(&sMsg,0,sizeof(sMsg));
 
@@ -869,7 +884,7 @@ static int Cfg433Dev(
 }
 
 // del433.cgi?id=%d
-static int Del433Dev(
+static int RemoveRFDev(
 	int				avIdx,
 	int				avMsgType,
 	const char *	szCgi,
@@ -878,7 +893,7 @@ static int Del433Dev(
 ){
 	char * Cgi = (char*)szCgi;
 
-	SMsgAVIoctrlDel433Req sMsg;
+	SMsgAVIoctrlRemoveRFReq sMsg;
 
 	memset(&sMsg,0,sizeof(sMsg));
 
@@ -890,22 +905,6 @@ static int Del433Dev(
 
 	Log3("user del 433 device:[%d].\n",sMsg.id);
 	
-	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
-}
-
-static int Cfg433DevExit(
-	int				avIdx,
-	int				avMsgType,
-	const char *	szCgi,
-	int				CgiLens,
-	void *			lpParams
-){
-	char * Cgi = (char*)szCgi;
-
-	SMsgAVIoctrlCfg433ExitReq sMsg;
-
-	memset(&sMsg,0,sizeof(sMsg));
-
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
@@ -1250,11 +1249,11 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SETPASSWORD_REQ,SetPassword},
 	{IOTYPE_USER_IPCAM_GET_OSD_REQ,GetOSD},
 	{IOTYPE_USER_IPCAM_SET_OSD_REQ,SetOSD},
-	{IOTYPE_USER_IPCAM_SET_433_REQ,Set433Dev},	
-	{IOTYPE_USER_IPCAM_GET_433_REQ,Get433Dev},	
-	{IOTYPE_USER_IPCAM_CFG_433_REQ,Cfg433Dev},
-	{IOTYPE_USER_IPCAM_DEL_433_REQ,Del433Dev},
-	{IOTYPE_USER_IPCAM_CFG_433_EXIT_REQ,Cfg433DevExit},
+	{IOTYPE_USER_IPCAM_PARING_RF_REQ,ParingRFDev},	
+	{IOTYPE_USER_IPCAM_SELECT_RF_REQ,SelectRFDev},	
+	{IOTYPE_USER_IPCAM_CONFIG_RF_REQ,ConfigRFDev},
+	{IOTYPE_USER_IPCAM_REMOVE_RF_REQ,RemoveRFDev},
+	{IOTYPE_USER_IPCAM_CONFIG_RF_EXIT_REQ,ParingRFDevExit},
     {IOTYPE_USER_IPCAM_UPDATE_REQ,SetUpdateUrl},
     {IOTYPE_USER_IPCAM_UPDATE_PROG_REQ,GetUpdateProgress},
     {IOTYPE_USER_IPCAM_GET_CAPACITY_REQ,GetCapacity},
