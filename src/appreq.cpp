@@ -897,7 +897,7 @@ static int RemoveRFDev(
 
 	memset(&sMsg,0,sizeof(sMsg));
 
-	char szID[8] = {0};
+	char szID[32] = {0};
 
 	GetCgiParam(szID,Cgi,sizeof(szID),"id=","&");
 
