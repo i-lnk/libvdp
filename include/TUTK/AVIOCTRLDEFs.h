@@ -1469,7 +1469,7 @@ typedef struct{
 
 typedef struct{
 	int		num;			// 
-	SRFDev	dev[32];		// 
+	SRFDev	dev[12];		// 
 }SMsgAVIoctrlSelectRFResp;
 
 #endif
