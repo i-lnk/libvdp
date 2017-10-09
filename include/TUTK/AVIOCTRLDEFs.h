@@ -1462,8 +1462,9 @@ SMsgAVIoctrlParingRFExitReq,
 SMsgAVIoctrlParingRFExitResp;
 
 typedef struct{
-	int 	id;				// RF 
-	int		type;			// RF  ENUM_DEV_RF_TYPE
+	int     code:24;		//
+	int 	id:8;			// RF 
+	int		type;			// RF ENUM_DEV_RF_TYPE
 	char	name[64];		// 		
 }SMsgAVIoctrlParingRFReq,SMsgAVIoctrlConfigRFReq,SMsgAVIoctrlRemoveRFReq,SRFDev;
 
