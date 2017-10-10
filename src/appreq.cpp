@@ -873,7 +873,7 @@ static int ConfigRFDev(
 	char szType[  8] = {0};
 	char szUUID[  8] = {0};
 
-	GetCgiParam(szUUID,Cgi,sizeof(szName),"uuid=","&");
+	GetCgiParam(szUUID,Cgi,sizeof(szUUID),"uuid=","&");
 	GetCgiParam(szName,Cgi,sizeof(szName),"name=","&");
 	GetCgiParam(szType,Cgi,sizeof(szType),"type=","&");
 
