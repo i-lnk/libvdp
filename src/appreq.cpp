@@ -871,12 +871,15 @@ static int ConfigRFDev(
 
 	char szName[512] = {0};
 	char szType[  8] = {0};
+	char szUUID[  8] = {0};
 
+	GetCgiParam(szUUID,Cgi,sizeof(szName),"uuid=","&");
 	GetCgiParam(szName,Cgi,sizeof(szName),"name=","&");
 	GetCgiParam(szType,Cgi,sizeof(szType),"type=","&");
 
 	memcpy(sMsg.name,szName,strlen(szName) > sizeof(sMsg.name) ? sizeof(sMsg.name) - 1 : strlen(szName));
 	sMsg.type = atoi(szType);
+	sMsg.id = atoi(szUUID);
 
 	Log3("433 CFG OLD DEVICE WITH NICK NAME:[%s].\n",sMsg.name);
 	
