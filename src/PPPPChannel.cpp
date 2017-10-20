@@ -24,20 +24,16 @@
 #include "apprsp.h"
 
 #define ENABLE_AEC
+
 #ifdef PLATFORM_ANDROID
 #else
 #define ENABLE_AGC
 #endif
+
 #define ENABLE_NSX_I
 #define ENABLE_NSX_O
-
 //#define ENABLE_VAD
-
 #define ENABLE_AUDIO_RECORD
-
-#ifdef PLATFORM_ANDROID
-#endif
-//#define ENABLE_DEBUG
 
 #ifdef PLATFORM_ANDROID
 
@@ -701,19 +697,32 @@ jump_rst:
 			avClientCleanAudioBuf(avIdx);
 			hPC->hAudioBuffer->Clear();
 			hPC->hSoundBuffer->Clear();
+			
 			CodecLength = 0;
 			avIdx = -1;
+
+			// release audio decode
+			audio_dec_free(hCodec);
+			hCodec = NULL;
+			
 			sleep(1); 
 			continue;
 		}
 
 		// set play index
 		if(avIdx < 0){
-			avIdx = hPC->rpIdx >= 0 ? hPC->rpIdx : hPC->avIdx;
+            
+            if(hPC->szURL[0]){
+                avIdx = hPC->rpIdx;
+            }else{
+                avIdx = hPC->avIdx;
+            }
+            
 			Log3("audio playing start with idx:[%d] mode:[%s]",
 				avIdx,
-				hPC->rpIdx >= 0 ? "replay" : "livestream"
+				hPC->rpIdx > 0 ? "replay" : "livestream"
 				);
+            
 			continue;
 		}
 
@@ -748,11 +757,13 @@ jump_rst:
 			continue;
 		}
 
-		if(frameInfo.codec_id != hPC->AudioRecvFormat){
-			Log3("invalid packet format for audio decoder:[%02X].",frameInfo.codec_id);
+//		LogX("current audio decode id:[%02X].",frameInfo.codec_id);
+
+		if(frameInfo.codec_id != hPC->AudioRecvFormat || hCodec == NULL){
+			LogX("invalid packet format for audio decoder:[%02X].",frameInfo.codec_id);
 			audio_dec_free(hCodec);
 			
-			Log3("initialize new audio decoder here.\n")
+			LogX("initialize new audio decoder here.\n")
 				
 			hCodec = audio_dec_init(
 				frameInfo.codec_id,
@@ -761,10 +772,11 @@ jump_rst:
 				);
 			
 			if(hCodec == NULL){
-				Log3("initialize audio decodec handle for codec:[%02X] failed.",frameInfo.codec_id);
-				break;
+				LogX("initialize audio decodec handle for codec:[%02X] failed.",frameInfo.codec_id);
+				continue;
 			}
-			Log3("initialize new audio decoder done.\n")
+			
+			LogX("initialize new audio decoder done.\n")
 			hPC->AudioRecvFormat = frameInfo.codec_id;
 			continue;
 		}
@@ -800,10 +812,19 @@ jump_rst:
 #ifdef ENABLE_AGC
 			audio_agc_proc(hAgc,&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength);
 #endif
+
 			if(hPC->audioEnabled){
 				hPC->hSoundBuffer->Put((char*)&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio player callback
 			}
-			
+
+#ifdef ENABLE_DEBUG
+			if(hPC->hRecordAudioRecv > 0){
+				int bytes = write(hPC->hRecordAudioRecv,(char*)&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength);
+				if(bytes != hPC->Audio10msLength){
+					LogX("debug wirte audio recv pcm raw data failed.");
+				}
+			}
+#endif
 #ifdef ENABLE_AUDIO_RECORD
 			hPC->hAudioBuffer->Put((char*)&Codec[hPC->Audio10msLength*i],hPC->Audio10msLength); // for audio avi record
 #endif
@@ -926,7 +947,9 @@ wait_next:
 		int captureLens = hPC->hAudioGetList->Used();
 		int speakerLens = hPC->hAudioPutList->Used();
 
-		if(captureLens < hPC->Audio10msLength || speakerLens < hPC->Audio10msLength){
+		if(captureLens < hPC->Audio10msLength 
+		|| speakerLens < hPC->Audio10msLength
+		){
 			usleep(10000);
 			continue;
 		}
@@ -945,7 +968,7 @@ wait_next:
 		}
 		
 		if (audio_echo_cancellation_proc(hAEC,(char*)captureData,(char*)WritePtr,hPC->Audio10msLength/sizeof(short)) != 0){
-				Log3("WebRtcAecm_Process() failed.");
+			Log3("WebRtcAecm_Process() failed.");
 		}
 #else
 		memcpy(WritePtr,captureData,hPC->Audio10msLength);
@@ -1354,7 +1377,7 @@ connect:
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
 		
 		if(ret < 0){
-			Log3("IOTC_Session_Check failed with error:[%d]",ret);	
+			LogX("IOTC_Session_Check failed with error:[%d]",ret);	
 			switch(ret){
 				case IOTC_ER_DEVICE_OFFLINE:
 					status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
@@ -1473,7 +1496,12 @@ CPPPPChannel::CPPPPChannel(
 	hAudioPutList = new CCircleBuffer(8 * 1024);
 	hAudioGetList = new CCircleBuffer(8 * 1024);
 	hOSL = NULL;
-	
+
+#ifdef ENABLE_DEBUG
+	hRecordAudioRecv = -1;
+	hRecordAudioSend = -1;
+#endif
+
 //	hVideoBuffer->Debug(1);
     
     hDec = new CH264Decoder();
@@ -1728,7 +1756,7 @@ int CPPPPChannel::LiveplayStart(){
 			);
 
 		if(avErr < AV_ER_NoERROR){
-			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].",avErr,SID,avIdx);
+			Log3("avSendIOCtrl failed with err:[%d],sid:[%d],avIdx:[%d].", avErr, SID, avIdx);
 			return -1;
 		}
 	}
@@ -1801,6 +1829,17 @@ int CPPPPChannel::SpeakingStart(){
 
 	speakEnabled = 1;
 
+#ifdef ENABLE_DEBUG
+	char audioRecvPath[128] = {0};
+	sprintf(audioRecvPath,"/mnt/sdcard/%d.pcm",time(NULL));
+	hRecordAudioRecv = open(audioRecvPath,O_CREAT|O_WRONLY,0755);
+	if(hRecordAudioRecv < 0){
+		LogX("CREATE AUDIO RECV RECORD FAIL:[%s]",audioRecvPath);
+	}else{
+		LogX("CREATE AUDIO RECV RECORD DONE:[%s]",audioRecvPath);
+	}
+#endif
+
 	return 0;
 }
 
@@ -1814,11 +1853,18 @@ int CPPPPChannel::SpeakingClose(){
 		sizeof(SMsgAVIoctrlAVStream),1);
 
 	if(avErr < 0){
-		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",avErr,avIdx);
+		LogX("avSendIOCtrl failed with err:[%d],avIdx:[%d].",avErr,avIdx);
 		return -1;
 	}
 
 	speakEnabled = 0;
+
+#ifdef ENABLE_DEBUG
+	if(hRecordAudioRecv > 0){
+		close(hRecordAudioRecv);
+		hRecordAudioRecv = -1;
+	}
+#endif
 
 	return 0;
 }
@@ -1934,13 +1980,13 @@ int CPPPPChannel::CloseWholeThreads()
 int CPPPPChannel::CloseMediaStreams(
 ){
 	if(TRY_LOCK(&PlayingLock) == 0){
-		Log3("CloseMediaStreams:[stream not in playing.]");
+		LogX("CloseMediaStreams:[stream not in playing.]");
 		PUT_LOCK(&PlayingLock);
 		return -1;
 	}
     
     if(TRY_LOCK(&DestoryLock) != 0){
-        Log3("CloseMediaStreams:[media stream will be destory.]");
+        LogX("CloseMediaStreams:[media stream will be destory.]");
         PUT_LOCK(&PlayingLock);
         return -1;
     }
@@ -2068,7 +2114,7 @@ int CPPPPChannel::StartMediaStreams(
         
 	PUT_LOCK(&DestoryLock);
 
-    Log3("media stream start %s.",ret == 0 ? "done" : "fail");
+    LogX("media stream start %s.",ret == 0 ? "done" : "fail");
 
     return ret;
 }
@@ -2083,13 +2129,13 @@ int CPPPPChannel::IOCmdSend(int type,char * msg,int len,int raw)
             ret = SendCmds(avIdx,type,msg,len,this);
         }
         
-        LogX("[DEV:%s]=====>send IOCTRL cmd:[0x%04x].",szDID,type);
+        Log3("[DEV:%s]=====>send IOCTRL cmd:[0x%04x].",szDID,type);
         
         if(ret == 0){
             return ret;
         }
     
-        LogX("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",szDID,ret);
+        Log3("[DEV:%s]=====>send IOCTRL cmd failed with error:[%d].",szDID,ret);
     
         if(ret == AV_ER_SENDIOCTRL_ALREADY_CALLED){
             usleep(1000);

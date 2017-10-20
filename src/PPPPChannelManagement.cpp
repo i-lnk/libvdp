@@ -228,7 +228,11 @@ int CPPPPChannelManagement::SetAudioStatus(char * szDID,int AudioStatus){
 	int voiceEnable = (AudioStatus & 0x2) >> 1;
 
 	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		LogX("SetAudioStatus get lock with index:[%d].",i);
+		
 		GET_LOCK(&sessionList[i].lock);
+		LogX("SetAudioStatus cmp with uuid:[%s][%s].",sessionList[i].deviceID,szDID);
+		
 		if(strcmp(sessionList[i].deviceID,szDID) == 0){
 			goto jumpout;
 		}
@@ -238,6 +242,12 @@ int CPPPPChannelManagement::SetAudioStatus(char * szDID,int AudioStatus){
 	return 0;
 
 jumpout:
+
+	if(sessionList[i].session == NULL){
+		LogX("Invalid session from index:[%d] uuid:[%s].",i,sessionList[i].deviceID);
+		PUT_LOCK(&sessionList[i].lock);
+		return 0;
+	}
 
 	if(voiceEnable){
 		sessionList[i].session->MicphoneStart();

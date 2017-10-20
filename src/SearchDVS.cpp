@@ -177,7 +177,6 @@ int CSearchDVS::SearchDVS()
 	servAddr.sin_family = AF_INET;
 	servAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 	servAddr.sin_port = htons(BROADCAST_SEND_PORT0);
-
     
 	nbytesSend = sendto(socks[0], &searchCmd, sizeof(searchCmd), 0, (sockaddr *)&servAddr, sizeof(struct sockaddr_in));
 

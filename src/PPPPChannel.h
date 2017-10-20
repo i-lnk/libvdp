@@ -32,6 +32,7 @@
 #include "libvdp.h"
 #include "muxing.h"
 
+//#define ENABLE_DEBUG
 
 #ifdef PLATFORM_ANDROID
 #define SET_THREAD_NAME(name) \
@@ -247,6 +248,11 @@ public:
 	CCircleBuffer *		hVideoBuffer;	// 
 	CCircleBuffer *		hAudioBuffer;	// 
 	CCircleBuffer *		hSoundBuffer;	//
+
+#ifdef ENABLE_DEBUG
+	int					hRecordAudioRecv;
+	int					hRecordAudioSend;
+#endif
 };
 
 #endif
