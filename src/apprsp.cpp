@@ -687,6 +687,22 @@ int             JsonBufferSize
     return 0;
 }
 
+static int GetCameraView(
+int             Cmd,
+void *          Msg,
+char *          JsonBuffer,
+int             JsonBufferSize
+){
+    if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlGetCameraViewResp * hRQ = (SMsgAVIoctrlGetCameraViewResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\"}","index",hRQ->index);
+    
+    return 0;
+}
 
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUID},
@@ -728,6 +744,7 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_XM_CALL_REQ,XMCallReq},
 {IOTYPE_XM_CALL_IND,XMCallInd},
 {IOTYPE_USER_IPCAM_GET_BATTERY_RESP,GetBatteryStatus},
+{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_RESP,GetCameraView},
 {0,NULL}
 };
 
