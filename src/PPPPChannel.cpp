@@ -693,7 +693,7 @@ jump_rst:
 	while(hPC->mediaLinking){
 
 		if(hPC->audioPlaying == 0){
-			Log3("audio recv process paused...");
+//            Log3("audio recv process paused...");
 			avClientCleanAudioBuf(avIdx);
 			hPC->hAudioBuffer->Clear();
 			hPC->hSoundBuffer->Clear();
