@@ -548,7 +548,7 @@ static int SetMotionSchedule(
 	SMsgAVIoctrlSetMDPReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
 
-	sMsg.MotionAlarmFrequency = atoi(sMotionNotifyDelay) < 5 ? 5 : atoi(sMotionNotifyDelay);
+	sMsg.MotionAlarmFrequency = atoi(sMotionNotifyDelay) < 0 ? 0 : atoi(sMotionNotifyDelay);
 	sMsg.MotionAlarmType = 0;
 	sMsg.MotionEnable = atoi(sMotionEnable);
 	sMsg.MotionLevel = atoi(sMotionSensitivity) * 20;
@@ -600,7 +600,7 @@ static int SetMotionScheduleEx(
 	SMsgAVIoctrlMDAlarmReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
 
-	sMsg.MotionAlarmFrequency = atoi(sMotionNotifyDelay) < 5 ? 5 : atoi(sMotionNotifyDelay);
+	sMsg.MotionAlarmFrequency = atoi(sMotionNotifyDelay) < 0 ? 0 : atoi(sMotionNotifyDelay);
 	sMsg.MotionEnable = atoi(sMotionEnable);
 	sMsg.MotionLevel = atoi(sMotionSensitivity) * 20;
 	sMsg.MotionNotify = atoi(sMotionNotify);
