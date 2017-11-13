@@ -172,7 +172,8 @@ int             JsonBufferSize
             "start_hour",hRQ->startHour,
             "start_mins",hRQ->startMins,
             "close_hour",hRQ->closeHour,
-            "close_mins",hRQ->closeMins
+            "close_mins",hRQ->closeMins,
+            "video_lens",hRQ->videoLens
             );
     
     return 0;

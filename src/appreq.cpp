@@ -340,6 +340,7 @@ static int SetRecordSchedule(
 	char szStartMins[8] = {0};
 	char szCloseHour[8] = {0};
 	char szCloseMins[8] = {0};
+	char szVideoLens[8] = {0};
 
 	// AVIOCTRL Record Type
 	/*
@@ -359,6 +360,7 @@ static int SetRecordSchedule(
 	GetCgiParam(szStartMins,szCgi,sizeof(szStartMins),"startMins=","&");
 	GetCgiParam(szCloseHour,szCgi,sizeof(szCloseHour),"closeHour=","&");
 	GetCgiParam(szCloseMins,szCgi,sizeof(szCloseMins),"closeMins=","&");
+	GetCgiParam(szCloseMins,szCgi,sizeof(szCloseMins),"videoLens=","&");
 
 	SMsgAVIoctrlSetRecordReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
@@ -369,6 +371,7 @@ static int SetRecordSchedule(
 	sMsg.closeHour = atoi(szCloseHour);
 	sMsg.startMins = atoi(szStartMins);
 	sMsg.closeMins = atoi(szCloseMins);
+	sMsg.videoLens = atoi(szVideoLens);
 
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }

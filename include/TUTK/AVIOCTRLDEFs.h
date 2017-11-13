@@ -253,6 +253,12 @@ typedef enum
     IOTYPE_USER_IPCAM_UPDATE_REQ                = 0x88a,
     IOTYPE_USER_IPCAM_UPDATE_RESP               = 0x88b,
     IOTYPE_USER_IPCAM_UPDATE_PROG_REQ           = 0x88c,
+
+	IOTYPE_USER_IPCAM_GET_AUDIO_VOLUME_REQ		= 0x8a0,	// »ñÈ¡ÒôÁ¿
+	IOTYPE_USER_IPCAM_GET_AUDIO_VOLUME_RESP 	= 0x8a1,	// »ñÈ¡ÒôÁ¿Ó¦´ð
+	IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_REQ		= 0x8a2,	// ÉèÖÃÒôÁ¿
+	IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_RESP 	= 0x8a3,	// ÉèÖÃÒôÁ¿Ó¦´ð
+	
     IOTYPE_USER_IPCAM_UPDATE_PROG_RESP          = 0x88d,
 
 	IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ		= 0x901,	 
@@ -447,8 +453,9 @@ typedef struct
 	int startMins;				// Ã¸â„¢Â Âºâˆ‘Ã·
 	int closeHour;				// Î©Â·Â Â¯Â Â±
 	int closeMins;				// Î©Â·Â Â¯âˆ‘Ã·
-	
-	unsigned char reserved[4];
+
+	unsigned char videoLens;	// 
+	unsigned char reserved[3];
 }SMsgAVIoctrlGetRecordReq, SMsgAVIoctrlGetRecordResp,
 SMsgAVIoctrlSetRecordReq, SMsgAVIoctrlSetRecordResp;
 
@@ -1089,7 +1096,10 @@ typedef struct
 	unsigned char status;	// 0x00: Recording file exists, Event unreaded
 							// 0x01: Recording file exists, Event readed
 							// 0x02: No Recording file in the event
-	unsigned char reserved[2];
+	unsigned char reply;	// 0x00: invalid reply
+							// 0x01: no reply
+							// 0x02: already replied
+	unsigned char reserved[1];
 }SAvEvent;
 	
 /*
@@ -1472,5 +1482,15 @@ typedef struct{
 	int		num;			// 
 	SRFDev	dev[12];		// 
 }SMsgAVIoctrlSelectRFResp;
+
+typedef struct{  
+	unsigned int 	level; // 0~4,5¸ö¼¶±ð£¬0ÒôÁ¿×îµÍ£¬4ÒôÁ¿×î¸ß
+	unsigned char 	reserved[4];
+}
+SMsgAVIoctrlGetAudioLevelReq,
+SMsgAVIoctrlGetAudioLevelResp,
+SMsgAVIoctrlSetAudioLevelReq,
+SMsgAVIoctrlSetAudioLevelResp;
+
 
 #endif
