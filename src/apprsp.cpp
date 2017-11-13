@@ -166,7 +166,7 @@ int             JsonBufferSize
     
     SMsgAVIoctrlGetRecordResp * hRQ = (SMsgAVIoctrlGetRecordResp *)Msg;
     
-    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+    sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
             "channel",hRQ->channel,
             "type",hRQ->recordType,
             "start_hour",hRQ->startHour,
