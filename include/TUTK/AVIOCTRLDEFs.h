@@ -1487,10 +1487,10 @@ typedef struct{
 	unsigned int 	level; // 0~4,5个级别，0音量最低，4音量最高
 	unsigned char 	reserved[4];
 }
-SMsgAVIoctrlGetAudioLevelReq,
-SMsgAVIoctrlGetAudioLevelResp,
-SMsgAVIoctrlSetAudioLevelReq,
-SMsgAVIoctrlSetAudioLevelResp;
+SMsgAVIoctrlGetAudioVolumeReq,
+SMsgAVIoctrlGetAudioVolumeResp,
+SMsgAVIoctrlSetAudioVolumeReq,
+SMsgAVIoctrlSetAudioVolumeResp;
 
 
 #endif

@@ -1220,6 +1220,41 @@ static int GetBatteryStatus(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int GetAudioVolume(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlGetAudioVolumeReq sMsg;
+	
+	memset(&sMsg,0,sizeof(sMsg));
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+static int SetAudioVolume(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlSetAudioVolumeReq sMsg;
+
+	char sAudioVolume[8] = {0};
+	GetCgiParam(sAudioVolume,Cgi,sizeof(sAudioVolume),"audioVolume=","&");
+
+	sMsg.level = atoi(sAudioVolume);
+	
+	memset(&sMsg,0,sizeof(sMsg));
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -1271,6 +1306,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_REQ,GetCameraView},
 	{IOTYPE_XM_CALL_RESP,XMCallResp},
 	{IOTYPE_USER_IPCAM_GET_BATTERY_REQ,GetBatteryStatus},
+	{IOTYPE_USER_IPCAM_GET_AUDIO_VOLUME_REQ,GetAudioVolume},
+	{IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_REQ,SetAudioVolume},
 	{0,NULL}
 };
 
