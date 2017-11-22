@@ -1250,14 +1250,14 @@ static int SetAudioVolume(
 	
 	SMsgAVIoctrlSetAudioVolumeReq sMsg;
 
+	memset(&sMsg,0,sizeof(sMsg));
+
 	char sAudioVolume[8] = {0};
 	GetCgiParam(sAudioVolume,Cgi,sizeof(sAudioVolume),"audioVolume=","&");
 
 	sMsg.level = atoi(sAudioVolume);
 
 	Log3("SetAudioVolume:%d",sMsg.level);
-	
-	memset(&sMsg,0,sizeof(sMsg));
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
