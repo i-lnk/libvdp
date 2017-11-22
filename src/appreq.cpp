@@ -360,7 +360,7 @@ static int SetRecordSchedule(
 	GetCgiParam(szStartMins,szCgi,sizeof(szStartMins),"startMins=","&");
 	GetCgiParam(szCloseHour,szCgi,sizeof(szCloseHour),"closeHour=","&");
 	GetCgiParam(szCloseMins,szCgi,sizeof(szCloseMins),"closeMins=","&");
-	GetCgiParam(szCloseMins,szCgi,sizeof(szCloseMins),"videoLens=","&");
+	GetCgiParam(szVideoLens,szCgi,sizeof(szVideoLens),"videoLens=","&");
 
 	SMsgAVIoctrlSetRecordReq sMsg;
 	memset(&sMsg,0,sizeof(sMsg));
