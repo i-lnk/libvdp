@@ -373,6 +373,8 @@ static int SetRecordSchedule(
 	sMsg.closeMins = atoi(szCloseMins);
 	sMsg.videoLens = atoi(szVideoLens);
 
+	Log3("SetRecordSchedule videoLens:%d",sMsg.videoLens);
+
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
@@ -615,6 +617,8 @@ static int SetMotionScheduleEx(
 	sMsg.MotionStartMins = atoi(sMotionStartMins);
 	sMsg.MotionCloseHour = atoi(sMotionCloseHour);
 	sMsg.MotionCloseMins = atoi(sMotionCloseMins);
+
+	Log3("SetMotionScheduleEx PIR:%d",sMsg.EnablePir);
 
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
@@ -1250,6 +1254,8 @@ static int SetAudioVolume(
 	GetCgiParam(sAudioVolume,Cgi,sizeof(sAudioVolume),"audioVolume=","&");
 
 	sMsg.level = atoi(sAudioVolume);
+
+	Log3("SetAudioVolume:%d",sMsg.level);
 	
 	memset(&sMsg,0,sizeof(sMsg));
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));

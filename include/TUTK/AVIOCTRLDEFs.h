@@ -1101,10 +1101,6 @@ typedef struct
 							// 0x02: already replied
 	unsigned char reserved[1];
 }SAvEvent;
-
-
-
-
 	
 /*
 IOTYPE_USER_IPCAM_LISTEVENT_RESP		= 0x0319,

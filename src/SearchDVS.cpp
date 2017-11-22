@@ -183,7 +183,7 @@ int CSearchDVS::SearchDVS()
 	Log3("broadcast search msg to sock:[%d] port:[%d][%d] ret = %ld,err = %d.",
 		socks[0],ntohs(servAddr.sin_port),BROADCAST_SEND_PORT0,nbytesSend,errno);
     
-    servAddr.sin_port = htons(BROADCAST_SEND_PORT1);
+    servAddr.sin_port = htons(BROADCAST_SEND_PhORT1);
 	char * p = (char*)&searchCmd;
     *((short*)p) = (short)STARTCODE;
     p += sizeof(short);
