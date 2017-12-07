@@ -475,7 +475,7 @@ int             JsonBufferSize
     for(i=0;i<(int)hRQ->num;i++){
         
         lens += sprintf(JsonBuffer + lens,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%s\"},",
-                        "id",hRQ->dev[i].id,
+                        "id"  ,hRQ->dev[i].id,
                         "code",hRQ->dev[i].code,
                         "type",hRQ->dev[i].type,
                         "name",hRQ->dev[i].name

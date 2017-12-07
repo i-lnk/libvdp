@@ -905,7 +905,6 @@ typedef struct
 	char user[32];
 }SMsgAVIoctrlSetPasswdReq;
 
-
 /*
 IOTYPE_USER_IPCAM_SETPASSWORD_RESP		= 0x0333,
 ** @struct SMsgAVIoctrlSetPasswdResp
@@ -915,7 +914,6 @@ typedef struct
 	int result;	// 0: success; otherwise: failed.
 	unsigned char reserved[4];
 }SMsgAVIoctrlSetPasswdResp;
-
 
 /*
 IOTYPE_USER_IPCAM_LISTWIFIAP_REQ		= 0x0340,

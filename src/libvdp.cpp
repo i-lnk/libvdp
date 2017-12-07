@@ -581,7 +581,7 @@ JNIEXPORT int JNICALL Wake(
 		return 0;
 	}
 
-	IOTC_WakeUp_Setup_Auto_WakeUp(1);
+//	IOTC_WakeUp_Setup_Auto_WakeUp(1);
 	IOTC_WakeUp_WakeDevice(szDID);
 
 	env->ReleaseStringUTFChars(did,szDID);
