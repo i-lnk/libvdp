@@ -189,26 +189,17 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
     }
 
 	int length_10ms = (p->sr * channels * 2 / 1000) * 10;
-   
-    const SLInterfaceID ids[] = {SL_IID_VOLUME};
+
+    const SLInterfaceID ids[] = {0};
     const SLboolean req[] = {SL_BOOLEAN_FALSE};
-    result = (*p->engineEngine)->CreateOutputMix(p->engineEngine, &(p->outputMixObject), 1, ids, req);
+    result = (*p->engineEngine)->CreateOutputMix(p->engineEngine, &(p->outputMixObject), 0, ids, req);
     if(result != SL_RESULT_SUCCESS){
-		Log3("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.");
+		Log3("CreateOutputMix failed.");
 		return result;
     }
 
     // realize the output mix
     result = (*p->outputMixObject)->Realize(p->outputMixObject, SL_BOOLEAN_FALSE);
-
-#ifdef _SET_OPENSL_VOLUME_
-	// set output volume
-	result = (*p->outputMixObject)->GetInterface(p->outputMixObject, SL_IID_VOLUME, &(p->bqPlayerVolume));
-	if(result != SL_RESULT_SUCCESS){
-		Log3("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII.");
-		return result;
-	}
-#endif
    
     int speakers;
 
@@ -230,27 +221,18 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
     SLDataSource audioSrc = {&loc_bufq, &format_pcm};
 
     // configure audio sink
-    SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX, p->outputMixObject};
-    SLDataSink audioSnk = {&loc_outmix, NULL};
+    SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX,p->outputMixObject};
+    SLDataSink audioSnk = {&loc_outmix,NULL};
 
     // create audio player
-    const SLInterfaceID ids1[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
-    const SLboolean req1[] = {SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids1[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,SL_IID_EFFECTSEND,SL_IID_VOLUME };
+    const SLboolean req1[] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
     result = (*p->engineEngine)->CreateAudioPlayer(p->engineEngine, &(p->bqPlayerObject), &audioSrc, &audioSnk,
-						   1, ids1, req1);
+						   3, ids1, req1);
     if(result != SL_RESULT_SUCCESS) return result;
     // realize the player
     result = (*p->bqPlayerObject)->Realize(p->bqPlayerObject, SL_BOOLEAN_FALSE);
     if(result != SL_RESULT_SUCCESS) return result;
-
-#ifdef _SET_OPENSL_VOLUME_
-	SLmillibel vol;
-
-	(*p->bqPlayerVolume)->GetMaxVolumeLevel(p->bqPlayerVolume,&vol);
-	(*p->bqPlayerVolume)->SetVolumeLevel(p->bqPlayerVolume,vol);
-
-	Log3("MMMMMMMMMMMMMAX VOLUME OPENSL:[%d].",vol);
-#endif
 
     // get the play interface
     result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_PLAY, &(p->bqPlayerPlay));
@@ -260,6 +242,22 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
     result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
 						&(p->bqPlayerBufferQueue));
     if(result != SL_RESULT_SUCCESS) return result;
+
+		// set output volume
+	result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_VOLUME, &(p->bqPlayerVolume));
+	if(result != SL_RESULT_SUCCESS){
+		Log3("GetInterface SL_IID_VOLUME failed.");
+		return result;
+	}
+
+#if 1
+	SLmillibel vol;
+
+	(*p->bqPlayerVolume)->GetMaxVolumeLevel(p->bqPlayerVolume,&vol);
+	(*p->bqPlayerVolume)->SetVolumeLevel(p->bqPlayerVolume,vol);
+#endif
+
+	Log3("MMMMMMMMMMMMMAX VOLUME OPENSL:[%d].",vol);
 
     // register callback on the buffer queue
     result = (*p->bqPlayerBufferQueue)->RegisterCallback(p->bqPlayerBufferQueue, p->cbp, p);

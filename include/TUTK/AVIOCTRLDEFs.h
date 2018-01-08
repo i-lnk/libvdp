@@ -419,12 +419,11 @@ typedef struct{
 }SMsgAVIoctrlAlarmingReq;
 
 //
-// ø™À¯ π”√µƒ ˝æ›Ω·ππ
 //
 typedef struct{
-	int			DoorNumb;		// √≈À¯±‡∫≈
-	int			OpenTime;		// √≈À¯ø™∆Ù ±º‰
-	char		DoorPass[32];	// √≈À¯√‹¬Î
+	int			DoorNumb;		
+	int			OpenTime;		
+	char		DoorPass[32];	
 }SMsgAVIoctrlDoorOpenReq;
 
 //
@@ -664,17 +663,25 @@ typedef enum
 // AVIOCTRL Event Type
 typedef enum 
 {
-	AVIOCTRL_EVENT_ALL					= 0x00,	// all event type(general APP-->IPCamera)
-	AVIOCTRL_EVENT_MOTIONDECT			= 0x01,	// motion detect start//==s==
-	AVIOCTRL_EVENT_VIDEOLOST			= 0x02,	// video lost alarm
-	AVIOCTRL_EVENT_IOALARM				= 0x03, // io alarmin start //---s--
-
-	AVIOCTRL_EVENT_MOTIONPASS			= 0x04, // motion detect end  //==e==
-	AVIOCTRL_EVENT_VIDEORESUME			= 0x05,	// video resume
-	AVIOCTRL_EVENT_IOALARMPASS			= 0x06, // IO alarmin end   //---e--
-
-	AVIOCTRL_EVENT_EXPT_REBOOT			= 0x10, // system exception reboot
-	AVIOCTRL_EVENT_SDFAULT				= 0x11, // sd record exception
+		AVIOCTRL_EVENT_ALL					= 0x00, // all event type(general APP-->IPCamera)
+		AVIOCTRL_EVENT_MOTIONDECT			= 0x01, // motion detect start//==s==
+		AVIOCTRL_EVENT_VIDEOLOST			= 0x02, // video lost alarm
+		AVIOCTRL_EVENT_IOALARM				= 0x03, // io alarmin start //---s--
+	
+		AVIOCTRL_EVENT_MOTIONPASS			= 0x04, // motion detect end  //==e==
+		AVIOCTRL_EVENT_VIDEORESUME			= 0x05, // video resume
+		AVIOCTRL_EVENT_IOALARMPASS			= 0x06, // IO alarmin end	//---e--
+		AVIOCTRL_EVENT_MOVIE				= 0x07,
+		AVIOCTRL_EVENT_TIME_LAPSE			= 0x08,
+		AVIOCTRL_EVENT_EMERGENCY			= 0x09,
+		AVIOCTRL_EVENT_EXPT_REBOOT			= 0x10, // system exception reboot
+		AVIOCTRL_EVENT_SDFAULT				= 0x11, // sd record exception
+		AVIOCTRL_EVENT_FULLTIME_RECORDING	= 0x12,
+		AVIOCTRL_EVENT_PIR					= 0x13,
+	//	AVIOCTRL_EVENT_RINGBELL 			= 0x14,
+		AVIOCTRL_EVENT_SOUND				= 0x15,
+		AVIOCTRL_EVENT_RINGBELL 			= 0x7d0, // 2000,
+		AVIOCTRL_EVENT_DISMANTLE			= 0x100,	
 }ENUM_EVENTTYPE;
 
 // AVIOCTRL Record Type

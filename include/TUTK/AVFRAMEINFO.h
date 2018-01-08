@@ -80,10 +80,11 @@ typedef struct _FRAMEINFO
 	unsigned char cam_index;	// 0 - n
 
 	unsigned char onlineNum;	// number of client connected this device
-	unsigned char reserve1[3];
+	unsigned char last;			// 
+	unsigned char reserve1[2];	
 
-	unsigned int reserve2;	//
-	unsigned int timestamp;	// Timestamp of the frame, in milliseconds
+	unsigned int length;		//
+	unsigned int timestamp;		// Timestamp of the frame, in milliseconds
 
     // unsigned int videoWidth;
     // unsigned int videoHeight;

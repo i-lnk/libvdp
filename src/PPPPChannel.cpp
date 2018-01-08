@@ -594,14 +594,18 @@ static void * VideoRecvProcess(void * hVoid){
 			}
 		}
 
-		if(TRY_LOCK(&hPC->DisplayLock) != 0){
-			continue;
+		if(frameInfo.last == 1){
+			GET_LOCK(&hPC->DisplayLock);
+		}else{
+			if(TRY_LOCK(&hPC->DisplayLock) != 0){
+				continue;
+			}
 		}
 
 		hPC->MW = W - hPC->MWCropSize;
 		hPC->MH = H - hPC->MHCropSize;
 		
-		// get h264 yuv data
+		// Get h264 yuv data
 		hPC->hDec->GetYUVBuffer((uint8_t*)hYUV,hPC->YUVSize,hPC->MW,hPC->MH);
 		hPC->hVideoFrame = hYUV;
 		hPC->FrameTimestamp = frameInfo.timestamp;
@@ -1030,7 +1034,7 @@ wait_next:
 		frameInfo.codec_id = hPC->AudioSendFormat;
 		frameInfo.flags = (AUDIO_SAMPLE_8K << 2) | (AUDIO_DATABITS_16 << 1) | AUDIO_CHANNEL_MONO;
 //		frameInfo.timestamp = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-        frameInfo.reserve2 = ret;
+        frameInfo.length = ret;
 
 		ret = avSendAudioData(hPC->spIdx,hCodecFrame,ret,&frameInfo,sizeof(FRAMEINFO_t));
 
@@ -1378,6 +1382,7 @@ connect:
 		
 		if(ret < 0){
 			LogX("IOTC_Session_Check failed with error:[%d]",ret);	
+			
 			switch(ret){
 				case IOTC_ER_DEVICE_OFFLINE:
 					status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
