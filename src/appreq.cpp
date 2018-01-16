@@ -487,12 +487,14 @@ static int SetSystem(
 ){
 	char szPower[8] = {0};
 	char szLanguage[8] = {0};
+	char szTimezone[32] = {0};
 	char szEnableAutomicUpdate[8] = {0};
 	char szEnablePreviewUnlock[8] = {0};
 	char szEnableRingingButton[8] = {0};
 
 	GetCgiParam(szPower,szCgi,sizeof(szPower),"power=","&");
 	GetCgiParam(szLanguage,szCgi,sizeof(szLanguage),"language=","&");
+	GetCgiParam(szTimezone,szCgi,sizeof(szTimezone),"timezone=","&");
 	GetCgiParam(szEnableAutomicUpdate,szCgi,sizeof(szEnableAutomicUpdate),"enableAutomicUpdate=","&");
 	GetCgiParam(szEnablePreviewUnlock,szCgi,sizeof(szEnablePreviewUnlock),"enablePreviewUnlock=","&");
 	GetCgiParam(szEnableRingingButton,szCgi,sizeof(szEnableRingingButton),"enableRingingButton=","&");
@@ -506,6 +508,7 @@ static int SetSystem(
 	sMsg.enableAutomicUpdate = atoi(szEnableAutomicUpdate);
 	sMsg.enablePreviewUnlock = atoi(szEnablePreviewUnlock);
 	sMsg.enableRingingButton = atoi(szEnableRingingButton);
+	sMsg.timezone = atoi(szTimezone);
 
 	GetCgiParam(sMsg.datetime,szCgi,sizeof(sMsg.datetime),"datetime=","&");
 		

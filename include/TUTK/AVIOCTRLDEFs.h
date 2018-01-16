@@ -468,7 +468,8 @@ typedef struct
 	int 	power_ctrl;	// 0x1: reboot 0x3: reset
 	int  	lang;
 	char 	datetime[24];
-	char	reserved[12];
+	int     timezone;
+	char 	reserved[8];
 	int		enablePreviewUnlock;	
 	int		enableAutomicUpdate;
 	int		enableRingingButton;
