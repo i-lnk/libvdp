@@ -1264,6 +1264,44 @@ static int SetAudioVolume(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int GetWakeUpOptions(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlGetWakeUpStateReq sMsg;
+	memset(&sMsg,0,sizeof(sMsg));
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+static int SetWakeUpOptions(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlSetWakeUpStateReq sMsg;
+
+	memset(&sMsg,0,sizeof(sMsg));
+
+	char sWakeUpEnable[8] = {0};
+	GetCgiParam(sWakeUpEnable,Cgi,sizeof(sWakeUpEnable),"enable=","&");
+
+	sMsg.enable = atoi(sWakeUpEnable);
+
+	Log3("sWakeUpEnable:%d",sMsg.enable);
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+
+
 // fucntion list for each command
 
 static APP_CMD_CALL hACC[] = {
@@ -1317,6 +1355,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_GET_BATTERY_REQ,GetBatteryStatus},
 	{IOTYPE_USER_IPCAM_GET_AUDIO_VOLUME_REQ,GetAudioVolume},
 	{IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_REQ,SetAudioVolume},
+	{IOTYPE_USER_IPCAM_GET_WAKEUP_FUN_REQ,GetWakeUpOptions},
+	{IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_REQ,SetWakeUpOptions},
 	{0,NULL}
 };
 

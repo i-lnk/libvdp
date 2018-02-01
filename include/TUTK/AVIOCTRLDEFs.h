@@ -272,6 +272,11 @@ typedef enum
 
 	IOTYPE_USER_IPCAM_SOUND_CTRL				= 0x1009,	// âˆÃÃ€Â´Ï€Â§â€œÃ™âˆ†ÂµÃ¸Ã¿Ã·âˆ†
 
+	IOTYPE_USER_IPCAM_GET_WAKEUP_FUN_REQ		= 0x1802,
+	IOTYPE_USER_IPCAM_GET_WAKEUP_FUN_RESP		= 0x1803,
+	IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_REQ		= 0x1804,
+	IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_RESP		= 0x1805,
+
 	IOTYPE_USER_IPCAM_LST_IOT_REQ				= 0x2012,
 	IOTYPE_USER_IPCAM_LST_IOT_RESP				= 0x2013,
 	
@@ -521,7 +526,8 @@ typedef struct{
     char 			version[16];		// ç‰ˆæœ¬å·:  é‡‡ç”¨ç¼–è¯‘æ—¥æœŸ201612121816(å¹´æœˆæ—¥æ—¶åˆ†)
     char 			model[16];			// äº§å“è§„æ ¼å‹å·
     char			supportPIR;
-	char			supportRemoveAlarm;
+	char			supportDemolishAlarm;
+	char			supportWakeUpControl;	// ÏÔÊ¾»½ĞÑ¹¦ÄÜ¿ª¹ØÏî£¬1 Ö§³Ö£¬0 ²»Ö§³ÖË«Ïò¸Äµ¥ÏòÃÅÁå£¬ÉèÖÃÀ¸ÖĞ²»ÏÔÊ¾
     char 			reserve2[46];		// ä¿ç•™2
 }SMsgAVIoctrlGetCapacityResp;
 
@@ -1493,11 +1499,17 @@ typedef struct{
 typedef struct{  
 	unsigned int 	level; // 0~4,5¸ö¼¶±ğ£¬0ÒôÁ¿×îµÍ£¬4ÒôÁ¿×î¸ß
 	unsigned char 	reserved[4];
-}
-SMsgAVIoctrlGetAudioVolumeReq,
+}SMsgAVIoctrlGetAudioVolumeReq,
 SMsgAVIoctrlGetAudioVolumeResp,
 SMsgAVIoctrlSetAudioVolumeReq,
 SMsgAVIoctrlSetAudioVolumeResp;
 
+typedef struct{
+	unsigned int enable; // 0,¹Ø±ÕË«Ïò»½ĞÑ¹¦ÄÜ£¬1 ´ò¿ªË«Ïò»½ĞÑ
+	unsigned char reserved[4];
+}SMsgAVIoctrlGetWakeUpStateReq,
+SMsgAVIoctrlGetWakeUpStateResp,
+SMsgAVIoctrlSetWakeUpStateReq,
+SMsgAVIoctrlSetWakeUpStateResp;
 
 #endif
