@@ -240,13 +240,13 @@ void* CSearchDVS::RecvThread(void *pParam)
 void CSearchDVS::SendProcess()
 { 
     int i;
-    for(i = 0; i < 30; i++){
+    for(i = 0; i < 300; i++){
         SearchDVS();
 		if(m_bSendThreadRuning != 1){
 			Log3("broadcast search msg send proc stop now.");
 			break;
 		}
-        sleep(1);
+        usleep(100 * 1000);
     }    
 }
 
