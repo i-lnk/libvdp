@@ -258,6 +258,11 @@ typedef enum
 	IOTYPE_USER_IPCAM_GET_AUDIO_VOLUME_RESP 	= 0x8a1,	// 获取音量应答
 	IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_REQ		= 0x8a2,	// 设置音量
 	IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_RESP 	= 0x8a3,	// 设置音量应答
+
+	IOTYPE_USER_IPCAM_GET_AUDIO_GAIN_REQ		= 0x8b0,	// 获取音量
+	IOTYPE_USER_IPCAM_GET_AUDIO_GAIN_RESP 		= 0x8b1,	// 获取音量应答
+	IOTYPE_USER_IPCAM_SET_AUDIO_GAIN_REQ		= 0x8b2,	// 设置音量
+	IOTYPE_USER_IPCAM_SET_AUDIO_GAIN_RESP 		= 0x8b3,	// 设置音量应答
 	
     IOTYPE_USER_IPCAM_UPDATE_PROG_RESP          = 0x88d,
 
@@ -1507,9 +1512,14 @@ SMsgAVIoctrlSetAudioVolumeResp;
 typedef struct{
 	unsigned int enable; // 0,关闭双向唤醒功能，1 打开双向唤醒
 	unsigned char reserved[4];
-}SMsgAVIoctrlGetWakeUpStateReq,
-SMsgAVIoctrlGetWakeUpStateResp,
-SMsgAVIoctrlSetWakeUpStateReq,
-SMsgAVIoctrlSetWakeUpStateResp;
+}SMsgAVIoctrlGetAudioVolumeReq,
+SMsgAVIoctrlGetAudioVolumeResp,
+SMsgAVIoctrlSetAudioVolumeReq,
+SMsgAVIoctrlSetAudioVolumeResp,
+SMsgAVIoctrlGetAudioGainReq,
+SMsgAVIoctrlGetAudioGainResp,
+SMsgAVIoctrlSetAudioGainReq,
+SMsgAVIoctrlSetAudioGainResp;
+
 
 #endif

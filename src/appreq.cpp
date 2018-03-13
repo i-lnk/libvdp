@@ -1264,6 +1264,44 @@ static int SetAudioVolume(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int GetAudioGain(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlGetAudioGainReq sMsg;
+	
+	memset(&sMsg,0,sizeof(sMsg));
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+static int SetAudioGain(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlSetAudioGainReq sMsg;
+
+	memset(&sMsg,0,sizeof(sMsg));
+
+	char sAudioGain[8] = {0};
+	GetCgiParam(sAudioGain,Cgi,sizeof(sAudioGain),"audioGain=","&");
+
+	sMsg.level = atoi(sAudioGain);
+
+	Log3("SetAudioGain:%d",sMsg.level);
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+
 static int GetWakeUpOptions(
 	int 			avIdx,
 	int 			avMsgType,
@@ -1355,6 +1393,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_GET_BATTERY_REQ,GetBatteryStatus},
 	{IOTYPE_USER_IPCAM_GET_AUDIO_VOLUME_REQ,GetAudioVolume},
 	{IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_REQ,SetAudioVolume},
+	{IOTYPE_USER_IPCAM_GET_AUDIO_GAIN_REQ,GetAudioGain},
+	{IOTYPE_USER_IPCAM_SET_AUDIO_GAIN_REQ,SetAudioGain},
 	{IOTYPE_USER_IPCAM_GET_WAKEUP_FUN_REQ,GetWakeUpOptions},
 	{IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_REQ,SetWakeUpOptions},
 	{0,NULL}

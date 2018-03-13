@@ -724,6 +724,24 @@ static int XetAudioVolume(
     return 0;
 }
 
+static int XetAudioGain(
+	int 			Cmd,
+	void *			Msg,
+	char *			JsonBuffer,
+	int 			JsonBufferSize
+){
+	if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlGetAudioGainResp * hRQ = (SMsgAVIoctrlGetAudioGainResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\"}","audioGain",hRQ->level);
+    
+    return 0;
+}
+
+
 static int XetWakeUpOptions(
 	int 			Cmd,
 	void *			Msg,
@@ -785,6 +803,8 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_GET_CAMERA_VIEW_RESP,GetCameraView},
 {IOTYPE_USER_IPCAM_GET_AUDIO_VOLUME_RESP,XetAudioVolume},
 {IOTYPE_USER_IPCAM_SET_AUDIO_VOLUME_RESP,XetAudioVolume},
+{IOTYPE_USER_IPCAM_GET_AUDIO_GAIN_RESP,XetAudioGain},
+{IOTYPE_USER_IPCAM_SET_AUDIO_GAIN_RESP,XetAudioGain},
 {IOTYPE_USER_IPCAM_GET_WAKEUP_FUN_RESP,XetWakeUpOptions},
 {IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_RESP,XetWakeUpOptions},
 {0,NULL}
