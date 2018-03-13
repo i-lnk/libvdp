@@ -1501,9 +1501,9 @@ typedef struct{
 	int		end;			//
 }SMsgAVIoctrlSelectRFResp;
 
-typedef struct{
-	unsigned int enable; // 0,关闭双向唤醒功能，1 打开双向唤醒
-	unsigned char reserved[4];
+typedef struct{  
+	unsigned int 	level; // 0~4,5个级别，0音量最低，4音量最高
+	unsigned char 	reserved[4];
 }SMsgAVIoctrlGetAudioVolumeReq,
 SMsgAVIoctrlGetAudioVolumeResp,
 SMsgAVIoctrlSetAudioVolumeReq,
@@ -1512,6 +1512,15 @@ SMsgAVIoctrlGetAudioGainReq,
 SMsgAVIoctrlGetAudioGainResp,
 SMsgAVIoctrlSetAudioGainReq,
 SMsgAVIoctrlSetAudioGainResp;
+
+typedef struct{
+	unsigned int enable; // 0,关闭双向唤醒功能，1 打开双向唤醒
+	unsigned char reserved[4];
+}SMsgAVIoctrlSetWakeUpStateReq,
+SMsgAVIoctrlSetWakeUpStateResp,
+SMsgAVIoctrlGetWakeUpStateReq,
+SMsgAVIoctrlGetWakeUpStateResp;
+
 
 
 #endif
