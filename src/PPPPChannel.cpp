@@ -1201,6 +1201,10 @@ void * RecordingProcess(void * Ptr){
 	return NULL;
 }
 
+void   CheckPPPPHandler(int result, void * userData){
+	*(int*)userData = result;
+}
+
 void * MeidaCoreProcess(
 	void * hVoid
 ){
@@ -1230,6 +1234,7 @@ void * MeidaCoreProcess(
 
 	int resend = 0;
     int status = 0;
+	int result = 1;
 	int Err = 0;
 
 	hPC->startSession = 0;
@@ -1241,6 +1246,31 @@ connect:
 	}
 	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
+
+	IOTC_Check_Device_On_Line(hPC->szDID,10 * 1000,CheckPPPPHandler,&result);
+
+	while(result > 0){
+		Log3("waiting for IOTC_Check_Device_On_Line.");
+		sleep(1);
+	}
+
+	switch(status){
+		case IOTC_ER_NETWORK_UNREACHABLE: // Network is unreachable, please check the network settings 
+ 		case IOTC_ER_MASTER_NOT_RESPONSE: // IOTC master servers have no response 
+		case IOTC_ER_TCP_CONNECT_TO_SERVER_FAILED: // Cannot connect to IOTC servers in TCP
+		case IOTC_ER_CAN_NOT_FIND_DEVICE: // IOTC servers cannot locate the specified device
+		case IOTC_ER_SERVER_NOT_RESPONSE: // All servers have no response
+		case IOTC_ER_TCP_TRAVEL_FAILED: // Cannot connect to masters in neither UDP nor TCP
+			status = PPPP_STATUS_CONNECT_FAILED;
+		 	hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
+			goto jumperr;
+		case IOTC_ER_DEVICE_OFFLINE: // The device is not on line.
+			status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
+			hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
+			goto jumperr;
+		default:
+			break;
+	}
 
     hPC->playrecChannel = -1;
 	hPC->sessionID = IOTC_Get_SessionID();
