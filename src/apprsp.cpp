@@ -759,6 +759,45 @@ static int XetWakeUpOptions(
     return 0;
 }
 
+static int SetEnv(
+	int 			Cmd,
+	void *			Msg,
+	char *			JsonBuffer,
+	int 			JsonBufferSize
+){
+	if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlSetEnvironmentResp * hRQ = (SMsgAVIoctrlSetEnvironmentResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\"}",
+		"channel",hRQ->channel,
+		"result",hRQ->result
+		);
+    
+    return 0;
+}
+
+static int GetEnv(
+	int 			Cmd,
+	void *			Msg,
+	char *			JsonBuffer,
+	int 			JsonBufferSize
+){
+	if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlGetEnvironmentResp * hRQ = (SMsgAVIoctrlGetEnvironmentResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\"}",
+		"channel",hRQ->channel,
+		"mode",hRQ->mode
+		);
+    
+    return 0;
+}
 
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUID},
@@ -807,6 +846,8 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_AUDIO_GAIN_RESP,XetAudioGain},
 {IOTYPE_USER_IPCAM_GET_WAKEUP_FUN_RESP,XetWakeUpOptions},
 {IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_RESP,XetWakeUpOptions},
+{IOTYPE_USER_IPCAM_GET_ENVIRONMENT_RESP,GetEnv},
+{IOTYPE_USER_IPCAM_SET_ENVIRONMENT_RESP,SetEnv},
 {0,NULL}
 };
 

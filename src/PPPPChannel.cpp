@@ -1234,6 +1234,7 @@ void * MeidaCoreProcess(
 
 	int resend = 0;
     int status = 0;
+	int counts = 0;
 	int result = 1;
 	int Err = 0;
 
@@ -1247,11 +1248,14 @@ connect:
 	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
 
+	// because IOTC_Connect_ByUID_Parallel take a lot of time for device status refresh,
+	// so we add this function for status fast check.
 	IOTC_Check_Device_On_Line(hPC->szDID,10 * 1000,CheckPPPPHandler,&result);
 
 	while(result > 0){
 		Log3("waiting for IOTC_Check_Device_On_Line.");
 		sleep(1);
+		counts++;
 	}
 
 	switch(status){
@@ -1269,6 +1273,13 @@ connect:
 			hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
 			goto jumperr;
 		default:
+			Log3("IOTC_Check_Device_On_Line break status is:[%d]",status);
+			if(counts > 8){
+				status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
+				hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
+				Log3("IOTC_Check_Device_On_Line break counts more than 8 second");
+				goto jumperr;
+			}
 			break;
 	}
 
@@ -1425,6 +1436,8 @@ connect:
 					hPC->PPPPClose();
 					hPC->CloseWholeThreads();
 					hPC->mediaLinking = 1;
+					hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
+					sleep(5);
 					goto connect;
 			}
 			break;
@@ -1623,7 +1636,7 @@ int CPPPPChannel::PPPPClose()
 
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
-	int statusGetTimes = 2;
+	int statusGetTimes = 20;
 	int ret = -1;
 
 	if(TRY_LOCK(&SessionLock) != 0){
@@ -1661,7 +1674,7 @@ check_connection:
 		switch(status){
 			case PPPP_STATUS_CONNECTING:
 				Log3("start pppp connection block, status not change.");
-				sleep(1);
+				usleep(100 * 1000); // check connection every 100ms
 				continue;
 			case PPPP_STATUS_ON_LINE:
 				Log3("start pppp connection success.");

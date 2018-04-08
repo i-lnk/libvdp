@@ -1338,6 +1338,51 @@ static int SetWakeUpOptions(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int GetEnv(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlGetEnvironmentReq sMsg;
+
+	memset(&sMsg,0,sizeof(sMsg));
+
+	char sChannel[8] = {0};
+	GetCgiParam(sChannel,Cgi,sizeof(sChannel),"channel=","&");
+
+	sMsg.channel = atoi(sChannel);
+
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+static int SetEnv(
+	int 			avIdx,
+	int 			avMsgType,
+	const char *	szCgi,
+	int 			CgiLens,
+	void *			lpParams
+){
+	char * Cgi = (char*)szCgi;
+	
+	SMsgAVIoctrlSetEnvironmentReq sMsg;
+
+	memset(&sMsg,0,sizeof(sMsg));
+
+	char sChannel[8] = {0};
+	char sMode[8] = {0};
+
+	GetCgiParam(sChannel,Cgi,sizeof(sChannel),"channel=","&");
+	GetCgiParam(sMode,Cgi,sizeof(sMode),"mode=","&");
+
+	sMsg.channel = atoi(sChannel);
+	sMsg.mode = atoi(sMode);
+
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
 
 
 // fucntion list for each command
@@ -1397,6 +1442,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_SET_AUDIO_GAIN_REQ,SetAudioGain},
 	{IOTYPE_USER_IPCAM_GET_WAKEUP_FUN_REQ,GetWakeUpOptions},
 	{IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_REQ,SetWakeUpOptions},
+	{IOTYPE_USER_IPCAM_GET_ENVIRONMENT_REQ,GetEnv},
+	{IOTYPE_USER_IPCAM_SET_ENVIRONMENT_REQ,SetEnv},
 	{0,NULL}
 };
 
