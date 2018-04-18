@@ -1250,15 +1250,16 @@ connect:
 
 	// because IOTC_Connect_ByUID_Parallel take a lot of time for device status refresh,
 	// so we add this function for status fast check.
+	result = 1;
 	IOTC_Check_Device_On_Line(hPC->szDID,10 * 1000,CheckPPPPHandler,&result);
 
 	while(result > 0){
-		Log3("waiting for IOTC_Check_Device_On_Line.");
+		Log3("waiting for IOTC_Check_Device_On_Line %02d.",counts);
 		sleep(1);
 		counts++;
 	}
 
-	switch(status){
+	switch(result){
 		case IOTC_ER_NETWORK_UNREACHABLE: // Network is unreachable, please check the network settings 
  		case IOTC_ER_MASTER_NOT_RESPONSE: // IOTC master servers have no response 
 		case IOTC_ER_TCP_CONNECT_TO_SERVER_FAILED: // Cannot connect to IOTC servers in TCP
@@ -1273,7 +1274,7 @@ connect:
 			hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
 			goto jumperr;
 		default:
-			Log3("IOTC_Check_Device_On_Line break status is:[%d]",status);
+			Log3("IOTC_Check_Device_On_Line break status is:[%d]",result);
 			if(counts > 8){
 				status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
 				hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
@@ -1673,7 +1674,7 @@ check_connection:
 
 		switch(status){
 			case PPPP_STATUS_CONNECTING:
-				Log3("start pppp connection block, status not change.");
+//				Log3("start pppp connection block, status not change.");
 				usleep(100 * 1000); // check connection every 100ms
 				continue;
 			case PPPP_STATUS_ON_LINE:
