@@ -203,6 +203,8 @@ public:
 	int 				audioPlaying;		
 	int 				iocmdRecving;
 
+	int					isWakeUp;
+
 	int					AudioSampleRate;	// audio samplerate
 	int					AudioChannel;		// audio channel mode
 	int					AudioRecvFormat;	// audio codec from device

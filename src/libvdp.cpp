@@ -582,7 +582,9 @@ JNIEXPORT int JNICALL Wake(
 	}
 
 //	IOTC_WakeUp_Setup_Auto_WakeUp(1);
-	IOTC_WakeUp_WakeDevice(szDID);
+//	IOTC_WakeUp_WakeDevice(szDID);
+	g_pPPPPChannelMgt->PPPPSleepWake(szDID);
+
 
 	env->ReleaseStringUTFChars(did,szDID);
 

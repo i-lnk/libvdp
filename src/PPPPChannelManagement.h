@@ -41,6 +41,7 @@ public:
 	int SetVideoStatus(char * szDID,int VideoStatus);
 
     int PPPPIOCmdSend(char *szDID, int type, char *msg, int len);
+	int PPPPSleepWake(char *szDID);
 
 	int StartRecorderByDID(char * szDID,char * filepath);
 	int CloseRecorderByDID(char * szDID);

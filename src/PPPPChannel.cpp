@@ -413,7 +413,7 @@ static void * VideoPlayProcess(
 		
 		int NW = hPC->MW;
 		int NH = hPC->MH;
-		int NS = NW * NH + NW * NH * 3 / 2;
+		int NS = NW * NH * 3 / 2;
 
 		PUT_LOCK(&hPC->DisplayLock);
 
@@ -1248,40 +1248,55 @@ connect:
 	
     hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_CONNECTING);
 
-	// because IOTC_Connect_ByUID_Parallel take a lot of time for device status refresh,
-	// so we add this function for status fast check.
 	result = 1;
-	IOTC_Check_Device_On_Line(hPC->szDID,10 * 1000,CheckPPPPHandler,&result);
 
-	while(result > 0){
-		Log3("waiting for IOTC_Check_Device_On_Line %02d.",counts);
-		sleep(1);
-		counts++;
-	}
+	if(hPC->isWakeUp == 0){
+		IOTC_Check_Device_On_Line(hPC->szDID,10 * 1000,CheckPPPPHandler,&result);
 
-	switch(result){
-		case IOTC_ER_NETWORK_UNREACHABLE: // Network is unreachable, please check the network settings 
- 		case IOTC_ER_MASTER_NOT_RESPONSE: // IOTC master servers have no response 
-		case IOTC_ER_TCP_CONNECT_TO_SERVER_FAILED: // Cannot connect to IOTC servers in TCP
-		case IOTC_ER_CAN_NOT_FIND_DEVICE: // IOTC servers cannot locate the specified device
-		case IOTC_ER_SERVER_NOT_RESPONSE: // All servers have no response
-		case IOTC_ER_TCP_TRAVEL_FAILED: // Cannot connect to masters in neither UDP nor TCP
-			status = PPPP_STATUS_CONNECT_FAILED;
-		 	hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
-			goto jumperr;
-		case IOTC_ER_DEVICE_OFFLINE: // The device is not on line.
-			status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
-			hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
-			goto jumperr;
-		default:
-			Log3("IOTC_Check_Device_On_Line break status is:[%d]",result);
-			if(counts > 8){
+		counts = 0;
+		while(result > 0){
+		//	Log4("waiting for IOTC_Check_Device_On_Line %02d.",counts);e
+			usleep(10 * 1000);
+			counts++;
+		}
+
+		switch(result){
+			case IOTC_ER_NETWORK_UNREACHABLE: // Network is unreachable, please check the network settings 
+				case IOTC_ER_MASTER_NOT_RESPONSE: // IOTC master servers have no response 
+			case IOTC_ER_TCP_CONNECT_TO_SERVER_FAILED: // Cannot connect to IOTC servers in TCP
+			case IOTC_ER_CAN_NOT_FIND_DEVICE: // IOTC servers cannot locate the specified device
+			case IOTC_ER_SERVER_NOT_RESPONSE: // All servers have no response
+			case IOTC_ER_TCP_TRAVEL_FAILED: // Cannot connect to masters in neither UDP nor TCP
+				status = PPPP_STATUS_CONNECT_FAILED;
+			 	hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
+				goto jumperr;
+			case IOTC_ER_DEVICE_IS_SLEEP:
+				status = PPPP_STATUS_DEVICE_SLEEP;
+				hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
+		//		if(hPC->isWakeUp > 0 && hPC->isWakeUp < 8){ 
+		//				Log4("wakeup mode, break for auto wakeup");
+		//				break;
+		//			Log4("wakeUp mode, check status by IOTC_Check_Device_On_Line again");
+		//			hPC->SleepingClose();
+		//			goto connect;
+		//		}else{
+					Log4("wakeup mode, break for auto wakeup");
+					goto jumperr;
+		//		}
+			case IOTC_ER_DEVICE_OFFLINE: // The device is not on line.
 				status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
 				hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
-				Log3("IOTC_Check_Device_On_Line break counts more than 8 second");
 				goto jumperr;
-			}
-			break;
+			default:
+				Log4("IOTC_Check_Device_On_Line break status is:[%d]",result);
+				if(counts > 800){
+					status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
+					hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
+					Log3("IOTC_Check_Device_On_Line break counts more than 8 second");
+					goto jumperr;
+				}
+				break;
+		}
 	}
 
     hPC->playrecChannel = -1;
@@ -1295,8 +1310,10 @@ connect:
 	}
 
 	hPC->SID = IOTC_Connect_ByUID_Parallel(hPC->szDID,hPC->sessionID);
+	hPC->isWakeUp = 0;
+	
 	if(hPC->SID < 0){
-		LogX("[2:%s]=====>start connection failed with error [%d] with device:[%s]\n",
+		Log4("[2:%s]=====>start connection failed with error [%d] with device:[%s]\n",
              hPC->szDID, hPC->SID, hPC->szDID);
 		
 		switch(hPC->SID){
@@ -1326,7 +1343,7 @@ connect:
 		}
 	}
 
-	Log3("[3:%s]=====>start av client service with user:[%s] pass:[%s].\n", hPC->szDID, hPC->szUsr, hPC->szPwd);
+	Log4("[3:%s]=====>start av client service with user:[%s] pass:[%s].\n", hPC->szDID, hPC->szUsr, hPC->szPwd);
 
 	if(strlen(hPC->szUsr) == 0 || strlen(hPC->szPwd) == 0){
 		status = PPPP_STATUS_NOT_LOGIN;
@@ -1368,8 +1385,6 @@ connect:
 		goto connect;
 	}
 
-	IOTC_WakeUp_Setup_Auto_WakeUp(0);
-
 	Log3("[4:%s]=====>session:[%d] idx:[%d] did:[%s] resend:[%d].",
         hPC->szDID,
 		hPC->SID,
@@ -1385,6 +1400,8 @@ connect:
 	
 	hPC->audioEnabled = 1;
 	hPC->voiceEnabled = 1;
+
+	hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_ON_LINE);
 	
     Err = pthread_create(&hPC->iocmdRecvThread,NULL,IOCmdRecvProcess,(void*)hPC);
 	if(Err != 0){
@@ -1415,8 +1432,6 @@ connect:
 		Log3("create video play process failed.");
 		goto jumperr;
 	}
-
-	hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS, PPPP_STATUS_ON_LINE);
 
 	while(hPC->mediaLinking){
 		struct st_SInfo sInfo;
@@ -1455,7 +1470,8 @@ connect:
 jumperr:	
 	
 	GET_LOCK(&hPC->DestoryLock);
-    
+
+	hPC->isWakeUp = 0;
     hPC->PPPPClose();
     hPC->CloseWholeThreads(); // make sure other service thread all exit.
     hPC->MsgNotify(hEnv,MSG_NOTIFY_TYPE_PPPP_STATUS,status == 0 ? PPPP_STATUS_CONNECT_FAILED : status);
@@ -1505,6 +1521,8 @@ CPPPPChannel::CPPPPChannel(
 	voiceEnabled = 0;
 	audioEnabled = 0;
 	speakEnabled = 1;
+
+	isWakeUp = 0;
     
 	mediaCoreThread = (pthread_t)-1;
 	iocmdRecvThread = (pthread_t)-1;
@@ -1637,7 +1655,7 @@ int CPPPPChannel::PPPPClose()
 
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
-	int statusGetTimes = 20;
+	int statusGetTimes = 200;
 	int ret = -1;
 
 	if(TRY_LOCK(&SessionLock) != 0){
@@ -1673,15 +1691,20 @@ check_connection:
 		PUT_LOCK( &g_CallbackContextLock );
 
 		switch(status){
+			case PPPP_STATUS_DEVICE_SLEEP:
+				if(isWakeUp == 0){
+					Log4("start pppp connection failed with sleep mode.");
+					return status;
+				}
 			case PPPP_STATUS_CONNECTING:
 //				Log3("start pppp connection block, status not change.");
 				usleep(100 * 1000); // check connection every 100ms
 				continue;
 			case PPPP_STATUS_ON_LINE:
-				Log3("start pppp connection success.");
+				Log4("start pppp connection success.");
 				return  0;
 			default:
-				Log3("start pppp connection error:[%d].",status);
+				Log4("start pppp connection error:[%d].",status);
 				return status;
 		}
 	}
@@ -1728,12 +1751,17 @@ int CPPPPChannel::SleepingStart(){
 		Log3("avSendIOCtrl failed with err:[%d],avIdx:[%d].",avErr,avIdx);
 		return -1;
 	}
-
+	
+	isWakeUp = 0;
+	
 	return 0;
 }
 
 int CPPPPChannel::SleepingClose(){
-	IOTC_WakeUp_WakeDevice(szDID);
+	IOTC_WakeUp_Setup_Auto_WakeUp(1);
+	isWakeUp = 1;
+//	IOTC_WakeUp_WakeDevice(szDID);
+	Log4("start pppp connection by wakeup.");
     return 0;
 }
 

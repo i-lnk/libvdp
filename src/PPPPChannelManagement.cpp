@@ -378,3 +378,30 @@ jumpout:
 
 	return e;
 }
+
+int CPPPPChannelManagement::PPPPSleepWake(char * szDID)
+{   
+	if(szDID == NULL) return 0;
+
+	int i = 0;
+	int e = 0;
+
+	for(i = 0; i < MAX_PPPP_CHANNEL_NUM; i++){
+		GET_LOCK(&sessionList[i].lock);
+		if(strcmp(sessionList[i].deviceID,szDID) == 0){
+			goto jumpout;
+		}
+		PUT_LOCK(&sessionList[i].lock);
+	}
+
+	return 0;
+
+jumpout:
+
+	e = sessionList[i].session->SleepingClose();
+
+	PUT_LOCK(&sessionList[i].lock);
+
+	return e;
+}
+
