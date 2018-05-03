@@ -2057,13 +2057,13 @@ int CPPPPChannel::CloseWholeThreads()
 int CPPPPChannel::CloseMediaStreams(
 ){
 	if(TRY_LOCK(&PlayingLock) == 0){
-		LogX("CloseMediaStreams:[stream not in playing.]");
+		Log3("CloseMediaStreams:[stream not in playing.]");
 		PUT_LOCK(&PlayingLock);
 		return -1;
 	}
     
     if(TRY_LOCK(&DestoryLock) != 0){
-        LogX("CloseMediaStreams:[media stream will be destory.]");
+        Log3("CloseMediaStreams:[media stream will be destory.]");
         PUT_LOCK(&PlayingLock);
         return -1;
     }
@@ -2102,7 +2102,6 @@ int CPPPPChannel::CloseMediaStreams(
 	Log3("close media stream success ... ");
 
 	PUT_LOCK(&DestoryLock);
-	PUT_LOCK(&PlayingLock);
 
 	return 0;
 }

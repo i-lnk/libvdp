@@ -103,7 +103,7 @@ int CSearchDVS::Open(char *ssid,char *psd)
 		servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
         servaddr.sin_port = htons(sockattrs[i].sock_port);
 		
-    	r = bind(socks[i], (sockaddr *)&servaddr, sizeof(servaddr) );
+    	r = bind(socks[i], (sockaddr *)&servaddr, sizeof(servaddr));
     	if (r < 0){
 			Log3("set socket port:[%d] for:[%d] failed with error:[%d].\n",sockattrs[i].sock_port,socks[i],errno);
     		close(socks[i]);
@@ -437,7 +437,6 @@ void CSearchDVS::ProcMessageGoke(const char * lpMsg){
 
 	GET_LOCK( &g_CallbackContextLock );
 
-	
 	m_envLocal->CallVoidMethod(
 		g_CallBack_Handle,
 		g_CallBack_SearchResults,

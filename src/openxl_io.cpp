@@ -39,6 +39,9 @@ static COMMO_LOCK OpenSLLock = PTHREAD_MUTEX_INITIALIZER;
 
 #ifdef PLATFORM_ANDROID
 
+#define MAX_NUMBER_INTERFACES 3
+#define MAX_NUMBER_OUTPUT_DEVICES 6
+
 #include <jni.h>
 
 // creates the OpenSL ES audio engine
@@ -53,7 +56,7 @@ static SLresult openSLCreateEngine(OPENXL_STREAM *p)
 	// create engine
 
 	Log3("opensl step 1.");
-	result = slCreateEngine(&(p->engineObject), 0, EngineOption, 0, NULL, NULL);
+	result = slCreateEngine(&(p->engineObject), 1, EngineOption, 0, NULL, NULL);
 	if(result != SL_RESULT_SUCCESS) goto engine_end;
 
 	// realize the engine 
@@ -64,7 +67,11 @@ static SLresult openSLCreateEngine(OPENXL_STREAM *p)
 	// get the engine interface, which is needed in order to create other objects
 	Log3("opensl step 3.");
 	result = (*p->engineObject)->GetInterface(p->engineObject, SL_IID_ENGINE, &(p->engineEngine));
-	if(result != SL_RESULT_SUCCESS) goto engine_end;
+	if(result != SL_RESULT_SUCCESS){
+		Log3("Get the engine interface failed with error:%d",result);
+		return result;
+	}
+
 
 engine_end:
 	return result;
@@ -190,16 +197,115 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
 
 	int length_10ms = (p->sr * channels * 2 / 1000) * 10;
 
-    const SLInterfaceID ids[] = {0};
-    const SLboolean req[] = {SL_BOOLEAN_FALSE};
-    result = (*p->engineEngine)->CreateOutputMix(p->engineEngine, &(p->outputMixObject), 0, ids, req);
+    SLInterfaceID ids[MAX_NUMBER_INTERFACES];
+    SLboolean req[MAX_NUMBER_INTERFACES];
+	SLuint32 OutputDeviceIDs[MAX_NUMBER_OUTPUT_DEVICES];
+
+	for (int i=0;i<MAX_NUMBER_INTERFACES;i++)
+	{
+		req[i] = SL_BOOLEAN_FALSE;
+		ids[i] = SL_IID_NULL;
+	}
+
+	SLOutputMixItf outputMixItf;
+	SLAudioOutputDescriptor AudioOutputDescriptor;
+
+	SLint32 numOutputs = MAX_NUMBER_OUTPUT_DEVICES;
+
+	SLboolean headset_available = SL_BOOLEAN_FALSE;
+	SLuint32  headset_deviceID = 0;
+	SLboolean handsfree_speaker_available = SL_BOOLEAN_FALSE;
+	SLuint32  handsfree_speaker_deviceID = 0;
+
+	result = (*p->engineEngine)->CreateOutputMix(p->engineEngine, &(p->outputMixObject), 0, ids, req);
     if(result != SL_RESULT_SUCCESS){
 		Log3("CreateOutputMix failed.");
 		return result;
     }
 
-    // realize the output mix
+	// realize the output mix
     result = (*p->outputMixObject)->Realize(p->outputMixObject, SL_BOOLEAN_FALSE);
+	
+	/* Get Output Mix interface */
+	result = (*p->outputMixObject)->GetInterface(p->outputMixObject, SL_IID_OUTPUTMIX, (void*)&outputMixItf);	
+	if(result != SL_RESULT_SUCCESS){
+		Log3("Get Output Mix interface failed.");
+		return result;
+	}
+
+#if 0
+	result = (*p->outputMixObject)->GetInterface(p->outputMixObject, SL_IID_VOLUME, (void*)&p->bqPlayerVolume);
+	if(result == SL_RESULT_SUCCESS){
+		result = (*p->bqPlayerVolume)->SetVolumeLevel(p->bqPlayerVolume, -300);
+		if(result != SL_RESULT_SUCCESS){
+			Log3("SetVolumeLevel failed.");
+		}
+	}else{
+		Log3("Get Output Mix volume failed.");
+	}
+#endif
+
+#if 0
+	SLAudioIODeviceCapabilitiesItf AudioIODeviceCapabilitiesItf;
+
+	/* Get the Audio IO DEVICE CAPABILITIES interface */
+	result = (*p->engineObject)->GetInterface(
+		p->engineObject, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&AudioIODeviceCapabilitiesItf
+		);
+	if(result != SL_RESULT_SUCCESS){
+	   Log3("Get the Audio IO DEVICE CAPABILITIES interface failed with error:%d",result);
+//	   return result;
+   	}
+
+	result = (*AudioIODeviceCapabilitiesItf)->GetAvailableAudioOutputs(
+		AudioIODeviceCapabilitiesItf, &numOutputs, OutputDeviceIDs);
+	if(result != SL_RESULT_SUCCESS){
+	   Log3("GetAvailableAudioOutputs interface failed.");
+	   return result;
+   	}
+
+	for (int i = 0;i<numOutputs; i++)
+	{
+		result = (*AudioIODeviceCapabilitiesItf)->QueryAudioOutputCapabilities(
+			AudioIODeviceCapabilitiesItf, OutputDeviceIDs[i], &AudioOutputDescriptor
+			);
+#if 0
+		if(
+		(AudioOutputDescriptor.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED)&&
+		(AudioOutputDescriptor.deviceScope == SL_DEVSCOPE_USER)&&
+		(AudioOutputDescriptor.deviceLocation == SL_DEVLOCATION_HEADSET)
+		){
+			headset_deviceID = OutputDeviceIDs[i];
+			headset_available = SL_BOOLEAN_TRUE;
+		}else 
+#endif
+		if(
+		(AudioOutputDescriptor.deviceConnection == SL_DEVCONNECTION_INTEGRATED)&&
+		(AudioOutputDescriptor.deviceScope == SL_DEVSCOPE_ENVIRONMENT)&&
+		(AudioOutputDescriptor.deviceLocation == SL_DEVLOCATION_HANDSET)
+		){
+			handsfree_speaker_deviceID = OutputDeviceIDs[i];
+			handsfree_speaker_available = SL_BOOLEAN_TRUE;
+		}
+	}
+#else
+	/* Route output to handsfree_speaker_deviceID */
+	result = (*outputMixItf)->GetDestinationOutputDeviceIDs(
+		outputMixItf, &numOutputs, OutputDeviceIDs);
+	if(result != SL_RESULT_SUCCESS){
+		Log3("GetDestinationOutputDeviceIDs failed.");
+		return result;
+	}
+
+	handsfree_speaker_deviceID = OutputDeviceIDs[0];
+#endif
+
+	/* Route output to handsfree_speaker_deviceID */
+	result = (*outputMixItf)->ReRoute(outputMixItf, 1, &handsfree_speaker_deviceID);
+	if(result != SL_RESULT_SUCCESS){
+		Log3("Route output to handsfree_speaker_deviceID failed.");
+		return result;
+	}
    
     int speakers;
 
@@ -243,6 +349,7 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
 						&(p->bqPlayerBufferQueue));
     if(result != SL_RESULT_SUCCESS) return result;
 
+#if 0
 		// set output volume
 	result = (*p->bqPlayerObject)->GetInterface(p->bqPlayerObject, SL_IID_VOLUME, &(p->bqPlayerVolume));
 	if(result != SL_RESULT_SUCCESS){
@@ -250,14 +357,11 @@ static SLresult openSLPlayerOpen(OPENXL_STREAM *p)
 		return result;
 	}
 
-#if 1
-	SLmillibel vol;
-
-	(*p->bqPlayerVolume)->GetMaxVolumeLevel(p->bqPlayerVolume,&vol);
-	(*p->bqPlayerVolume)->SetVolumeLevel(p->bqPlayerVolume,vol);
+	result = (*p->bqPlayerVolume)->SetVolumeLevel(p->bqPlayerVolume, -300);
+	if(result != SL_RESULT_SUCCESS){
+		Log3("SetVolumeLevel failed.");
+	}
 #endif
-
-	Log3("MMMMMMMMMMMMMAX VOLUME OPENSL:[%d].",vol);
 
     // register callback on the buffer queue
     result = (*p->bqPlayerBufferQueue)->RegisterCallback(p->bqPlayerBufferQueue, p->cbp, p);
@@ -807,17 +911,17 @@ OPENXL_STREAM * InitOpenXLStream(
         goto jumperr;
     }
 
-    if(openSLRecordOpen(p) != SL_RESULT_SUCCESS) {
-        Log2("open sl record failed.");
-        FreeOpenXLStream(p);
-        goto jumperr;
-    } 
-
     if(openSLPlayerOpen(p) != SL_RESULT_SUCCESS) {
         Log2("open sl player failed.");
         FreeOpenXLStream(p);
         goto jumperr;
     }
+
+	 if(openSLRecordOpen(p) != SL_RESULT_SUCCESS) {
+        Log2("open sl record failed.");
+        FreeOpenXLStream(p);
+        goto jumperr;
+    } 
     
 #else
     

@@ -69,8 +69,8 @@ typedef	pthread_t		PROCESS_HANDLE;
 #ifdef PLATFORM_ANDROID
 #define Log(...)
 #define Log2(fmt, args...)
-#define Log3(fmt, args...)
-#define Log4(fmt, args...)  \
+#define Log4(fmt, args...)
+#define Log3(fmt, args...)  \
 	{	\
 		__android_log_print(ANDROID_LOG_ERROR, "P2PLIB","= %-16s, line %4d, %-16s:"fmt"\n", __FILE__, __LINE__, __FUNCTION__, ##args); \
 	}
