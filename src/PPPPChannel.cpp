@@ -1251,18 +1251,20 @@ connect:
 	result = 1;
 
 	if(hPC->isWakeUp == 0){
-		IOTC_Check_Device_On_Line(hPC->szDID,10 * 1000,CheckPPPPHandler,&result);
+		IOTC_Check_Device_On_Line(hPC->szDID,5 * 1000,CheckPPPPHandler,&result);
 
 		counts = 0;
 		while(result > 0){
-		//	Log4("waiting for IOTC_Check_Device_On_Line %02d.",counts);e
+			if((counts % 100) == 0) Log4("waiting for IOTC_Check_Device_On_Line %02d.",counts);
 			usleep(10 * 1000);
 			counts++;
 		}
 
+		Log4("IOTC_Check_Device_On_Line break status is:[%d]",result);
+
 		switch(result){
 			case IOTC_ER_NETWORK_UNREACHABLE: // Network is unreachable, please check the network settings 
-				case IOTC_ER_MASTER_NOT_RESPONSE: // IOTC master servers have no response 
+			case IOTC_ER_MASTER_NOT_RESPONSE: // IOTC master servers have no response 
 			case IOTC_ER_TCP_CONNECT_TO_SERVER_FAILED: // Cannot connect to IOTC servers in TCP
 			case IOTC_ER_CAN_NOT_FIND_DEVICE: // IOTC servers cannot locate the specified device
 			case IOTC_ER_SERVER_NOT_RESPONSE: // All servers have no response
@@ -1288,13 +1290,6 @@ connect:
 				hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
 				goto jumperr;
 			default:
-				Log4("IOTC_Check_Device_On_Line break status is:[%d]",result);
-				if(counts > 800){
-					status = PPPP_STATUS_DEVICE_NOT_ON_LINE;
-					hPC->MsgNotify(hEnv, MSG_NOTIFY_TYPE_PPPP_STATUS, status);
-					Log3("IOTC_Check_Device_On_Line break counts more than 8 second");
-					goto jumperr;
-				}
 				break;
 		}
 	}
@@ -1328,6 +1323,7 @@ connect:
 				Log3("[2:%s]=====>device in sleep mode.",hPC->szDID);
                 status = PPPP_STATUS_DEVICE_SLEEP;
                 goto jumperr;
+//			case IOTC_ER_FAIL_CONNECT_SEARCH:
 			case IOTC_ER_FAIL_SETUP_RELAY:
             case IOTC_ER_CAN_NOT_FIND_DEVICE:
 			case IOTC_ER_DEVICE_OFFLINE:
@@ -1438,7 +1434,7 @@ connect:
 		int ret = IOTC_Session_Check(hPC->SID,&sInfo);
 		
 		if(ret < 0){
-			LogX("IOTC_Session_Check failed with error:[%d]",ret);	
+			Log4("IOTC_Session_Check failed with error:[%d]",ret);	
 			
 			switch(ret){
 				case IOTC_ER_DEVICE_OFFLINE:
@@ -1449,6 +1445,7 @@ connect:
 					break;
 				default:
 					hPC->mediaLinking = 0;
+					hPC->isWakeUp = 0;
 					hPC->PPPPClose();
 					hPC->CloseWholeThreads();
 					hPC->mediaLinking = 1;
@@ -1484,7 +1481,7 @@ jumperr:
 	PUT_LOCK(&hPC->PlayingLock);
 	PUT_LOCK(&hPC->SessionLock);
     
-    LogX("[%d]:MediaCoreProcess Exit By Status:[%d].",gettid(),status);
+    Log4("[%d]:MediaCoreProcess Exit By Status:[%d].",gettid(),status);
 
 #ifdef PLATFORM_ANDROID
 	if(isAttached) g_JavaVM->DetachCurrentThread();
@@ -1655,7 +1652,7 @@ int CPPPPChannel::PPPPClose()
 
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
-	int statusGetTimes = 200;
+	int statusGetTimes = 100;
 	int ret = -1;
 
 	if(TRY_LOCK(&SessionLock) != 0){
@@ -2101,6 +2098,7 @@ int CPPPPChannel::CloseMediaStreams(
 
 	Log3("close media stream success ... ");
 
+	PUT_LOCK(&PlayingLock);
 	PUT_LOCK(&DestoryLock);
 
 	return 0;
