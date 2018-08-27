@@ -436,6 +436,50 @@ static int SetLockPass(
 	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
 }
 
+static int GetLockGoke(
+	int				avIdx,
+	int				avMsgType,
+	const char *	szCgi,
+	int				CgiLens,
+	void *			lpParams
+){
+	char szDoorNumb[8]  = {0};
+
+	SMsgAVIoctrlSetOpenDoorReq sMsg;
+	memset(&sMsg,0,sizeof(sMsg));
+
+	GetCgiParam(szDoorNumb,szCgi,sizeof(szDoorNumb),"doornumb=","&");
+
+	sMsg.channel = atoi(szDoorNumb);
+
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+
+static int SetLockGoke(
+	int				avIdx,
+	int				avMsgType,
+	const char *	szCgi,
+	int				CgiLens,
+	void *			lpParams
+){
+	char szDoorNumb[8]  = {0};
+	char szOpenMode[8]  = {0};
+	char szOpenPass[32] = {0};
+
+	SMsgAVIoctrlSetOpenDoorReq sMsg;
+	memset(&sMsg,0,sizeof(sMsg));
+
+	GetCgiParam(szDoorNumb,szCgi,sizeof(szDoorNumb),"doornumb=","&");
+	GetCgiParam(szOpenMode,szCgi,sizeof(szOpenMode),"openmode=","&");
+
+	sMsg.channel = atoi(szDoorNumb);
+	sMsg.mode = atoi(szOpenMode); // set: open door:0x01  lock door:0x00;  get: door unlock:0x01 door locked:0x00
+
+	return avSendIOCtrl(avIdx,avMsgType,(const char *)&sMsg,sizeof(sMsg));
+}
+
+
 static int SetVideo(
 	int				avIdx,
 	int				avMsgType,
@@ -1407,6 +1451,8 @@ static APP_CMD_CALL hACC[] = {
 	{IOTYPE_USER_IPCAM_GET_MD_ALAM_REQ,GetMotionScheduleEx},
 	{IOTYPE_USER_IPCAM_DOOROPEN_REQ,SetLock},
 	{IOTYPE_USER_IPCAM_DOORPASS_REQ,SetLockPass},
+	{IOTYPE_USER_IPCAM_SET_DOOROPEN_REQ,SetLockGoke},
+	{IOTYPE_USER_IPCAM_GET_DOOROPEN_REQ,GetLockGoke},
 	{IOTYPE_USER_IPCAM_SET_VIDEOMODE_REQ,SetVideo},
 	{IOTYPE_USER_IPCAM_GET_VIDEOMODE_REQ,GetVideo},
 	{IOTYPE_USER_IPCAM_SET_SYSTEM_REQ,SetSystem},

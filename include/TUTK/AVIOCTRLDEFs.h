@@ -282,6 +282,12 @@ typedef enum
 	IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_REQ		= 0x1804,
 	IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_RESP		= 0x1805,
 
+	
+	IOTYPE_USER_IPCAM_SET_DOOROPEN_REQ			= 0x1810,	//设置开门
+	IOTYPE_USER_IPCAM_SET_DOOROPEN_RESP 		= 0x1811,	//设置开门应答
+	IOTYPE_USER_IPCAM_GET_DOOROPEN_REQ			= 0x1812,	//获取门锁状态
+	IOTYPE_USER_IPCAM_GET_DOOROPEN_RESP 		= 0x1813,	//获取门锁状态应答
+
 	IOTYPE_USER_IPCAM_LST_IOT_REQ				= 0x2012,
 	IOTYPE_USER_IPCAM_LST_IOT_RESP				= 0x2013,
 	
@@ -533,7 +539,8 @@ typedef struct{
     char			supportPIR;
 	char			supportDemolishAlarm;
 	char			supportWakeUpControl;	// 显示唤醒功能开关项，1 支持，0 不支持双向改单向门铃，设置栏中不显示
-    char 			reserve2[46];		// 淇濈暀2
+	char			supportUnlock;
+    char 			reserve2[45];		// 淇濈暀2
 }SMsgAVIoctrlGetCapacityResp;
 
 typedef struct
@@ -903,13 +910,13 @@ typedef struct
 {
 	unsigned char model[16];	// IPCam mode
 	unsigned char vendor[16];	// IPCam manufacturer
-	unsigned int version;		// IPCam firmware version	ex. v1.2.3.4 => 0x01020304;  v1.0.0.2 => 0x01000002
-	unsigned int channel;		// Camera index
-	unsigned int total;			// 0: No cards been detected or an unrecognizeable sdcard that could not be re-formatted.
+	unsigned int  version;		// IPCam firmware version	ex. v1.2.3.4 => 0x01020304;  v1.0.0.2 => 0x01000002
+	unsigned int  channel;		// Camera index
+	unsigned int  total;			// 0: No cards been detected or an unrecognizeable sdcard that could not be re-formatted.
 								// -1: if camera detect an unrecognizable sdcard, and could be re-formatted
 								// otherwise: return total space size of sdcard (MBytes)								
 								
-	unsigned int free;			// Free space size of sdcard (MBytes)
+	unsigned int  free;			// Free space size of sdcard (MBytes)
 	unsigned char reserved[8];	// reserved
 }SMsgAVIoctrlDeviceInfoResp;
 
@@ -1521,6 +1528,25 @@ SMsgAVIoctrlSetWakeUpStateResp,
 SMsgAVIoctrlGetWakeUpStateReq,
 SMsgAVIoctrlGetWakeUpStateResp;
 
+typedef enum{
+	DEV_DOORTYPE_LOCK = 0x00,	// set: lock door
+	DEV_DOORTYPE_OPEN = 0x01,	// set: open door
+}ENUM_DEV_OPENDOOR_TYPE;
+
+typedef struct  // 0X1810
+{
+    unsigned int channel;  // door index
+    unsigned char mode;   // set: open door:0x01  lock door:0x00;  get: door unlock:0x01 door locked:0x00 
+    unsigned char reserved[3];
+}SMsgAVIoctrlSetOpenDoorReq,SMsgAVIoctrlGetOpenDoorReq,SMsgAVIoctrlGetOpenDoorResp;
+
+typedef struct	// 0X1811 
+{
+	unsigned int channel;   // door index
+	unsigned char mode;   // open door:0x01  lock door:0x00
+	unsigned char result;   // 0: success; otherwise: failed
+	unsigned char reserved[2];
+}SMsgAVIoctrlSetOpenDoorResp;
 
 
 #endif

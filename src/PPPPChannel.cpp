@@ -1251,7 +1251,7 @@ connect:
 	result = 1;
 
 	if(hPC->isWakeUp == 0){
-		IOTC_Check_Device_On_Line(hPC->szDID,5 * 1000,CheckPPPPHandler,&result);
+		IOTC_Check_Device_On_Line(hPC->szDID,10 * 1000,CheckPPPPHandler,&result);
 
 		counts = 0;
 		while(result > 0){
@@ -1263,6 +1263,7 @@ connect:
 		Log4("IOTC_Check_Device_On_Line break status is:[%d]",result);
 
 		switch(result){
+			case IOTC_ER_TIMEOUT:
 			case IOTC_ER_NETWORK_UNREACHABLE: // Network is unreachable, please check the network settings 
 			case IOTC_ER_MASTER_NOT_RESPONSE: // IOTC master servers have no response 
 			case IOTC_ER_TCP_CONNECT_TO_SERVER_FAILED: // Cannot connect to IOTC servers in TCP
@@ -1317,12 +1318,14 @@ connect:
 				goto jumperr;
 			case IOTC_ER_EXCEED_MAX_SESSION:
 			case IOTC_ER_DEVICE_EXCEED_MAX_SESSION:
+				Log3("[2:%s]=====>got max session error:[%d].",hPC->szDID,hPC->SID);
 				status = PPPP_STATUS_EXCEED_SESSION;
 				goto jumperr;
             case IOTC_ER_DEVICE_IS_SLEEP:
 				Log3("[2:%s]=====>device in sleep mode.",hPC->szDID);
                 status = PPPP_STATUS_DEVICE_SLEEP;
                 goto jumperr;
+			case IOTC_ER_NETWORK_UNREACHABLE:
 //			case IOTC_ER_FAIL_CONNECT_SEARCH:
 			case IOTC_ER_FAIL_SETUP_RELAY:
             case IOTC_ER_CAN_NOT_FIND_DEVICE:
@@ -1652,7 +1655,7 @@ int CPPPPChannel::PPPPClose()
 
 int CPPPPChannel::Start(char * usr,char * pwd,char * svr)
 {   
-	int statusGetTimes = 100;
+	int statusGetTimes = 200;
 	int ret = -1;
 
 	if(TRY_LOCK(&SessionLock) != 0){
@@ -1693,6 +1696,8 @@ check_connection:
 					Log4("start pppp connection failed with sleep mode.");
 					return status;
 				}
+				usleep(100 * 1000);
+				continue;
 			case PPPP_STATUS_CONNECTING:
 //				Log3("start pppp connection block, status not change.");
 				usleep(100 * 1000); // check connection every 100ms

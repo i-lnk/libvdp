@@ -539,8 +539,8 @@ int             JsonBufferSize
 		"\"%s\":\"%d\",\"%s\":\"%s\",\"%s\":\"%d\","
 		"\"%s\":\"%s\",\"%s\":\"%d\",\"%s\":\"%d\","
 		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\","
-		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\""
-		"}",
+		"\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\","
+		"\"%s\":\"%d\"}",
         "devType",hRQ->devType,
         "version",hRQ->version,
         "odm",hRQ->odmID,
@@ -552,7 +552,8 @@ int             JsonBufferSize
         "supportRemoveAlarm",hRQ->supportDemolishAlarm,
         "supportWakeUpControl",hRQ->supportWakeUpControl,
         "supportAudioIn",hRQ->supportAudioIn,
-        "supportAudioOut",hRQ->supportAudioOut
+        "supportAudioOut",hRQ->supportAudioOut,
+        "supportUnlock",hRQ->supportUnlock
         );
     
     return 0;
@@ -799,6 +800,49 @@ static int GetEnv(
     return 0;
 }
 
+static int GetLockGoke(
+	int 			Cmd,
+	void *			Msg,
+	char *			JsonBuffer,
+	int 			JsonBufferSize
+){
+	if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlGetOpenDoorResp * hRQ = (SMsgAVIoctrlGetOpenDoorResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\"}",
+		"doornumb",hRQ->channel,
+		"openmode",hRQ->mode
+		);
+    
+    return 0;
+}
+
+static int SetLockGoke(
+	int 			Cmd,
+	void *			Msg,
+	char *			JsonBuffer,
+	int 			JsonBufferSize
+){
+	if(Msg == NULL || JsonBuffer == NULL){
+        return -1;
+    }
+    
+    SMsgAVIoctrlSetOpenDoorResp * hRQ = (SMsgAVIoctrlSetOpenDoorResp *)Msg;
+
+	sprintf(JsonBuffer,"{\"%s\":\"%d\",\"%s\":\"%d\",\"%s\":\"%d\"}",
+		"doornumb",hRQ->channel,
+		"openmode",hRQ->mode,
+		"result",hRQ->result
+		);
+    
+    return 0;
+}
+
+
+
 static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_UUID,SetUUID},
 {IOTYPE_USER_IPCAM_SETPASSWORD_RESP,SetPassword},
@@ -848,6 +892,8 @@ static APP_CMD_RESP hACR[] = {
 {IOTYPE_USER_IPCAM_SET_WAKEUP_FUN_RESP,XetWakeUpOptions},
 {IOTYPE_USER_IPCAM_GET_ENVIRONMENT_RESP,GetEnv},
 {IOTYPE_USER_IPCAM_SET_ENVIRONMENT_RESP,SetEnv},
+{IOTYPE_USER_IPCAM_SET_DOOROPEN_RESP,SetLockGoke},
+{IOTYPE_USER_IPCAM_GET_DOOROPEN_RESP,GetLockGoke},
 {0,NULL}
 };
 
